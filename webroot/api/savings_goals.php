@@ -1,0 +1,89 @@
+<?php
+declare(strict_types=1);
+require __DIR__ . '/db.php';
+
+$uid = require_auth();
+
+// Stesse esclusioni usate in analytics.php: i movimenti di investimento e i
+// trasferimenti tra conti propri non sono "risparmio", sono spostamenti.
+const GOAL_EXCLUDED_CATEGORIES = ['Investimenti (acquisto)', 'Investimenti (vendita)'];
+
+function goal_progress(int $uid, string $startDate): float
+{
+    $placeholders = implode(',', array_fill(0, count(GOAL_EXCLUDED_CATEGORIES), '?'));
+    $stmt = db()->prepare("
+        SELECT COALESCE(SUM(CASE WHEN t.type = 'entrata' THEN t.amount ELSE -t.amount END), 0) AS net
+        FROM transactions t
+        JOIN categories c ON c.id = t.category_id
+        WHERE t.user_id = ? AND t.date >= ? AND t.type IN ('entrata','uscita')
+        AND c.name NOT IN ($placeholders)
+    ");
+    $stmt->execute(array_merge([$uid, $startDate], GOAL_EXCLUDED_CATEGORIES));
+    return (float)$stmt->fetchColumn();
+}
+
+switch (method()) {
+    case 'GET':
+        $stmt = db()->prepare("SELECT * FROM savings_goals WHERE user_id = :uid ORDER BY target_date IS NULL, target_date, created_at DESC");
+        $stmt->execute(['uid' => $uid]);
+        $goals = $stmt->fetchAll();
+        foreach ($goals as &$g) {
+            $g['current_amount'] = round(goal_progress($uid, $g['start_date']), 2);
+            $g['pct'] = $g['target_amount'] > 0 ? round(min(100, max(0, $g['current_amount'] / $g['target_amount'] * 100)), 1) : 0;
+        }
+        respond($goals);
+        break;
+
+    case 'POST':
+        $in = json_input();
+        foreach (['name', 'target_amount'] as $f) {
+            if (empty($in[$f])) respond_error("Campo obbligatorio mancante: $f");
+        }
+        $stmt = db()->prepare("INSERT INTO savings_goals (user_id, name, target_amount, start_date, target_date)
+            VALUES (:uid, :name, :target_amount, :start_date, :target_date)");
+        $stmt->execute([
+            'uid' => $uid,
+            'name' => $in['name'],
+            'target_amount' => $in['target_amount'],
+            'start_date' => $in['start_date'] ?? date('Y-m-d'),
+            'target_date' => $in['target_date'] ?? null,
+        ]);
+        respond(['id' => (int)db()->lastInsertId()], 201);
+        break;
+
+    case 'PUT':
+        $in = json_input();
+        if (empty($in['id'])) respond_error('ID mancante');
+
+        $fields = [];
+        $params = ['id' => $in['id'], 'uid' => $uid];
+        foreach (['name', 'target_amount', 'start_date', 'target_date'] as $f) {
+            if (array_key_exists($f, $in)) {
+                $fields[] = "$f = :$f";
+                $params[$f] = $in[$f];
+            }
+        }
+        if (!$fields) respond_error('Nessun campo da aggiornare');
+
+        $stmt = db()->prepare("UPDATE savings_goals SET " . implode(', ', $fields) . " WHERE id = :id AND user_id = :uid");
+        $stmt->execute($params);
+        respond(['ok' => true]);
+        break;
+
+    case 'DELETE':
+        if (($_GET['action'] ?? '') === 'bulk') {
+            $stmt = db()->prepare("DELETE FROM savings_goals WHERE user_id = :uid");
+            $stmt->execute(['uid' => $uid]);
+            respond(['ok' => true, 'deleted' => $stmt->rowCount()]);
+            break;
+        }
+
+        $id = $_GET['id'] ?? null;
+        if (!$id) respond_error('ID mancante');
+        db()->prepare("DELETE FROM savings_goals WHERE id = :id AND user_id = :uid")->execute(['id' => $id, 'uid' => $uid]);
+        respond(['ok' => true]);
+        break;
+
+    default:
+        respond_error('Metodo non supportato', 405);
+}

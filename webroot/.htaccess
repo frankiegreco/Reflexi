@@ -1,0 +1,26 @@
+RewriteEngine On
+
+# URL puliti per la sezione news: /news/{slug} -> news-articolo.php?slug={slug}
+RewriteRule ^news/([a-z0-9-]+)/?$ news-articolo.php?slug=$1 [L,QSA]
+RewriteRule ^news/?$ news.php [L,QSA]
+
+# Sitemap generata dinamicamente (include gli articoli pubblicati)
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+# Cache lato browser per asset statici (Core Web Vitals: evita richieste di
+# revalidazione ripetute sulle visite di ritorno). site.css è versionato via
+# query string (?v=N in ogni <link>, da incrementare a mano quando si
+# rigenera con build/build-css.sh) quindi puo' avere una scadenza piu' lunga;
+# le icone SVG/PNG non sono versionate, scadenza piu' prudente.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 week"
+    ExpiresByType image/png "access plus 1 week"
+    ExpiresByType image/jpeg "access plus 1 week"
+</IfModule>
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|svg|png|jpe?g)$">
+        Header set Cache-Control "public"
+    </FilesMatch>
+</IfModule>

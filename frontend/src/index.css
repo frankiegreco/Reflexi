@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-mono, input, select {
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  opacity: 1;
+}
+
+/* Le classi custom vanno dentro @layer components: cosi' finiscono PRIMA delle
+   utility di Tailwind nel foglio di stile generato, e utility come "w-auto"
+   possono correttamente sovrascrivere lo "w-full" di .field quando servono
+   filtri affiancati invece che a piena larghezza. */
+/* Forza i controlli nativi del browser (data, ora, ecc.) a comportarsi come
+   se il tema fosse chiaro, indipendentemente dal tema scuro di sistema —
+   altrimenti su Android (WebView incluso) il testo del selettore data può
+   risultare chiaro su chiaro, invisibile ma comunque cliccabile. */
+input, select, textarea {
+  color-scheme: light;
+}
+
+@layer components {
+  .field {
+    @apply w-full rounded-xl border border-border bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-shadow focus:border-accent focus:ring-4 focus:ring-accent/10;
+  }
+  .field-label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 active:scale-[0.98];
+  }
+  .btn-accent {
+    @apply btn bg-accent text-white shadow-sm shadow-accent/30 hover:bg-accentDark hover:shadow-md hover:shadow-accent/30;
+  }
+  .btn-outline {
+    @apply btn border border-border bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50;
+  }
+  .btn-outline-danger {
+    @apply btn border border-red-200 text-red-600 hover:bg-red-50;
+  }
+  .card {
+    @apply rounded-2xl border border-border bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_1px_1px_rgba(16,24,40,0.03)] transition-shadow duration-150;
+  }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.view-enter {
+  animation: fade-in-up 0.25s ease;
+}

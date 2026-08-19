@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sovrascrive il layout omonimo della libreria @capacitor/android (stesso nome
+  file = override delle risorse Android). L'originale non ha fitsSystemWindows,
+  quindi su Android 15/16 (targetSdk 35+, edge-to-edge imposto dall'OS) la
+  WebView disegna sotto le barre di sistema. fitsSystemWindows="true" e' il
+  meccanismo Android piu' datato ma piu' affidabile per far riservare
+  automaticamente lo spazio delle system bar, senza codice Java custom.
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@android:color/white"
+    tools:context="com.getcapacitor.BridgeActivity"
+    >
+
+    <com.getcapacitor.CapacitorWebView
+        android:id="@+id/webview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

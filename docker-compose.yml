@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  db:
+    image: mariadb:11
+    container_name: finanze_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-changeme_root}
+      MYSQL_DATABASE: ${DB_NAME:-finanze}
+      MYSQL_USER: ${DB_USER:-finanze_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - finanze_net
+
+  web:
+    build:
+      context: ./webroot
+      dockerfile: Dockerfile
+    container_name: finanze_web
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-finanze}
+      DB_USER: ${DB_USER:-finanze_user}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-tls}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@localhost}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Le mie finanze}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_MONTHLY: ${STRIPE_PRICE_MONTHLY:-}
+      STRIPE_PRICE_ANNUAL: ${STRIPE_PRICE_ANNUAL:-}
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    volumes:
+      - ./webroot:/var/www/html
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    networks:
+      - finanze_net
+
+  # Opzionale: interfaccia web per ispezionare il DB. Commenta se non ti serve.
+  adminer:
+    image: adminer:latest
+    container_name: finanze_adminer
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
+    networks:
+      - finanze_net
+
+  # Reverse proxy con HTTPS automatico (Let's Encrypt). In produzione, imposta
+  # SITE_ADDRESS nel .env con il tuo dominio (es. reflexi.it, www.reflexi.it).
+  # In locale, lascia vuoto: Caddy serve in HTTP semplice su localhost.
+  caddy:
+    image: caddy:2
+    container_name: finanze_caddy
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - finanze_net
+
+networks:
+  finanze_net:
+    driver: bridge
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:

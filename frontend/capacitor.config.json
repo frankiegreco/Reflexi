@@ -1,0 +1,19 @@
+{
+  "appId": "reflexi.app",
+  "appName": "Reflexi",
+  "webDir": "dist",
+  "server": {
+    "url": "https://reflexi.it/app/",
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#14162b"
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#14162b"
+    }
+  }
+}

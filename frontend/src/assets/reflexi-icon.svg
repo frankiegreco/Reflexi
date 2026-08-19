@@ -1,0 +1,28 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14162b"/>
+      <stop offset="100%" stop-color="#1f2240"/>
+    </linearGradient>
+    <linearGradient id="leftRingI" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="rightRingI" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e0e1fb"/>
+      <stop offset="100%" stop-color="#b8bbf4"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="240" height="240" rx="52" fill="url(#bg)"/>
+
+  <!-- Anello sinistro -->
+  <path fill-rule="evenodd" fill="url(#leftRingI)"
+        d="M 48,120 A 42,42 0 1,0 132,120 A 42,42 0 1,0 48,120 Z
+           M 64,120 A 26,26 0 1,0 116,120 A 26,26 0 1,0 64,120 Z"/>
+
+  <!-- Anello destro: riflesso -->
+  <path fill-rule="evenodd" fill="url(#rightRingI)"
+        d="M 108,120 A 42,42 0 1,0 192,120 A 42,42 0 1,0 108,120 Z
+           M 124,120 A 26,26 0 1,0 176,120 A 26,26 0 1,0 124,120 Z"/>
+</svg>

@@ -1,0 +1,19 @@
+# Segreti — mai in git (password DB, SMTP, chiavi Stripe)
+.env
+webroot/.env
+
+# Dipendenze rigenerabili
+frontend/node_modules/
+webroot/vendor/
+
+# Build intermedie del frontend (webroot/app/ è il build effettivamente
+# servito e resta versionato; queste sono solo passaggi intermedi locali)
+frontend/dist/
+frontend/dist_incoming/
+
+# OS / editor
+.DS_Store
+*.swp
+
+# Impostazioni locali di Claude Code (personali, non condivise)
+.claude/settings.local.json
