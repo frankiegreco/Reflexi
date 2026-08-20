@@ -18,6 +18,15 @@ const TYPES = [
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD'];
 
+// Giorno precedente a una data ISO (YYYY-MM-DD), per mostrare la fine
+// calcolata di un periodo di tasso (l'inizio del successivo meno un giorno).
+function dayBefore(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() - 1);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
 const empty = {
   id: null, name: '', type: 'corrente', initial_balance: 0, color: '#4f46e5', currency: 'EUR',
   interest_enabled: false, interest_rate: '', interest_tax_rate: 26, interest_frequency: 'annuale', next_interest_date: todayISO(),
@@ -256,14 +265,18 @@ export default function Accounts() {
                   </p>
                   {rateError && <div className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{rateError}</div>}
                   <div className="space-y-1.5">
-                    {rates.map((r) => (
-                      <div key={r.id} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm">
-                        <span>dal {formatDate(r.effective_date)} — <span className="font-mono">{r.rate}%</span></span>
-                        <button type="button" className="text-muted hover:text-red-600" onClick={() => deleteRate(r.id)} aria-label="Elimina variazione">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
+                    {rates.map((r, i) => {
+                      const next = rates[i + 1];
+                      const endLabel = next ? formatDate(dayBefore(next.effective_date)) : 'in corso';
+                      return (
+                        <div key={r.id} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm">
+                          <span>dal {formatDate(r.effective_date)} al {endLabel} — <span className="font-mono">{r.rate}%</span></span>
+                          <button type="button" className="text-muted hover:text-red-600" onClick={() => deleteRate(r.id)} aria-label="Elimina variazione">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                   <div className="mt-3 flex flex-wrap items-end gap-2">
                     <div>
