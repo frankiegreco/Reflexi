@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/db.php';
 require_once __DIR__ . '/price_fetch.php';
+require_once __DIR__ . '/account_interest_math.php';
 
 $uid = require_auth();
 
@@ -31,45 +32,6 @@ function advance_interest_date(string $date, string $frequency): string
     return $d->format('Y-m-d');
 }
 
-/** Storico dei tassi di un conto, ordinato per data di decorrenza. */
-function account_load_rate_history(int $accountId): array
-{
-    $stmt = db()->prepare("SELECT effective_date, rate FROM account_interest_rate_history WHERE account_id = :id ORDER BY effective_date ASC");
-    $stmt->execute(['id' => $accountId]);
-    return $stmt->fetchAll();
-}
-
-/** Tasso in vigore a una certa data, secondo lo storico (l'ultima variazione con effective_date <= $date). */
-function account_rate_at(array $rateHistory, string $date): float
-{
-    $rate = (float)$rateHistory[0]['rate'];
-    foreach ($rateHistory as $r) {
-        if ($r['effective_date'] > $date) break;
-        $rate = (float)$r['rate'];
-    }
-    return $rate;
-}
-
-/**
- * Saldo reale del conto a fine di una certa data (saldo iniziale ± transazioni
- * con data <= $date). Usato per calcolare l'interesse di un periodo arretrato
- * sul saldo che il conto aveva davvero in quel momento, non su quello di oggi
- * — coerente col fatto che ora anche il tasso è storicizzato per periodo.
- */
-function account_balance_at(int $accountId, string $date): float
-{
-    $stmt = db()->prepare("
-        SELECT a.initial_balance
-            + COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'entrata' AND date <= :d1), 0)
-            - COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'uscita' AND date <= :d2), 0)
-            - COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'trasferimento' AND date <= :d3), 0)
-            + COALESCE((SELECT SUM(amount) FROM transactions WHERE transfer_account_id = a.id AND type = 'trasferimento' AND date <= :d4), 0)
-            AS balance
-        FROM accounts a WHERE a.id = :id");
-    $stmt->execute(['id' => $accountId, 'd1' => $date, 'd2' => $date, 'd3' => $date, 'd4' => $date]);
-    return (float)$stmt->fetchColumn();
-}
-
 // Genera l'interesse maturato per i conti che lo hanno attivo e sono scaduti:
 // crea una VERA transazione di entrata (non un dato separato), cosi' il saldo
 // reale del conto aumenta e il patrimonio netto lo riflette automaticamente.
@@ -87,12 +49,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'interest_summary') {
         $totalEarned = (float)$sumStmt->fetchColumn();
     }
 
-    $stmt = db()->prepare("SELECT " . BALANCE_SQL . ", interest_rate, interest_tax_rate FROM accounts a
+    $stmt = db()->prepare("SELECT a.id, " . BALANCE_SQL . ", interest_rate, interest_tax_rate FROM accounts a
         WHERE a.user_id = :uid AND a.interest_enabled = 1 AND a.archived = 0");
     $stmt->execute(['uid' => $uid]);
     $totalProjected = 0.0;
     foreach ($stmt->fetchAll() as $a) {
-        $gross = (float)$a['balance'] * (float)$a['interest_rate'] / 100;
+        $gross = (float)$a['balance'] * account_current_rate($a) / 100;
         $totalProjected += $gross * (1 - (float)$a['interest_tax_rate'] / 100);
     }
 
@@ -183,8 +145,12 @@ switch (method()) {
         $rows = $stmt->fetchAll();
         foreach ($rows as &$r) {
             if ($r['interest_enabled']) {
-                $fraction = interest_frequency_fraction($r['interest_frequency']);
-                $gross = (float)$r['balance'] * (float)$r['interest_rate'] / 100;
+                // Il tasso "vivo" secondo lo storico, non la colonna interest_rate da
+                // sola: puo' essersi disallineata se un periodo e' stato aggiunto/tolto
+                // dalla sezione "Storico tasso" invece che dal form principale, o se un
+                // periodo futuro nel frattempo e' entrato in vigore.
+                $r['interest_rate'] = account_current_rate($r);
+                $gross = (float)$r['balance'] * $r['interest_rate'] / 100;
                 $net = $gross * (1 - (float)$r['interest_tax_rate'] / 100);
                 $r['projected_gross_annual_interest'] = round($gross, 2);
                 $r['projected_net_annual_interest'] = round($net, 2);
