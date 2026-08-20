@@ -31,6 +31,25 @@ function advance_interest_date(string $date, string $frequency): string
     return $d->format('Y-m-d');
 }
 
+/** Storico dei tassi di un conto, ordinato per data di decorrenza. */
+function account_load_rate_history(int $accountId): array
+{
+    $stmt = db()->prepare("SELECT effective_date, rate FROM account_interest_rate_history WHERE account_id = :id ORDER BY effective_date ASC");
+    $stmt->execute(['id' => $accountId]);
+    return $stmt->fetchAll();
+}
+
+/** Tasso in vigore a una certa data, secondo lo storico (l'ultima variazione con effective_date <= $date). */
+function account_rate_at(array $rateHistory, string $date): float
+{
+    $rate = (float)$rateHistory[0]['rate'];
+    foreach ($rateHistory as $r) {
+        if ($r['effective_date'] > $date) break;
+        $rate = (float)$r['rate'];
+    }
+    return $rate;
+}
+
 // Genera l'interesse maturato per i conti che lo hanno attivo e sono scaduti:
 // crea una VERA transazione di entrata (non un dato separato), cosi' il saldo
 // reale del conto aumenta e il patrimonio netto lo riflette automaticamente.
@@ -94,13 +113,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_interest') {
 
         // Usiamo il saldo ATTUALE per ogni periodo arretrato (non conosciamo il
         // saldo storico esatto di ogni data passata) — un'approssimazione
-        // dichiarata, ragionevole per una proiezione di interesse.
+        // dichiarata, ragionevole per una proiezione di interesse. Il TASSO
+        // invece si conosce con precisione per ogni data passata (storico
+        // esplicito), quindi ogni periodo usa il tasso realmente in vigore in
+        // quella data, non quello attuale applicato retroattivamente.
         $balance = (float)$account['balance'];
         $fraction = interest_frequency_fraction($account['interest_frequency']);
+        $rateHistory = account_load_rate_history((int)$account['id']);
+        if (!$rateHistory) {
+            $rateHistory = [['effective_date' => $account['next_interest_date'], 'rate' => $account['interest_rate']]];
+        }
 
         foreach ($accrualDates as $accrualDate) {
             if ($balance > 0) {
-                $gross = $balance * (float)$account['interest_rate'] / 100 * $fraction;
+                $rate = account_rate_at($rateHistory, $accrualDate);
+                $gross = $balance * $rate / 100 * $fraction;
                 $net = $gross * (1 - (float)$account['interest_tax_rate'] / 100);
 
                 db()->prepare("INSERT INTO transactions (user_id, account_id, category_id, amount, type, description, date)
@@ -180,7 +207,21 @@ switch (method()) {
             'next_interest_date' => $interestEnabled ? ($in['next_interest_date'] ?? date('Y-m-d')) : null,
             'currency' => strtoupper($in['currency'] ?? 'EUR'),
         ]);
-        respond(['id' => (int)db()->lastInsertId()], 201);
+        $newAccountId = (int)db()->lastInsertId();
+
+        // Prima riga dello storico tasso: valida dalla data del primo
+        // accredito previsto (puo' essere passata, per conti gia' aperti
+        // altrove prima di iniziare a tracciarli qui). Ulteriori variazioni
+        // si aggiungono dalla sezione "Storico tasso".
+        if ($interestEnabled) {
+            db()->prepare("INSERT INTO account_interest_rate_history (account_id, effective_date, rate) VALUES (:account_id, :effective_date, :rate)")
+                ->execute([
+                    'account_id' => $newAccountId,
+                    'effective_date' => $in['next_interest_date'] ?? date('Y-m-d'),
+                    'rate' => $in['interest_rate'],
+                ]);
+        }
+        respond(['id' => $newAccountId], 201);
         break;
 
     case 'PUT':
@@ -207,6 +248,27 @@ switch (method()) {
 
         $stmt = db()->prepare("UPDATE accounts SET " . implode(', ', $fields) . " WHERE id = :id AND user_id = :uid");
         $stmt->execute($params);
+
+        // Il campo "tasso" del form principale rappresenta il tasso corrente:
+        // se il conto ha gia' uno storico, questa modifica vale da oggi (una
+        // vera variazione va inserita dalla sezione "Storico tasso" con la
+        // sua data effettiva); se e' la prima volta che si attivano gli
+        // interessi, seeda lo storico come alla creazione del conto.
+        if (array_key_exists('interest_rate', $in) && $in['interest_rate'] !== null) {
+            $checkStmt = db()->prepare("SELECT interest_enabled, next_interest_date FROM accounts WHERE id = :id AND user_id = :uid");
+            $checkStmt->execute(['id' => $in['id'], 'uid' => $uid]);
+            $updatedAccount = $checkStmt->fetch();
+            if ($updatedAccount && $updatedAccount['interest_enabled']) {
+                $countStmt = db()->prepare("SELECT COUNT(*) FROM account_interest_rate_history WHERE account_id = :id");
+                $countStmt->execute(['id' => $in['id']]);
+                $hasHistory = (int)$countStmt->fetchColumn() > 0;
+                $effectiveDate = $hasHistory ? date('Y-m-d') : ($updatedAccount['next_interest_date'] ?? date('Y-m-d'));
+
+                db()->prepare("INSERT INTO account_interest_rate_history (account_id, effective_date, rate) VALUES (:account_id, :effective_date, :rate)
+                    ON DUPLICATE KEY UPDATE rate = VALUES(rate)")
+                    ->execute(['account_id' => $in['id'], 'effective_date' => $effectiveDate, 'rate' => $in['interest_rate']]);
+            }
+        }
         respond(['ok' => true]);
         break;
 

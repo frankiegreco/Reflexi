@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Plus, Trash } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Plus, Trash, Trash2 } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { apiSend, apiDelete } from '../api';
-import { euro, capitalize, todayISO } from '../lib/format';
+import { apiGet, apiSend, apiDelete } from '../api';
+import { euro, capitalize, formatDate, todayISO } from '../lib/format';
 import { KNOWN_BANKS, matchBank } from '../lib/banks';
 import ServiceIcon from '../components/ServiceIcon';
 import Modal from '../components/Modal';
@@ -28,6 +28,16 @@ export default function Accounts() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [error, setError] = useState('');
+  const [rates, setRates] = useState([]);
+  const [rateForm, setRateForm] = useState({ effective_date: todayISO(), rate: '' });
+  const [rateError, setRateError] = useState('');
+
+  const loadRates = useCallback(async () => {
+    if (!form.id) { setRates([]); return; }
+    setRates(await apiGet(`account_interest_rates.php?account_id=${form.id}`));
+  }, [form.id]);
+
+  useEffect(() => { loadRates(); }, [loadRates]);
 
   function openNew() {
     setForm(empty);
@@ -41,7 +51,28 @@ export default function Accounts() {
       interest_frequency: a.interest_frequency || 'annuale', next_interest_date: a.next_interest_date || todayISO(),
     });
     setError('');
+    setRateForm({ effective_date: todayISO(), rate: '' });
+    setRateError('');
     setModalOpen(true);
+  }
+
+  async function addRate(e) {
+    e.preventDefault();
+    setRateError('');
+    try {
+      await apiSend('account_interest_rates.php', 'POST', { account_id: form.id, effective_date: rateForm.effective_date, rate: parseFloat(rateForm.rate) });
+      setRateForm({ effective_date: todayISO(), rate: '' });
+      await loadRates();
+    } catch (err) { setRateError(err.message); }
+  }
+
+  async function deleteRate(id) {
+    if (!confirm('Eliminare questa variazione di tasso?')) return;
+    setRateError('');
+    try {
+      await apiDelete(`account_interest_rates.php?id=${id}`);
+      await loadRates();
+    } catch (err) { setRateError(err.message); }
   }
 
   async function handleSubmit(e) {
@@ -187,8 +218,9 @@ export default function Accounts() {
             <div className="space-y-3 rounded-xl border border-accent/20 bg-accentSoft p-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="field-label">Tasso lordo annuo (%)</label>
+                  <label className="field-label">Tasso lordo annuo (%){form.id ? ' — attuale' : ''}</label>
                   <input className="field" type="number" step="0.001" min="0" required value={form.interest_rate} onChange={(e) => setForm((f) => ({ ...f, interest_rate: e.target.value }))} />
+                  {form.id && <p className="mt-1 text-xs text-muted">Modificarlo qui vale da oggi. Per una variazione futura o per correggere il passato, usa lo storico qui sotto.</p>}
                 </div>
                 <div>
                   <label className="field-label">Frequenza accredito</label>
@@ -214,6 +246,38 @@ export default function Accounts() {
                 L'interesse si calcola sul saldo reale del conto in quel momento, e si accredita come
                 vera transazione — vai su <strong>Investimenti</strong> per generarlo quando è dovuto.
               </p>
+
+              {form.id && (
+                <div className="border-t border-accent/20 pt-3">
+                  <h6 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Storico tasso</h6>
+                  <p className="mb-2 text-xs text-muted">
+                    Se il tasso è cambiato nel tempo (es. promozione scaduta, rinnovo), registra ogni
+                    periodo qui: l'interesse arretrato userà il tasso realmente in vigore in ciascuna data.
+                  </p>
+                  {rateError && <div className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{rateError}</div>}
+                  <div className="space-y-1.5">
+                    {rates.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm">
+                        <span>dal {formatDate(r.effective_date)} — <span className="font-mono">{r.rate}%</span></span>
+                        <button type="button" className="text-muted hover:text-red-600" onClick={() => deleteRate(r.id)} aria-label="Elimina variazione">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-end gap-2">
+                    <div>
+                      <label className="field-label">Decorrenza</label>
+                      <input type="date" className="field" value={rateForm.effective_date} onChange={(e) => setRateForm((f) => ({ ...f, effective_date: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="field-label">Tasso (%)</label>
+                      <input type="number" step="0.001" min="0" className="field" value={rateForm.rate} onChange={(e) => setRateForm((f) => ({ ...f, rate: e.target.value }))} />
+                    </div>
+                    <button type="button" className="btn-outline" onClick={addRate}>Aggiungi periodo</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </form>
