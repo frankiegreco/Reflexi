@@ -50,6 +50,26 @@ function account_rate_at(array $rateHistory, string $date): float
     return $rate;
 }
 
+/**
+ * Saldo reale del conto a fine di una certa data (saldo iniziale ± transazioni
+ * con data <= $date). Usato per calcolare l'interesse di un periodo arretrato
+ * sul saldo che il conto aveva davvero in quel momento, non su quello di oggi
+ * — coerente col fatto che ora anche il tasso è storicizzato per periodo.
+ */
+function account_balance_at(int $accountId, string $date): float
+{
+    $stmt = db()->prepare("
+        SELECT a.initial_balance
+            + COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'entrata' AND date <= :d1), 0)
+            - COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'uscita' AND date <= :d2), 0)
+            - COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'trasferimento' AND date <= :d3), 0)
+            + COALESCE((SELECT SUM(amount) FROM transactions WHERE transfer_account_id = a.id AND type = 'trasferimento' AND date <= :d4), 0)
+            AS balance
+        FROM accounts a WHERE a.id = :id");
+    $stmt->execute(['id' => $accountId, 'd1' => $date, 'd2' => $date, 'd3' => $date, 'd4' => $date]);
+    return (float)$stmt->fetchColumn();
+}
+
 // Genera l'interesse maturato per i conti che lo hanno attivo e sono scaduti:
 // crea una VERA transazione di entrata (non un dato separato), cosi' il saldo
 // reale del conto aumenta e il patrimonio netto lo riflette automaticamente.
@@ -111,13 +131,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_interest') {
         }
         $hitCap = $cursor <= $today;
 
-        // Usiamo il saldo ATTUALE per ogni periodo arretrato (non conosciamo il
-        // saldo storico esatto di ogni data passata) — un'approssimazione
-        // dichiarata, ragionevole per una proiezione di interesse. Il TASSO
-        // invece si conosce con precisione per ogni data passata (storico
-        // esplicito), quindi ogni periodo usa il tasso realmente in vigore in
-        // quella data, non quello attuale applicato retroattivamente.
-        $balance = (float)$account['balance'];
+        // Sia il TASSO che il SALDO usati per ogni periodo arretrato sono ora
+        // quelli realmente in vigore in quella data specifica (non quelli di
+        // oggi applicati retroattivamente a tutti i periodi): il tasso viene
+        // dallo storico esplicito, il saldo si ricalcola a fine di ciascuna
+        // data dalle transazioni realmente registrate fino a quel momento —
+        // comprese le eventuali rate di interesse già generate in questo
+        // stesso ciclo per i periodi precedenti, cosi' l'interesse composto
+        // si riflette correttamente sui periodi successivi.
         $fraction = interest_frequency_fraction($account['interest_frequency']);
         $rateHistory = account_load_rate_history((int)$account['id']);
         if (!$rateHistory) {
@@ -125,6 +146,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_interest') {
         }
 
         foreach ($accrualDates as $accrualDate) {
+            $balance = account_balance_at((int)$account['id'], $accrualDate);
             if ($balance > 0) {
                 $rate = account_rate_at($rateHistory, $accrualDate);
                 $gross = $balance * $rate / 100 * $fraction;
@@ -137,7 +159,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_interest') {
                         'account_id' => $account['id'],
                         'category_id' => $categoryId,
                         'amount' => round($net, 2),
-                        'description' => 'Interessi maturati — ' . $account['name'],
+                        'description' => sprintf('Interessi maturati — %s (saldo %.2f€, tasso %s%%)', $account['name'], $balance, rtrim(rtrim(number_format($rate, 3, '.', ''), '0'), '.')),
                         'date' => $accrualDate,
                     ]);
                 $created++;
