@@ -30,7 +30,12 @@
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 
-<?php $active = 'budget'; include '_nav.php'; ?>
+<?php
+$active = 'budget';
+require_once __DIR__ . '/_news_db.php';
+$relatedArticles = news_related(['regola-50-30-20-vs-budget-per-categoria', 'metodo-delle-buste-budget-digitale', 'fondo-di-emergenza-quanto-tenere-da-parte']);
+include '_nav.php';
+?>
 
 <!-- HERO -->
 <section class="px-6 pb-16 pt-14 sm:pt-20">
@@ -95,6 +100,24 @@
     </div>
   </div>
 </section>
+
+<!-- Articoli News correlati -->
+<?php if (!empty($relatedArticles)): ?>
+<section class="border-t border-border bg-white px-6 py-16">
+  <div class="mx-auto max-w-5xl">
+    <h2 class="mb-6 text-center text-xl font-bold">Continua a leggere</h2>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <?php foreach ($relatedArticles as $r): ?>
+      <a href="/news/<?= htmlspecialchars($r['slug']) ?>" class="group flex flex-col rounded-2xl border border-border bg-bg p-6 transition hover:border-accent hover:bg-accentSoft">
+        <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-xl"><?= htmlspecialchars($r['cover_emoji']) ?></div>
+        <h3 class="mb-1.5 text-base font-bold"><?= htmlspecialchars($r['title']) ?></h3>
+        <p class="text-sm text-muted"><?= htmlspecialchars($r['excerpt']) ?></p>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <!-- CTA -->
 <section class="px-6 py-20">
