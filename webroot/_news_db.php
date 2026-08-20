@@ -25,3 +25,25 @@ function news_db(): PDO
     }
     return $pdo;
 }
+
+// Recupera un set scelto a mano di articoli News (slug -> titolo/estratto/emoji),
+// usato dalle pagine calcolatore per linkare gli approfondimenti pertinenti.
+// Filtra su stato/data come le altre query pubbliche e preserva l'ordine di
+// $slugs (il più rilevante per primo), non l'ordine restituito dal DB.
+function news_related(array $slugs): array
+{
+    if ($slugs === []) {
+        return [];
+    }
+    $placeholders = implode(',', array_fill(0, count($slugs), '?'));
+    $stmt = news_db()->prepare(
+        "SELECT slug, title, excerpt, cover_emoji FROM news_articles
+         WHERE status = 'pubblicato' AND published_at <= NOW() AND slug IN ($placeholders)"
+    );
+    $stmt->execute($slugs);
+    $bySlug = array_column($stmt->fetchAll(), null, 'slug');
+    return array_values(array_filter(array_map(
+        static fn($slug) => $bySlug[$slug] ?? null,
+        $slugs
+    )));
+}
