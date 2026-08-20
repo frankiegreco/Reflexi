@@ -1,3 +1,17 @@
+<?php
+require_once __DIR__ . '/_news_db.php';
+$recentArticles = news_db()->query(
+    "SELECT slug, title, excerpt, category, cover_emoji FROM news_articles
+     WHERE status = 'pubblicato' AND published_at <= NOW()
+     ORDER BY published_at DESC LIMIT 3"
+)->fetchAll();
+$categoryLabels = [
+    'mutui' => 'Mutui',
+    'investimenti' => 'Investimenti',
+    'budget' => 'Budget',
+    'pianificazione' => 'Pianificazione',
+];
+?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -470,6 +484,31 @@
     </div>
   </div>
 </section>
+
+<!-- NEWS: articoli recenti -->
+<?php if (!empty($recentArticles)): ?>
+<section class="border-t border-border bg-white px-6 py-20">
+  <div class="mx-auto max-w-5xl">
+    <div class="mb-12 text-center">
+      <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Dal blog</h2>
+      <p class="mx-auto max-w-xl text-muted">Guide pratiche di finanza personale: mutui, investimenti, budget e pianificazione.</p>
+    </div>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <?php foreach ($recentArticles as $article): ?>
+      <a href="/news/<?= htmlspecialchars($article['slug']) ?>" class="group flex flex-col rounded-2xl border border-border bg-bg p-6 transition hover:-translate-y-1 hover:border-accent hover:bg-accentSoft hover:shadow-lg">
+        <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-xl"><?= htmlspecialchars($article['cover_emoji']) ?></div>
+        <span class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-accent"><?= htmlspecialchars($categoryLabels[$article['category']] ?? $article['category']) ?></span>
+        <h3 class="mb-1.5 text-base font-bold"><?= htmlspecialchars($article['title']) ?></h3>
+        <p class="text-sm text-muted"><?= htmlspecialchars($article['excerpt']) ?></p>
+      </a>
+      <?php endforeach; ?>
+    </div>
+    <div class="mt-10 text-center">
+      <a href="/news" class="inline-block rounded-xl border border-border bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-accent hover:text-accent">Leggi tutti gli articoli &rarr;</a>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <!-- INTERMEZZO -->
 <div class="flex justify-center px-6 pt-16" aria-hidden="true">
