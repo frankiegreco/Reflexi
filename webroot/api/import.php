@@ -502,6 +502,7 @@ switch (method()) {
         }
         $createdInstruments = [];
         $investmentCount = 0;
+        $accountInterestTaxRate = null; // cache: aliquota imposta sostitutiva del conto, per le righe "interesse"
 
         // "Investimenti (acquisto)"/"Investimenti (vendita)" sono le stesse categorie
         // usate dal form manuale in investments.php per il movimento di cassa collegato
@@ -672,9 +673,46 @@ switch (method()) {
             $description = !empty($columns['description']) ? trim((string)$row[$columns['description']]) : '';
             $description = $description !== '' ? $description : null;
 
+            // Interesse riscosso da un broker estero (es. Trade Republic) che non
+            // agisce da sostituto d'imposta italiano: arriva LORDO sul conto (il
+            // CSV lo conferma, tax=0 su queste righe), l'imposta sostitutiva del
+            // 26% resta a carico dell'utente in dichiarazione. Registriamo qui il
+            // NETTO (quanto resta davvero all'utente dopo l'imposta dovuta) con il
+            // lordo/imposta evidenziati in descrizione, cosi' il totale interessi
+            // mostrato in Investimenti e' coerente con la proiezione (gia' netta).
+            $interestTaxRateForRow = null;
+            if ($forced === 'interesse') {
+                if ($accountInterestTaxRate === null) {
+                    $s = db()->prepare("SELECT interest_tax_rate FROM accounts WHERE id = :id");
+                    $s->execute(['id' => $in['account_id']]);
+                    $accountInterestTaxRate = (float)($s->fetchColumn() ?: 26);
+                }
+                $type = 'entrata';
+                $grossAmount = $amount;
+                $interestTaxRateForRow = $accountInterestTaxRate;
+                $interestTax = round($grossAmount * $accountInterestTaxRate / 100, 2);
+                $amount = round($grossAmount - $interestTax, 2);
+                $taxLabel = rtrim(rtrim(number_format($accountInterestTaxRate, 2, '.', ''), '0'), '.');
+                $breakdown = sprintf('lordo %s€, imposta %s%% -%s€, netto %s€',
+                    number_format($grossAmount, 2, ',', '.'), $taxLabel,
+                    number_format($interestTax, 2, ',', '.'), number_format($amount, 2, ',', '.'));
+                $description = $description !== null ? "$description ($breakdown)" : ucfirst($breakdown);
+            }
+
             $categoryId = null;
             $categoryName = null;
-            if (!empty($columns['category'])) {
+            if ($forced === 'interesse') {
+                $catStmt2 = db()->prepare("SELECT id FROM categories WHERE user_id = :uid AND name = 'Interessi attivi'");
+                $catStmt2->execute(['uid' => $uid]);
+                $categoryId = $catStmt2->fetchColumn();
+                if (!$categoryId && !$dryRun) {
+                    db()->prepare("INSERT INTO categories (user_id, name, type, color) VALUES (:uid, 'Interessi attivi', 'entrata', '#10b981')")
+                        ->execute(['uid' => $uid]);
+                    $categoryId = (int)db()->lastInsertId();
+                }
+                $categoryId = $categoryId ?: -1;
+                $categoryName = 'Interessi attivi';
+            } elseif (!empty($columns['category'])) {
                 $catName = trim((string)$row[$columns['category']]);
                 if ($catName !== '') {
                     $categoryName = $catName;

@@ -342,7 +342,7 @@ export default function ImportModal({ open, onClose, onSaved }) {
 
           <div>
             <label className="field-label">Colonna tipo/causale (opzionale)</label>
-            <p className="mb-1 text-xs text-muted">Utile per export come quello di Trade Republic che mescolano movimenti di cassa e operazioni di trading: per ogni valore trovato scegli se contarlo come entrata, uscita, operazione su uno strumento (genera acquisto/vendita nel modulo Investimenti, incluse le esecuzioni di un PAC) oppure ignorarlo del tutto (es. "Saveback"/"Cash Reward" — il cashback dell'1% di Trade Republic finisce in automatico nel PAC, non resta liquidità sul conto — o eventi senza contropartita in denaro come migrazioni titoli).</p>
+            <p className="mb-1 text-xs text-muted">Utile per export come quello di Trade Republic che mescolano movimenti di cassa e operazioni di trading: per ogni valore trovato scegli se contarlo come entrata, uscita, operazione su uno strumento (genera acquisto/vendita nel modulo Investimenti, incluse le esecuzioni di un PAC), interesse (per broker esteri che non trattengono l'imposta: registra il netto dopo l'imposta sostitutiva del conto, con lordo/imposta/netto in descrizione — categoria "Interessi attivi") oppure ignorarlo del tutto (es. "Saveback"/"Cash Reward" — il cashback dell'1% di Trade Republic finisce in automatico nel PAC, non resta liquidità sul conto — o eventi senza contropartita in denaro come migrazioni titoli).</p>
             <select className="field" value={columns.type} onChange={(e) => setCol('type', e.target.value)}>
               <option value="">-- nessuna, usa solo il segno dell'importo --</option>
               {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
@@ -364,6 +364,7 @@ export default function ImportModal({ open, onClose, onSaved }) {
                       <option value="entrata">Entrata</option>
                       <option value="uscita">Uscita</option>
                       <option value="investimento">Investimento (acquisto/vendita titolo)</option>
+                      <option value="interesse">Interesse (netta l'imposta sostitutiva)</option>
                       <option value="ignora">Ignora (non importare)</option>
                     </select>
                   </div>
