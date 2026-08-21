@@ -2,6 +2,11 @@
 .env
 webroot/.env
 
+# Export bancari reali caricati per testare l'import CSV/XLSX (dati personali:
+# saldo, stipendio, numero conto — mai in git, nemmeno in un repo locale)
+docs/*.xlsx
+docs/*.csv
+
 # Dipendenze rigenerabili
 frontend/node_modules/
 webroot/vendor/

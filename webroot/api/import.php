@@ -19,14 +19,153 @@ $uid = require_auth();
 const FIELD_ALIASES = [
     'date' => ['data', 'date', 'datum', 'data operazione', 'data valuta', 'data contabile', 'booking date', 'transaction date', 'value date', 'trade date'],
     'amount' => ['importo', 'amount', 'wert', 'value', 'betrag', 'ammontare', 'importo eur', 'amount eur', 'importo movimento'],
-    'debit' => ['dare', 'uscite', 'debit', 'addebito', 'ausgang'],
-    'credit' => ['avere', 'entrate', 'credit', 'accredito', 'eingang'],
+    'debit' => ['dare', 'uscite', 'debit', 'addebito', 'addebiti', 'ausgang'],
+    'credit' => ['avere', 'entrate', 'credit', 'accredito', 'accrediti', 'eingang'],
     'description' => ['descrizione', 'description', 'causale', 'note', 'notiz', 'beschreibung', 'merchant', 'controparte', 'beneficiario ordinante', 'memo', 'details', 'narrative', 'nota'],
     'type' => ['tipo', 'type', 'typ', 'transaction type', 'event type'],
     'category' => ['categoria', 'category', 'kategorie'],
 ];
 
 const DATE_FORMATS = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'd.m.Y', 'm/d/Y', 'Y/m/d', 'd/m/y', 'd.m.y'];
+
+/**
+ * Estrae le voci di un file ZIP (serve solo per leggere gli .xlsx: sono uno
+ * ZIP con dentro XML) leggendo il central directory a fondo file, senza
+ * l'estensione zip di PHP (non installata in questo container) — basta zlib
+ * (sempre presente) per decomprimere le voci "deflate", il metodo standard
+ * usato da Excel/LibreOffice/export bancari per generare gli xlsx.
+ */
+function zip_read_entries(string $data): array
+{
+    $eocdPos = strrpos($data, "PK\x05\x06");
+    if ($eocdPos === false) return [];
+    $eocd = unpack('vdisk/vcdDisk/vnumThis/vnumTotal/VcdSize/VcdOffset/vcommentLen', substr($data, $eocdPos + 4, 18));
+    if ($eocd === false) return [];
+
+    $entries = [];
+    $pos = $eocd['cdOffset'];
+    for ($i = 0; $i < $eocd['numTotal']; $i++) {
+        if (substr($data, $pos, 4) !== "PK\x01\x02") break;
+        $ch = unpack('vverMade/vverNeed/vflags/vmethod/vmtime/vmdate/Vcrc/VcompSize/VuncompSize/vnameLen/vextraLen/vcommentLen/vdiskStart/vintAttr/VextAttr/VlocalOffset', substr($data, $pos + 4, 42));
+        $nameStart = $pos + 46;
+        $name = substr($data, $nameStart, $ch['nameLen']);
+        $pos = $nameStart + $ch['nameLen'] + $ch['extraLen'] + $ch['commentLen'];
+
+        // La dimensione dell'header locale puo' differire leggermente da quella
+        // del central directory (nameLen/extraLen locali), quindi va riletta li'
+        // per trovare il vero inizio dei dati compressi.
+        $lh = $ch['localOffset'];
+        $lu = unpack('vnameLen/vextraLen', substr($data, $lh + 26, 4));
+        $dataStart = $lh + 30 + $lu['nameLen'] + $lu['extraLen'];
+        $raw = substr($data, $dataStart, $ch['compSize']);
+
+        if ($ch['method'] === 8) {
+            $content = @gzinflate($raw);
+        } elseif ($ch['method'] === 0) {
+            $content = $raw;
+        } else {
+            $content = false; // metodo di compressione non supportato (raro per xlsx)
+        }
+        if ($content !== false) $entries[$name] = $content;
+    }
+    return $entries;
+}
+
+function xlsx_col_to_index(string $col): int
+{
+    $col = strtoupper($col);
+    $idx = 0;
+    for ($i = 0; $i < strlen($col); $i++) {
+        $idx = $idx * 26 + (ord($col[$i]) - 64);
+    }
+    return $idx - 1;
+}
+
+/** Legge il primo foglio di un .xlsx e lo ritorna come array di righe (array di stringhe), stessa forma di parse_csv_text. */
+function parse_xlsx_bytes(string $bytes): array
+{
+    $entries = zip_read_entries($bytes);
+    if (!isset($entries['xl/worksheets/sheet1.xml'])) return [];
+
+    $sharedStrings = [];
+    if (isset($entries['xl/sharedStrings.xml'])) {
+        $sst = @simplexml_load_string($entries['xl/sharedStrings.xml']);
+        if ($sst !== false) {
+            foreach ($sst->si as $si) {
+                if (isset($si->t)) {
+                    $sharedStrings[] = (string)$si->t;
+                } else {
+                    $text = '';
+                    foreach ($si->r as $r) $text .= (string)$r->t;
+                    $sharedStrings[] = $text;
+                }
+            }
+        }
+    }
+
+    $sheet = @simplexml_load_string($entries['xl/worksheets/sheet1.xml']);
+    if ($sheet === false || !isset($sheet->sheetData)) return [];
+
+    $rows = [];
+    foreach ($sheet->sheetData->row as $rowXml) {
+        $cells = [];
+        foreach ($rowXml->c as $c) {
+            $ref = (string)$c['r'];
+            preg_match('/^([A-Z]+)/', $ref, $m);
+            $colIndex = xlsx_col_to_index($m[1] ?? 'A');
+            $type = (string)$c['t'];
+            $v = isset($c->v) ? (string)$c->v : null;
+            if ($type === 's' && $v !== null) {
+                $value = $sharedStrings[(int)$v] ?? '';
+            } elseif ($type === 'inlineStr') {
+                $value = (string)($c->is->t ?? '');
+            } else {
+                $value = $v;
+            }
+            $cells[$colIndex] = $value;
+        }
+        if (!$cells) continue;
+        $maxCol = max(array_keys($cells));
+        $row = [];
+        for ($i = 0; $i <= $maxCol; $i++) $row[] = (string)($cells[$i] ?? '');
+        $rows[] = $row;
+    }
+    return $rows;
+}
+
+/**
+ * Molti export bancari (es. BancoPosta) anteppongono alla tabella vera e
+ * propria alcune righe di intestazione ("Conto n.:", "Saldo al:", ecc.):
+ * cerchiamo la prima riga che "sembra" un header contando quante celle
+ * corrispondono a un alias noto, invece di assumere sempre che sia la riga 0.
+ */
+function count_header_like_cells(array $row): int
+{
+    $count = 0;
+    foreach ($row as $cell) {
+        $norm = normalize_header((string)$cell);
+        if ($norm === '') continue;
+        foreach (FIELD_ALIASES as $aliases) {
+            if (in_array($norm, $aliases, true)) { $count++; continue 2; }
+            foreach ($aliases as $alias) {
+                if (str_contains($norm, $alias)) { $count++; continue 2; }
+            }
+        }
+    }
+    return $count;
+}
+
+function detect_header_row(array $rows): int
+{
+    $best = 0;
+    $bestScore = 0;
+    $limit = min(count($rows), 30);
+    for ($i = 0; $i < $limit; $i++) {
+        $score = count_header_like_cells($rows[$i]);
+        if ($score > $bestScore) { $bestScore = $score; $best = $i; }
+    }
+    return $bestScore >= 2 ? $best : 0;
+}
 
 /** Rimuove BOM e converte in UTF-8 qualunque encoding comune di export bancari europei. */
 function decode_csv_bytes(string $raw): string
@@ -101,6 +240,18 @@ function parse_date_value(string $raw, string $format): ?string
 {
     $raw = trim($raw);
     if ($raw === '') return null;
+
+    if ($format === 'excel_serial') {
+        // Excel/xlsx salva le date come numero di giorni dal 30/12/1899 (l'epoca
+        // e' scelta cosi', un giorno prima del "vero" 1 gennaio 1900, per
+        // compensare il bug storico di Excel che tratta il 1900 come bisestile).
+        if (!is_numeric($raw)) return null;
+        $days = (int)(float)$raw;
+        if ($days <= 0) return null;
+        $d = new DateTime('1899-12-30');
+        $d->modify("+{$days} days");
+        return $d->format('Y-m-d');
+    }
 
     $tryFormats = $format === 'auto' ? DATE_FORMATS : [$format];
     foreach ($tryFormats as $fmt) {
@@ -183,20 +334,30 @@ switch (method()) {
         $in = json_input();
 
         if (!in_array($action, ['parse', 'commit'], true)) respond_error('Azione non valida');
-        if (empty($in['csv_base64'])) respond_error('File CSV mancante');
+        if (empty($in['csv_base64'])) respond_error('File mancante');
 
         $raw = base64_decode($in['csv_base64'], true);
-        if ($raw === false) respond_error('File CSV non decodificabile');
-        $text = decode_csv_bytes($raw);
+        if ($raw === false) respond_error('File non decodificabile');
 
-        $firstLineEnd = strcspn($text, "\r\n");
-        $delimiter = $in['delimiter'] ?? detect_delimiter(substr($text, 0, $firstLineEnd));
+        $isXlsx = str_starts_with($raw, "PK\x03\x04");
+        if ($isXlsx) {
+            $delimiter = null;
+            $allRows = parse_xlsx_bytes($raw);
+            if (!$allRows) respond_error('Foglio Excel non leggibile (formato .xlsx non riconosciuto o vuoto)');
+        } else {
+            $text = decode_csv_bytes($raw);
+            $firstLineEnd = strcspn($text, "\r\n");
+            $delimiter = $in['delimiter'] ?? detect_delimiter(substr($text, 0, $firstLineEnd));
+            $allRows = parse_csv_text($text, $delimiter);
+            if (count($allRows) < 1) respond_error('File CSV vuoto o non leggibile');
+        }
 
-        $allRows = parse_csv_text($text, $delimiter);
-        if (count($allRows) < 1) respond_error('File CSV vuoto o non leggibile');
-
-        $headers = array_map('trim', $allRows[0]);
-        $dataRows = array_slice($allRows, 1);
+        // Molti export bancari (es. BancoPosta) anteppongono righe di intestazione
+        // ("Conto n.:", "Saldo al:", ecc.) prima della tabella vera: la riga
+        // header non e' sempre la prima del file.
+        $headerIdx = detect_header_row($allRows);
+        $headers = array_map('trim', $allRows[$headerIdx]);
+        $dataRows = array_slice($allRows, $headerIdx + 1);
         // Righe completamente vuote (riga finale del file, separatori multipli) non contano.
         $dataRows = array_values(array_filter($dataRows, fn($r) => count(array_filter($r, fn($v) => trim((string)$v) !== '')) > 0));
         $assocRows = rows_to_assoc($headers, $dataRows);
@@ -219,13 +380,34 @@ switch (method()) {
                 $distinctValues[$h] = $vals === null ? null : array_keys($vals);
             }
 
+            $suggestedMapping = guess_mapping($headers);
+
+            // Negli .xlsx le date sono numeri seriali (giorni dal 30/12/1899), non
+            // testo: se la colonna data suggerita contiene solo numeri, il formato
+            // "auto" (che prova solo pattern testuali tipo gg/mm/aaaa) fallirebbe
+            // su ogni riga, quindi qui suggeriamo direttamente 'excel_serial'.
+            $suggestedDateFormat = 'auto';
+            if ($isXlsx && $suggestedMapping['date']) {
+                $sampled = 0;
+                $allNumeric = true;
+                foreach ($assocRows as $r) {
+                    $v = trim((string)$r[$suggestedMapping['date']]);
+                    if ($v === '') continue;
+                    if (!is_numeric($v)) { $allNumeric = false; break; }
+                    if (++$sampled >= 5) break;
+                }
+                if ($allNumeric && $sampled > 0) $suggestedDateFormat = 'excel_serial';
+            }
+
             respond([
                 'headers' => $headers,
                 'delimiter' => $delimiter,
+                'is_xlsx' => $isXlsx,
                 'total_rows' => count($assocRows),
                 'preview' => array_slice($assocRows, 0, 10),
                 'distinct_values' => $distinctValues,
-                'suggested_mapping' => guess_mapping($headers),
+                'suggested_mapping' => $suggestedMapping,
+                'suggested_date_format' => $suggestedDateFormat,
                 'saved_mappings' => $savedMappings,
             ]);
             break;

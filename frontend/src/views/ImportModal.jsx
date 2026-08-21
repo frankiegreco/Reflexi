@@ -15,6 +15,7 @@ const DATE_FORMAT_OPTIONS = [
   { value: 'd-m-Y', label: 'GG-MM-AAAA (31-01-2026)' },
   { value: 'm/d/Y', label: 'MM/GG/AAAA, formato USA (01/31/2026)' },
   { value: 'Y/m/d', label: 'AAAA/MM/GG (2026/01/31)' },
+  { value: 'excel_serial', label: 'Numero seriale Excel (colonna data di un .xlsx)' },
 ];
 
 const DECIMAL_OPTIONS = [
@@ -114,7 +115,8 @@ export default function ImportModal({ open, onClose, onSaved }) {
         category: data.suggested_mapping.category || '',
       });
       setAmountMode(!data.suggested_mapping.amount && (data.suggested_mapping.debit || data.suggested_mapping.credit) ? 'debit_credit' : 'single');
-      setSource(file.name.replace(/\.[Cc][Ss][Vv]$/, ''));
+      setDateFormat(data.suggested_date_format || 'auto');
+      setSource(file.name.replace(/\.[Cc][Ss][Vv]$|\.[Xx][Ll][Ss][Xx]$/, ''));
       setStep('mapping');
     } catch (err) {
       setError(err.message);
@@ -241,10 +243,11 @@ export default function ImportModal({ open, onClose, onSaved }) {
       {step === 'upload' && (
         <div className="space-y-4">
           <div className="rounded-xl border border-accent/20 bg-accentSoft px-4 py-3 text-sm text-gray-700">
-            Carica l'export CSV di una banca o broker (es. Trade Republic — Profilo → Estratti conto → Esporta
-            transazioni) e conferma la mappatura delle colonne al passo successivo. Ogni riga viene assegnata al
-            conto scelto qui sotto; i duplicati rispetto a transazioni già presenti vengono rilevati e saltati
-            automaticamente.
+            Carica l'export CSV o Excel (.xlsx) di una banca o broker (es. Trade Republic — Profilo → Estratti conto
+            → Esporta transazioni, o BancoPosta — Lista movimenti → Esporta) e conferma la mappatura delle colonne al
+            passo successivo. Eventuali righe di intestazione prima della tabella (conto, saldo, periodo) vengono
+            riconosciute e ignorate automaticamente. Ogni riga viene assegnata al conto scelto qui sotto; i duplicati
+            rispetto a transazioni già presenti vengono rilevati e saltati automaticamente.
           </div>
           <div>
             <label className="field-label">Conto di destinazione</label>
@@ -253,11 +256,11 @@ export default function ImportModal({ open, onClose, onSaved }) {
             </select>
           </div>
           <div>
-            <label className="field-label">File CSV</label>
+            <label className="field-label">File CSV o Excel (.xlsx)</label>
             <input
               className="field"
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
             {file && <p className="mt-1 text-xs text-muted">{file.name} — {(file.size / 1024).toFixed(0)} KB</p>}
@@ -267,7 +270,10 @@ export default function ImportModal({ open, onClose, onSaved }) {
 
       {step === 'mapping' && parseData && (
         <div className="space-y-4">
-          <p className="text-sm text-muted">{parseData.total_rows} righe rilevate, separatore <code>{delimiter === '\t' ? 'tab' : delimiter}</code>.</p>
+          <p className="text-sm text-muted">
+            {parseData.total_rows} righe rilevate
+            {parseData.is_xlsx ? ' (foglio Excel)' : <> , separatore <code>{delimiter === '\t' ? 'tab' : delimiter}</code></>}.
+          </p>
 
           {parseData.saved_mappings.length > 0 && (
             <div>
