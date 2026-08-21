@@ -19,7 +19,7 @@ function matchPayee(description) {
 export default function Transactions() {
   const { activeAccounts, categories, signal, bump } = useData();
   const [rows, setRows] = useState([]);
-  const [filters, setFilters] = useState({ account_id: '', category_id: '', type: '', date_from: '', date_to: '', search: '' });
+  const [filters, setFilters] = useState({ account_id: '', category_id: '', type: '', date_from: '', date_to: '', search: '', amount: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -58,6 +58,7 @@ export default function Transactions() {
   useEffect(() => { load(); }, [load]);
 
   const debouncedSetSearch = useCallback(debounce((v) => setFilters((f) => ({ ...f, search: v })), 300), []);
+  const debouncedSetAmount = useCallback(debounce((v) => setFilters((f) => ({ ...f, amount: v })), 300), []);
 
   // Esclusi i trasferimenti: spostano soldi tra propri conti, non sono ne'
   // entrata ne' uscita reale (stessa convenzione dei grafici in Riepilogo).
@@ -129,6 +130,7 @@ export default function Transactions() {
         <input className="field w-full sm:w-auto" type="date" value={filters.date_from} onChange={(e) => setFilters((f) => ({ ...f, date_from: e.target.value }))} />
         <input className="field w-full sm:w-auto" type="date" value={filters.date_to} onChange={(e) => setFilters((f) => ({ ...f, date_to: e.target.value }))} />
         <input className="field flex-1" type="text" placeholder="Cerca descrizione..." onChange={(e) => debouncedSetSearch(e.target.value)} />
+        <input className="field w-full sm:w-36" type="number" step="0.01" placeholder="Cerca importo..." onChange={(e) => debouncedSetAmount(e.target.value)} />
       </div>
 
       <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">

@@ -34,6 +34,11 @@ switch (method()) {
             $where[] = 't.description LIKE :search';
             $params['search'] = '%' . $_GET['search'] . '%';
         }
+        if (isset($_GET['amount']) && $_GET['amount'] !== '') {
+            // Tolleranza per arrotondamenti in virgola mobile, non un range di ricerca.
+            $where[] = 'ABS(t.amount - :amount) < 0.005';
+            $params['amount'] = (float)$_GET['amount'];
+        }
 
         $limit = min((int)($_GET['limit'] ?? 100), 1000);
         $offset = max((int)($_GET['offset'] ?? 0), 0);
@@ -136,6 +141,10 @@ switch (method()) {
             if (!empty($_GET['search'])) {
                 $where[] = 'description LIKE :search';
                 $params['search'] = '%' . $_GET['search'] . '%';
+            }
+            if (isset($_GET['amount']) && $_GET['amount'] !== '') {
+                $where[] = 'ABS(amount - :amount) < 0.005';
+                $params['amount'] = (float)$_GET['amount'];
             }
 
             $stmt = db()->prepare("DELETE FROM transactions WHERE " . implode(' AND ', $where));
