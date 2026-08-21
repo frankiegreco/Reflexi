@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Download, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Trash } from 'lucide-react';
+import { Download, Upload, History, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Trash } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { apiGet, apiDelete } from '../api';
 import { euro, formatDate, debounce } from '../lib/format';
 import TransactionModal from './TransactionModal';
+import ImportModal from './ImportModal';
+import ImportHistoryModal from './ImportHistoryModal';
 import { KNOWN_PAYEES } from '../lib/payees';
 import ServiceIcon from '../components/ServiceIcon';
 
@@ -19,6 +21,8 @@ export default function Transactions() {
   const [filters, setFilters] = useState({ account_id: '', category_id: '', type: '', date_from: '', date_to: '', search: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importHistoryOpen, setImportHistoryOpen] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
@@ -73,6 +77,8 @@ export default function Transactions() {
         <h4 className="text-xl font-bold">Transazioni</h4>
         <div className="flex flex-wrap gap-2">
           <a href={exportUrl()} className="btn-outline"><Download size={15} /> Esporta CSV</a>
+          <button className="btn-outline" onClick={() => setImportOpen(true)}><Upload size={15} /> Importa CSV</button>
+          <button className="btn-outline" onClick={() => setImportHistoryOpen(true)}><History size={15} /> Cronologia import</button>
           <button className="btn-outline text-expense" onClick={handleDeleteAll} disabled={!rows.length}><Trash size={15} /> Elimina tutte</button>
           <button className="btn-accent" onClick={() => { setEditing(null); setModalOpen(true); }}><Plus size={15} /> Movimento</button>
         </div>
@@ -165,6 +171,16 @@ export default function Transactions() {
         editingTx={editing}
         onClose={() => setModalOpen(false)}
         onSaved={() => { setModalOpen(false); load(); bump(); }}
+      />
+      <ImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSaved={() => { setImportOpen(false); load(); bump(); }}
+      />
+      <ImportHistoryModal
+        open={importHistoryOpen}
+        onClose={() => setImportHistoryOpen(false)}
+        onUndo={() => { load(); bump(); }}
       />
     </div>
   );
