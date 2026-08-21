@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Download, Upload, History, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Trash } from 'lucide-react';
+import { Download, Upload, History, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Trash, TrendingUp, TrendingDown, Scale } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { apiGet, apiDelete } from '../api';
 import { euro, formatDate, debounce } from '../lib/format';
@@ -8,6 +8,7 @@ import ImportModal from './ImportModal';
 import ImportHistoryModal from './ImportHistoryModal';
 import { KNOWN_PAYEES } from '../lib/payees';
 import ServiceIcon from '../components/ServiceIcon';
+import StatCard from '../components/StatCard';
 
 function matchPayee(description) {
   if (!description) return null;
@@ -57,6 +58,11 @@ export default function Transactions() {
   useEffect(() => { load(); }, [load]);
 
   const debouncedSetSearch = useCallback(debounce((v) => setFilters((f) => ({ ...f, search: v })), 300), []);
+
+  // Esclusi i trasferimenti: spostano soldi tra propri conti, non sono ne'
+  // entrata ne' uscita reale (stessa convenzione dei grafici in Riepilogo).
+  const totalEntrate = rows.reduce((s, t) => s + (t.type === 'entrata' ? parseFloat(t.amount) : 0), 0);
+  const totalUscite = rows.reduce((s, t) => s + (t.type === 'uscita' ? parseFloat(t.amount) : 0), 0);
 
   async function handleDelete(id) {
     if (!confirm('Eliminare questa transazione?')) return;
@@ -123,6 +129,12 @@ export default function Transactions() {
         <input className="field w-full sm:w-auto" type="date" value={filters.date_from} onChange={(e) => setFilters((f) => ({ ...f, date_from: e.target.value }))} />
         <input className="field w-full sm:w-auto" type="date" value={filters.date_to} onChange={(e) => setFilters((f) => ({ ...f, date_to: e.target.value }))} />
         <input className="field flex-1" type="text" placeholder="Cerca descrizione..." onChange={(e) => debouncedSetSearch(e.target.value)} />
+      </div>
+
+      <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatCard label="Totale entrate" value={euro(totalEntrate)} valueClass="text-income" icon={TrendingUp} iconColor="#7fa876" />
+        <StatCard label="Totale uscite" value={euro(totalUscite)} valueClass="text-expense" icon={TrendingDown} iconColor="#c1665a" />
+        <StatCard label="Saldo" value={euro(totalEntrate - totalUscite)} valueClass={totalEntrate - totalUscite >= 0 ? 'text-income' : 'text-expense'} icon={Scale} iconColor="#4f46e5" />
       </div>
 
       <div className="card overflow-hidden">
