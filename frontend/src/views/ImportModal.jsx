@@ -24,7 +24,10 @@ const DECIMAL_OPTIONS = [
   { value: '.', label: 'Punto: 1,234.56' },
 ];
 
-const emptyColumns = { date: '', amount: '', debit: '', credit: '', description: '', type: '', category: '' };
+const emptyColumns = {
+  date: '', amount: '', debit: '', credit: '', description: '', type: '', category: '',
+  symbol: '', shares: '', price: '', instrument_name: '', asset_class: '', fee: '', tax: '',
+};
 
 async function fileToBase64(file) {
   const buf = await file.arrayBuffer();
@@ -105,15 +108,9 @@ export default function ImportModal({ open, onClose, onSaved }) {
       if (!data.headers.length) throw new Error('Nessuna colonna trovata nel file');
       setParseData(data);
       setDelimiter(data.delimiter);
-      setColumns({
-        date: data.suggested_mapping.date || '',
-        amount: data.suggested_mapping.amount || '',
-        debit: data.suggested_mapping.debit || '',
-        credit: data.suggested_mapping.credit || '',
-        description: data.suggested_mapping.description || '',
-        type: data.suggested_mapping.type || '',
-        category: data.suggested_mapping.category || '',
-      });
+      const suggested = {};
+      Object.keys(emptyColumns).forEach((f) => { suggested[f] = data.suggested_mapping[f] || ''; });
+      setColumns(suggested);
       setAmountMode(!data.suggested_mapping.amount && (data.suggested_mapping.debit || data.suggested_mapping.credit) ? 'debit_credit' : 'single');
       setDateFormat(data.suggested_date_format || 'auto');
       setSource(file.name.replace(/\.[Cc][Ss][Vv]$|\.[Xx][Ll][Ss][Xx]$/, ''));
@@ -130,12 +127,9 @@ export default function ImportModal({ open, onClose, onSaved }) {
     const cfg = m.config;
     const headers = parseData.headers;
     const keep = (v) => (v && headers.includes(v) ? v : '');
-    setColumns({
-      date: keep(cfg.columns?.date), amount: keep(cfg.columns?.amount),
-      debit: keep(cfg.columns?.debit), credit: keep(cfg.columns?.credit),
-      description: keep(cfg.columns?.description), type: keep(cfg.columns?.type),
-      category: keep(cfg.columns?.category),
-    });
+    const restored = {};
+    Object.keys(emptyColumns).forEach((f) => { restored[f] = keep(cfg.columns?.[f]); });
+    setColumns(restored);
     setAmountMode(!keep(cfg.columns?.amount) && (keep(cfg.columns?.debit) || keep(cfg.columns?.credit)) ? 'debit_credit' : 'single');
     setDateFormat(cfg.date_format || 'auto');
     setDecimalSeparator(cfg.decimal_separator || 'auto');
@@ -153,13 +147,10 @@ export default function ImportModal({ open, onClose, onSaved }) {
       account_id: accountId,
       source: source || 'CSV',
       columns: {
-        date: columns.date,
+        ...columns,
         amount: amountMode === 'single' ? columns.amount : '',
         debit: amountMode === 'debit_credit' ? columns.debit : '',
         credit: amountMode === 'debit_credit' ? columns.credit : '',
-        description: columns.description,
-        type: columns.type,
-        category: columns.category,
       },
       date_format: dateFormat,
       decimal_separator: decimalSeparator,
@@ -174,9 +165,11 @@ export default function ImportModal({ open, onClose, onSaved }) {
 
   const typeColumnValues = columns.type ? parseData?.distinct_values?.[columns.type] : null;
   const needsDefaultCategories = !columns.category;
+  const hasInvestmentRows = Object.values(typeActions).includes('investimento');
   const canPreview = !!columns.date
     && (amountMode === 'single' ? !!columns.amount : !!(columns.debit || columns.credit))
-    && (!needsDefaultCategories || (defaultIncomeCat && defaultExpenseCat));
+    && (!needsDefaultCategories || (defaultIncomeCat && defaultExpenseCat))
+    && (!hasInvestmentRows || (columns.shares && columns.price && (columns.symbol || columns.instrument_name)));
 
   async function handlePreview() {
     setLoading(true);
@@ -349,7 +342,7 @@ export default function ImportModal({ open, onClose, onSaved }) {
 
           <div>
             <label className="field-label">Colonna tipo/causale (opzionale)</label>
-            <p className="mb-1 text-xs text-muted">Utile per export come quello di Trade Republic che mescolano movimenti di cassa e operazioni di trading: per ogni valore trovato scegli se contarlo come entrata, uscita, o ignorarlo del tutto (es. "Buy"/"Sell" se tieni già traccia degli investimenti nel modulo Investimenti, oppure "Saveback"/"Cash Reward" — il cashback dell'1% di Trade Republic finisce in automatico nel PAC, non resta liquidità sul conto).</p>
+            <p className="mb-1 text-xs text-muted">Utile per export come quello di Trade Republic che mescolano movimenti di cassa e operazioni di trading: per ogni valore trovato scegli se contarlo come entrata, uscita, operazione su uno strumento (genera acquisto/vendita nel modulo Investimenti, incluse le esecuzioni di un PAC) oppure ignorarlo del tutto (es. "Saveback"/"Cash Reward" — il cashback dell'1% di Trade Republic finisce in automatico nel PAC, non resta liquidità sul conto — o eventi senza contropartita in denaro come migrazioni titoli).</p>
             <select className="field" value={columns.type} onChange={(e) => setCol('type', e.target.value)}>
               <option value="">-- nessuna, usa solo il segno dell'importo --</option>
               {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
@@ -363,13 +356,14 @@ export default function ImportModal({ open, onClose, onSaved }) {
                   <div key={v} className="flex items-center justify-between gap-2 text-sm">
                     <span className="truncate" title={v}>{v}</span>
                     <select
-                      className="field w-44 py-1 text-xs"
+                      className="field w-52 py-1 text-xs"
                       value={typeActions[v] || 'auto'}
                       onChange={(e) => setTypeActions((t) => ({ ...t, [v]: e.target.value }))}
                     >
                       <option value="auto">Auto (segno importo)</option>
                       <option value="entrata">Entrata</option>
                       <option value="uscita">Uscita</option>
+                      <option value="investimento">Investimento (acquisto/vendita titolo)</option>
                       <option value="ignora">Ignora (non importare)</option>
                     </select>
                   </div>
@@ -377,6 +371,72 @@ export default function ImportModal({ open, onClose, onSaved }) {
               </div>
             )}
           </div>
+
+          {hasInvestmentRows && (
+            <div className="space-y-3 rounded-xl border border-accent/20 bg-accentSoft p-3">
+              <p className="text-xs text-gray-700">
+                Colonne per le righe marcate "Investimento": generano un acquisto/vendita nello strumento
+                (creato in automatico se non esiste già, cercato per simbolo) più il movimento di cassa collegato
+                sul conto, con la stessa formula usata dall'inserimento manuale in Investimenti (netto = valore
+                scambio ± commissioni ± imposta).
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="field-label">Simbolo / ISIN</label>
+                  <select className="field" value={columns.symbol} onChange={(e) => setCol('symbol', e.target.value)}>
+                    <option value="">-- nessuno --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Nome strumento</label>
+                  <select className="field" value={columns.instrument_name} onChange={(e) => setCol('instrument_name', e.target.value)}>
+                    <option value="">-- nessuno --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="field-label">Quote (quantità) *</label>
+                  <select className="field" value={columns.shares} onChange={(e) => setCol('shares', e.target.value)}>
+                    <option value="">-- seleziona --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Prezzo per quota *</label>
+                  <select className="field" value={columns.price} onChange={(e) => setCol('price', e.target.value)}>
+                    <option value="">-- seleziona --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="field-label">Classe strumento</label>
+                  <select className="field" value={columns.asset_class} onChange={(e) => setCol('asset_class', e.target.value)}>
+                    <option value="">-- nessuna (altro) --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Commissioni</label>
+                  <select className="field" value={columns.fee} onChange={(e) => setCol('fee', e.target.value)}>
+                    <option value="">-- nessuna --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Imposta</label>
+                  <select className="field" value={columns.tax} onChange={(e) => setCol('tax', e.target.value)}>
+                    <option value="">-- nessuna --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="field-label">Colonna categoria (opzionale)</label>
@@ -450,6 +510,13 @@ function ResultSummary({ result, label }) {
         <Stat value={result.ignored} label="Ignorate (tipo)" />
         <Stat value={result.errors.length} label="Errori" tone={result.errors.length ? 'text-expense' : ''} />
       </div>
+
+      {result.investment_count > 0 && (
+        <div className="rounded-lg bg-accentSoft px-3 py-2 text-xs text-gray-700">
+          Di cui {result.investment_count} operazioni di acquisto/vendita titoli generate in Investimenti
+          {result.created_instruments.length > 0 && <> — nuovi strumenti: {result.created_instruments.map((s) => `${s.name} (${s.ticker})`).join(', ')}</>}
+        </div>
+      )}
 
       {result.created_categories.length > 0 && (
         <div className="rounded-lg bg-accentSoft px-3 py-2 text-xs text-gray-700">

@@ -24,6 +24,24 @@ const FIELD_ALIASES = [
     'description' => ['descrizione', 'description', 'causale', 'note', 'notiz', 'beschreibung', 'merchant', 'controparte', 'beneficiario ordinante', 'memo', 'details', 'narrative', 'nota'],
     'type' => ['tipo', 'type', 'typ', 'transaction type', 'event type'],
     'category' => ['categoria', 'category', 'kategorie'],
+    'symbol' => ['symbol', 'isin', 'ticker', 'simbolo'],
+    'shares' => ['shares', 'quote', 'quantity', 'quantita', 'nr azioni'],
+    'price' => ['price', 'prezzo', 'kurs', 'preis'],
+    'instrument_name' => ['name', 'nome', 'strumento', 'security', 'titolo'],
+    'asset_class' => ['asset_class', 'asset class', 'tipo strumento', 'classe'],
+    'fee' => ['fee', 'fees', 'commissione', 'commissioni', 'gebuhr'],
+    'tax' => ['tax', 'imposta', 'imposte', 'steuer'],
+];
+
+// Mappa la classificazione dell'export (spesso in inglese, un broker specifico)
+// sull'enum instruments.type di Reflexi. Tutto cio' che non riconosciamo
+// finisce su 'altro' invece di far fallire la riga: non e' un dato critico
+// quanto quantita'/prezzo, l'utente puo' sempre correggerlo dopo da Investimenti.
+const ASSET_CLASS_MAP = [
+    'fund' => 'etf', 'etf' => 'etf',
+    'stock' => 'azione', 'share' => 'azione', 'equity' => 'azione',
+    'bond' => 'obbligazione',
+    'crypto' => 'crypto', 'cryptocurrency' => 'crypto',
 ];
 
 const DATE_FORMATS = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'd.m.Y', 'm/d/Y', 'Y/m/d', 'd/m/y', 'd.m.y'];
@@ -422,7 +440,8 @@ switch (method()) {
         if (empty($columns['amount']) && empty($columns['debit']) && empty($columns['credit'])) {
             respond_error("Devi mappare la colonna dell'importo (oppure dare/avere)");
         }
-        foreach (['date', 'amount', 'debit', 'credit', 'description', 'type', 'category'] as $f) {
+        foreach (['date', 'amount', 'debit', 'credit', 'description', 'type', 'category',
+                   'symbol', 'shares', 'price', 'instrument_name', 'asset_class', 'fee', 'tax'] as $f) {
             if (!empty($columns[$f]) && !in_array($columns[$f], $headers, true)) {
                 respond_error("Colonna mappata per '$f' non presente nel file");
             }
@@ -470,6 +489,26 @@ switch (method()) {
         }
         $createdCategories = [];
 
+        // Cache strumenti (per ticker, unico per utente — vedi UNIQUE KEY uniq_user_ticker):
+        // le righe Buy/Sell marcate "investimento" nel mapping del tipo generano
+        // acquisti/vendite reali nel modulo Investimenti, non semplici movimenti di
+        // cassa — creando/riusando lo strumento corrispondente invece di duplicarlo
+        // ad ogni riga dello stesso titolo.
+        $instrumentCache = [];
+        $instrStmt = db()->prepare("SELECT id, ticker FROM instruments WHERE user_id = :uid");
+        $instrStmt->execute(['uid' => $uid]);
+        foreach ($instrStmt->fetchAll() as $ins) {
+            $instrumentCache[mb_strtolower($ins['ticker'])] = (int)$ins['id'];
+        }
+        $createdInstruments = [];
+        $investmentCount = 0;
+
+        // "Investimenti (acquisto)"/"Investimenti (vendita)" sono le stesse categorie
+        // usate dal form manuale in investments.php per il movimento di cassa collegato
+        // (seedate di default per ogni utente — vedi lib_seed.php): le riusiamo per
+        // coerenza invece di crearne di nuove, creandole solo se l'utente le ha rimosse.
+        $investCategoryIds = ['acquisto' => null, 'vendita' => null];
+
         $toInsert = [];
         $errors = [];
         $duplicateCount = 0;
@@ -495,6 +534,120 @@ switch (method()) {
                 $rawTypeVal = trim((string)$row[$columns['type']]);
                 $forced = $typeActions[$rawTypeVal] ?? null;
                 if ($forced === 'ignora') { $ignoredCount++; continue; }
+            }
+
+            // Riga marcata come vera operazione di investimento (Buy/Sell/PAC di un
+            // broker): genera un acquisto/vendita nel modulo Investimenti collegato
+            // a un vero movimento di cassa, esattamente come farebbe l'inserimento
+            // manuale da quella sezione (stessa formula netto = valore ± commissioni
+            // ± imposta, stesse categorie "Investimenti (acquisto/vendita)") — non un
+            // semplice entrata/uscita generica.
+            if ($forced === 'investimento') {
+                if (empty($columns['shares']) || empty($columns['price'])) {
+                    $errors[] = ['row' => $rowNum, 'reason' => 'Operazione di investimento ma mancano le colonne quote/prezzo nel mapping'];
+                    continue;
+                }
+                $sharesRaw = parse_amount_value((string)$row[$columns['shares']], $decimalSep);
+                $priceRaw = parse_amount_value((string)$row[$columns['price']], $decimalSep);
+                if ($sharesRaw === null || $sharesRaw == 0 || $priceRaw === null || $priceRaw <= 0) {
+                    $errors[] = ['row' => $rowNum, 'reason' => 'Quote o prezzo non validi per operazione di investimento'];
+                    continue;
+                }
+                $isBuy = $sharesRaw > 0;
+                $quantity = abs($sharesRaw);
+                $pricePerUnit = $priceRaw;
+
+                // Il valore dello scambio si prende dalla colonna importo del CSV (se
+                // mappata) invece di ricalcolarlo da quote*prezzo: e' il numero che il
+                // broker ha davvero registrato, evita scarti di arrotondamento.
+                $tradeValueRaw = !empty($columns['amount']) ? parse_amount_value((string)$row[$columns['amount']], $decimalSep) : null;
+                $tradeValue = $tradeValueRaw !== null ? abs($tradeValueRaw) : round($quantity * $pricePerUnit, 2);
+
+                $fee = 0.0;
+                if (!empty($columns['fee'])) {
+                    $f = parse_amount_value((string)$row[$columns['fee']], $decimalSep);
+                    if ($f !== null) $fee = abs($f);
+                }
+                $tax = 0.0;
+                if (!empty($columns['tax'])) {
+                    $tx = parse_amount_value((string)$row[$columns['tax']], $decimalSep);
+                    if ($tx !== null) $tax = abs($tx);
+                }
+
+                // Stessa formula di investments.php: sull'acquisto il netto e'
+                // valore+commissioni; sulla vendita e' valore-commissioni-imposta.
+                $cashAmount = $isBuy ? ($tradeValue + $fee + $tax) : ($tradeValue - $fee - $tax);
+                if ($cashAmount <= 0) {
+                    $errors[] = ['row' => $rowNum, 'reason' => 'Importo netto non valido per operazione di investimento'];
+                    continue;
+                }
+
+                $symbolRaw = !empty($columns['symbol']) ? trim((string)$row[$columns['symbol']]) : '';
+                $nameRaw = !empty($columns['instrument_name']) ? trim((string)$row[$columns['instrument_name']]) : '';
+                $ticker = $symbolRaw !== '' ? $symbolRaw : $nameRaw;
+                if ($ticker === '') {
+                    $errors[] = ['row' => $rowNum, 'reason' => 'Nessun simbolo/nome per identificare lo strumento'];
+                    continue;
+                }
+                $instrumentName = $nameRaw !== '' ? $nameRaw : $ticker;
+
+                $tickerKey = mb_strtolower($ticker);
+                if (isset($instrumentCache[$tickerKey])) {
+                    $instrumentId = $instrumentCache[$tickerKey];
+                } elseif ($dryRun) {
+                    // In anteprima non creiamo lo strumento: un id fittizio basta a far
+                    // proseguire il calcolo, tanto nulla viene persistito in dry-run.
+                    $instrumentId = -1;
+                    $instrumentCache[$tickerKey] = -1;
+                    $createdInstruments[] = ['ticker' => $ticker, 'name' => $instrumentName];
+                } else {
+                    $assetClassRaw = !empty($columns['asset_class']) ? mb_strtolower(trim((string)$row[$columns['asset_class']])) : '';
+                    $instrumentType = ASSET_CLASS_MAP[$assetClassRaw] ?? 'altro';
+                    $ins = db()->prepare("INSERT INTO instruments (user_id, ticker, name, type, currency) VALUES (:uid, :ticker, :name, :type, 'EUR')");
+                    $ins->execute(['uid' => $uid, 'ticker' => $ticker, 'name' => $instrumentName, 'type' => $instrumentType]);
+                    $instrumentId = (int)db()->lastInsertId();
+                    $instrumentCache[$tickerKey] = $instrumentId;
+                    $createdInstruments[] = ['ticker' => $ticker, 'name' => $instrumentName];
+                }
+
+                $invTypeKey = $isBuy ? 'acquisto' : 'vendita';
+                $catType = $isBuy ? 'uscita' : 'entrata';
+                $catName = $isBuy ? 'Investimenti (acquisto)' : 'Investimenti (vendita)';
+                if ($investCategoryIds[$invTypeKey] === null) {
+                    $cStmt = db()->prepare("SELECT id FROM categories WHERE user_id = :uid AND name = :name");
+                    $cStmt->execute(['uid' => $uid, 'name' => $catName]);
+                    $catId = $cStmt->fetchColumn();
+                    if (!$catId && !$dryRun) {
+                        db()->prepare("INSERT INTO categories (user_id, name, type, color) VALUES (:uid, :name, :type, :color)")
+                            ->execute(['uid' => $uid, 'name' => $catName, 'type' => $catType, 'color' => $isBuy ? '#c1665a' : '#7fa876']);
+                        $catId = (int)db()->lastInsertId();
+                    }
+                    $investCategoryIds[$invTypeKey] = $catId ?: -1;
+                }
+                $categoryId = $investCategoryIds[$invTypeKey];
+
+                $originalDescription = !empty($columns['description']) ? trim((string)$row[$columns['description']]) : '';
+                $txDescription = ($isBuy ? 'Acquisto ' : 'Vendita ') . $instrumentName;
+
+                $key = $date . '|' . $catType . '|' . number_format($cashAmount, 2, '.', '') . '|' . mb_strtolower($txDescription);
+                if ($skipDuplicates && isset($existingSet[$key])) {
+                    $duplicateCount++;
+                    continue;
+                }
+                $existingSet[$key] = true;
+
+                $toInsert[] = [
+                    'date' => $date, 'type' => $catType, 'amount' => round($cashAmount, 2),
+                    'description' => $txDescription, 'category_id' => $categoryId, 'category_name' => $catName,
+                    'investment' => [
+                        'instrument_id' => $instrumentId, 'instrument_ticker' => $ticker,
+                        'type' => $invTypeKey, 'quantity' => $quantity, 'price_per_unit' => $pricePerUnit,
+                        'fees' => round($fee, 2), 'tax_amount' => round($tax, 2),
+                        'notes' => $originalDescription !== '' ? mb_substr($originalDescription, 0, 255) : null,
+                    ],
+                ];
+                $investmentCount++;
+                continue;
             }
 
             $type = null;
@@ -585,12 +738,26 @@ switch (method()) {
                 $txStmt = db()->prepare("INSERT INTO transactions
                     (user_id, account_id, category_id, amount, type, description, date, import_batch_id)
                     VALUES (:uid, :aid, :cid, :amount, :type, :description, :date, :batch_id)");
+                $invStmt = db()->prepare("INSERT INTO investment_transactions
+                    (user_id, instrument_id, account_id, linked_transaction_id, import_batch_id, type, quantity, price_per_unit, fees, tax_amount, date, notes)
+                    VALUES (:uid, :instrument_id, :aid, :linked_id, :batch_id, :type, :quantity, :price, :fees, :tax, :date, :notes)");
                 foreach ($toInsert as $r) {
                     $txStmt->execute([
                         'uid' => $uid, 'aid' => $in['account_id'], 'cid' => $r['category_id'],
                         'amount' => $r['amount'], 'type' => $r['type'],
                         'description' => $r['description'], 'date' => $r['date'], 'batch_id' => $batchId,
                     ]);
+                    if (isset($r['investment'])) {
+                        $linkedId = (int)db()->lastInsertId();
+                        $inv = $r['investment'];
+                        $invStmt->execute([
+                            'uid' => $uid, 'instrument_id' => $inv['instrument_id'], 'aid' => $in['account_id'],
+                            'linked_id' => $linkedId, 'batch_id' => $batchId, 'type' => $inv['type'],
+                            'quantity' => $inv['quantity'], 'price' => $inv['price_per_unit'],
+                            'fees' => $inv['fees'], 'tax' => $inv['tax_amount'],
+                            'date' => $r['date'], 'notes' => $inv['notes'],
+                        ]);
+                    }
                 }
                 db()->commit();
             } catch (Throwable $e) {
@@ -618,6 +785,8 @@ switch (method()) {
             'ignored' => $ignoredCount,
             'errors' => $errors,
             'created_categories' => $createdCategories,
+            'created_instruments' => $createdInstruments,
+            'investment_count' => $investmentCount,
             'sample' => array_slice($toInsert, 0, 10),
         ], $dryRun ? 200 : 201);
         break;
