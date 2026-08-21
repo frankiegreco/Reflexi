@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, RefreshCw, Trash, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Trash, Trash2, Pencil } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { apiGet, apiSend, apiDelete } from '../api';
 import { euro, formatDate, capitalize, todayISO } from '../lib/format';
@@ -15,6 +15,7 @@ export default function Recurring() {
   const { activeAccounts, categories, expenseCategories, incomeCategories, signal, bump } = useData();
   const [rows, setRows] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(empty);
   const [error, setError] = useState('');
 
@@ -25,7 +26,26 @@ export default function Recurring() {
   const categoryOptions = form.type === 'entrata' ? incomeCategories : expenseCategories;
 
   function openNew() {
+    setEditing(null);
     setForm({ ...empty, account_id: activeAccounts[0]?.id || '', category_id: expenseCategories[0]?.id || '' });
+    setError('');
+    setModalOpen(true);
+  }
+
+  function openEdit(r) {
+    setEditing(r);
+    setForm({
+      type: r.type,
+      amount: r.amount,
+      account_id: r.account_id,
+      category_id: r.category_id,
+      transfer_account_id: r.transfer_account_id || '',
+      frequency: r.frequency,
+      interval_count: r.interval_count,
+      start_date: r.start_date,
+      end_date: r.end_date || '',
+      description: r.description || '',
+    });
     setError('');
     setModalOpen(true);
   }
@@ -58,7 +78,11 @@ export default function Recurring() {
       description: form.description,
     };
     try {
-      await apiSend('recurring.php', 'POST', payload);
+      if (editing) {
+        await apiSend('recurring.php', 'PUT', { ...payload, id: editing.id });
+      } else {
+        await apiSend('recurring.php', 'POST', payload);
+      }
       setModalOpen(false);
       load();
     } catch (err) { setError(err.message); }
@@ -123,7 +147,10 @@ export default function Recurring() {
                   <td className="px-4 py-3">{capitalize(r.frequency)}{r.interval_count > 1 ? ` (ogni ${r.interval_count})` : ''}</td>
                   <td className="px-4 py-3">{formatDate(r.next_run)}</td>
                   <td className={`px-4 py-3 text-right font-mono ${cls}`}>{sign} {euro(r.amount)}</td>
-                  <td className="px-4 py-3 text-right"><button onClick={() => handleDelete(r.id)} className="text-muted hover:text-expense"><Trash2 size={15} /></button></td>
+                  <td className="px-4 py-3 text-right">
+                    <button onClick={() => openEdit(r)} className="mr-2 text-muted hover:text-accent"><Pencil size={15} /></button>
+                    <button onClick={() => handleDelete(r.id)} className="text-muted hover:text-expense"><Trash2 size={15} /></button>
+                  </td>
                 </tr>
               );
             }) : <tr><td colSpan={7} className="px-4 py-8 text-center text-muted">Nessuna ricorrenza impostata</td></tr>}
@@ -132,7 +159,7 @@ export default function Recurring() {
         </div>
       </div>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuova transazione ricorrente"
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifica ricorrenza' : 'Nuova transazione ricorrente'}
         footer={<>
           <button type="button" className="btn-outline" onClick={() => setModalOpen(false)}>Annulla</button>
           <button type="submit" form="recurring-form" className="btn-accent">Salva</button>
@@ -140,7 +167,7 @@ export default function Recurring() {
       >
         {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
-        <div className="mb-4">
+        {!editing && <div className="mb-4">
           <label className="field-label">È un abbonamento noto? (opzionale, compila da solo i campi sotto)</label>
           <select className="field" defaultValue="" onChange={(e) => { pickKnownService(e.target.value); e.target.value = ''; }}>
             <option value="">Seleziona un servizio...</option>
@@ -151,7 +178,7 @@ export default function Recurring() {
           <div className="my-4 flex items-center gap-3 text-xs text-muted">
             <div className="h-px flex-1 bg-border"></div>oppure compila tutto a mano<div className="h-px flex-1 bg-border"></div>
           </div>
-        </div>
+        </div>}
 
         <form id="recurring-form" onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
