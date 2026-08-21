@@ -19,7 +19,7 @@ $balanceSql = "
     + COALESCE((SELECT SUM(amount) FROM transactions WHERE transfer_account_id = a.id AND type = 'trasferimento'), 0)
     AS balance
 ";
-$stmt = db()->prepare("SELECT a.id, a.name, a.color, a.currency, a.exclude_from_networth, {$balanceSql} FROM accounts a WHERE a.user_id = :uid AND a.archived = 0 ORDER BY a.sort_order");
+$stmt = db()->prepare("SELECT a.id, a.name, a.color, a.currency, a.exclude_from_networth, a.interest_enabled, a.interest_rate, {$balanceSql} FROM accounts a WHERE a.user_id = :uid AND a.archived = 0 ORDER BY a.sort_order");
 $stmt->execute(['uid' => $uid]);
 $accounts = $stmt->fetchAll();
 

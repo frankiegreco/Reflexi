@@ -100,7 +100,11 @@ export default function Dashboard() {
       <div className="flex gap-3 overflow-x-auto pb-1">
         {dash.accounts.length ? dash.accounts.map((a) => (
           <div key={a.id} className="min-w-[170px] flex-shrink-0 rounded-xl border border-border border-l-4 bg-white p-4 transition-shadow hover:shadow-sm" style={{ borderLeftColor: a.color }}>
-            <div className="mb-1.5 text-xs text-muted">{a.name}</div>
+            <div className="mb-1.5 flex flex-wrap items-center gap-1 text-xs text-muted">
+              <span>{a.name}</span>
+              {!!a.interest_enabled && <span className="rounded-full bg-income/15 px-1.5 py-0.5 text-[10px] font-semibold text-income">{a.interest_rate}% interesse</span>}
+              {!!a.exclude_from_networth && <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600">escluso dal patrimonio</span>}
+            </div>
             <div className="font-mono text-base font-semibold">
               {a.currency && a.currency !== 'EUR' ? `${Number(a.balance).toLocaleString('it-IT', { minimumFractionDigits: 2 })} ${a.currency}` : euro(a.balance)}
             </div>
