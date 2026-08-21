@@ -484,6 +484,19 @@ switch (method()) {
                 continue;
             }
 
+            // Il controllo "ignora per tipo" va fatto PRIMA di interpretare l'importo:
+            // molte righe che l'utente vuole escludere (es. movimenti titoli senza
+            // contropartita in contanti, come "MIGRATION" o "FREE_RECEIPT" in export
+            // di broker) hanno l'importo vuoto o zero apposta, perche' non sono un
+            // vero movimento di cassa. Se controllassimo l'importo per primo, queste
+            // righe finirebbero in errore invece di essere scartate come richiesto.
+            $forced = null;
+            if (!empty($columns['type'])) {
+                $rawTypeVal = trim((string)$row[$columns['type']]);
+                $forced = $typeActions[$rawTypeVal] ?? null;
+                if ($forced === 'ignora') { $ignoredCount++; continue; }
+            }
+
             $type = null;
             $amount = null;
             if (!empty($columns['debit']) || !empty($columns['credit'])) {
@@ -501,12 +514,7 @@ switch (method()) {
                 continue;
             }
 
-            if (!empty($columns['type'])) {
-                $rawTypeVal = trim((string)$row[$columns['type']]);
-                $forced = $typeActions[$rawTypeVal] ?? null;
-                if ($forced === 'ignora') { $ignoredCount++; continue; }
-                if ($forced === 'entrata' || $forced === 'uscita') { $type = $forced; }
-            }
+            if ($forced === 'entrata' || $forced === 'uscita') { $type = $forced; }
 
             $description = !empty($columns['description']) ? trim((string)$row[$columns['description']]) : '';
             $description = $description !== '' ? $description : null;
