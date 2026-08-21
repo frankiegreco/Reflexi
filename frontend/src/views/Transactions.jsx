@@ -17,7 +17,7 @@ function matchPayee(description) {
 }
 
 export default function Transactions() {
-  const { activeAccounts, categories, signal, bump } = useData();
+  const { activeAccounts, incomeCategories, expenseCategories, signal, bump } = useData();
   const [rows, setRows] = useState([]);
   const [filters, setFilters] = useState({ account_id: '', category_id: '', type: '', date_from: '', date_to: '', search: '', amount: '' });
   const [modalOpen, setModalOpen] = useState(false);
@@ -119,7 +119,12 @@ export default function Transactions() {
         </select>
         <select className="field w-full sm:w-auto" value={filters.category_id} onChange={(e) => setFilters((f) => ({ ...f, category_id: e.target.value }))}>
           <option value="">Tutte le categorie</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.type})</option>)}
+          <optgroup label="Entrate">
+            {incomeCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </optgroup>
+          <optgroup label="Uscite">
+            {expenseCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </optgroup>
         </select>
         <select className="field w-full sm:w-auto" value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}>
           <option value="">Tutti i tipi</option>
