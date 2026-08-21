@@ -19,7 +19,7 @@ $balanceSql = "
     + COALESCE((SELECT SUM(amount) FROM transactions WHERE transfer_account_id = a.id AND type = 'trasferimento'), 0)
     AS balance
 ";
-$stmt = db()->prepare("SELECT a.id, a.name, a.color, a.currency, {$balanceSql} FROM accounts a WHERE a.user_id = :uid AND a.archived = 0 ORDER BY a.sort_order");
+$stmt = db()->prepare("SELECT a.id, a.name, a.color, a.currency, a.exclude_from_networth, {$balanceSql} FROM accounts a WHERE a.user_id = :uid AND a.archived = 0 ORDER BY a.sort_order");
 $stmt->execute(['uid' => $uid]);
 $accounts = $stmt->fetchAll();
 
@@ -34,7 +34,11 @@ foreach ($accounts as &$acc) {
         $acc['fx_rate'] = 1.0;
         $acc['balance_eur'] = $balance;
     }
-    $totalBalance += $acc['balance_eur'] ?? 0;
+    // Il conto resta visibile con il suo saldo reale, ma se escluso dal
+    // patrimonio netto non contribuisce al totale sommato qui sotto.
+    if (!$acc['exclude_from_networth']) {
+        $totalBalance += $acc['balance_eur'] ?? 0;
+    }
 }
 unset($acc);
 

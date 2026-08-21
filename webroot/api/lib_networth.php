@@ -10,7 +10,9 @@ require_once __DIR__ . '/price_fetch.php';
  * per i conti in valuta estera) + investimenti (convertiti in EUR per gli
  * strumenti in valuta estera, stesso tasso di cambio usato per i conti) +
  * immobili (per la sola quota di proprietà se collegati a un mutuo) meno il
- * debito residuo dei mutui (sempre per la propria quota).
+ * debito residuo dei mutui (sempre per la propria quota). I conti con
+ * exclude_from_networth restano pienamente utilizzabili (transazioni,
+ * saldo mostrato nella loro pagina) ma il saldo non entra in questa somma.
  */
 function compute_net_worth(int $uid): array
 {
@@ -23,7 +25,7 @@ function compute_net_worth(int $uid): array
             - COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'trasferimento'), 0)
             + COALESCE((SELECT SUM(amount) FROM transactions WHERE transfer_account_id = a.id AND type = 'trasferimento'), 0)
             AS balance
-        FROM accounts a WHERE a.user_id = :uid AND a.archived = 0
+        FROM accounts a WHERE a.user_id = :uid AND a.archived = 0 AND a.exclude_from_networth = 0
     ");
     $stmt->execute(['uid' => $uid]);
     $liquidBalance = 0.0;

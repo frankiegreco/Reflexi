@@ -30,6 +30,7 @@ function dayBefore(dateStr) {
 const empty = {
   id: null, name: '', type: 'corrente', initial_balance: 0, color: '#4f46e5', currency: 'EUR',
   interest_enabled: false, interest_rate: '', interest_tax_rate: 26, interest_frequency: 'annuale', next_interest_date: todayISO(),
+  exclude_from_networth: false,
 };
 
 export default function Accounts() {
@@ -58,6 +59,7 @@ export default function Accounts() {
       id: a.id, name: a.name, type: a.type, initial_balance: a.initial_balance, color: a.color, currency: a.currency || 'EUR',
       interest_enabled: !!a.interest_enabled, interest_rate: a.interest_rate ?? '', interest_tax_rate: a.interest_tax_rate ?? 26,
       interest_frequency: a.interest_frequency || 'annuale', next_interest_date: a.next_interest_date || todayISO(),
+      exclude_from_networth: !!a.exclude_from_networth,
     });
     setError('');
     setRateForm({ effective_date: todayISO(), rate: '' });
@@ -93,6 +95,7 @@ export default function Accounts() {
       interest_tax_rate: parseFloat(form.interest_tax_rate || '26'),
       interest_frequency: form.interest_frequency,
       next_interest_date: form.interest_enabled ? form.next_interest_date : null,
+      exclude_from_networth: form.exclude_from_networth,
     };
     try {
       if (form.id) await apiSend('accounts.php', 'PUT', { ...payload, id: form.id });
@@ -150,6 +153,7 @@ export default function Accounts() {
             <div className="mb-2.5 text-xs text-muted">
               {capitalize(a.type)}
               {!!a.interest_enabled && <span className="ml-1.5 rounded-full bg-income/15 px-1.5 py-0.5 text-[10px] font-semibold text-income">{a.interest_rate}% interesse</span>}
+              {!!a.exclude_from_networth && <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600">escluso dal patrimonio</span>}
             </div>
             <div className="font-mono text-xl font-semibold">
               {a.currency && a.currency !== 'EUR' ? `${a.balance.toLocaleString('it-IT', { minimumFractionDigits: 2 })} ${a.currency}` : euro(a.balance)}
@@ -222,6 +226,18 @@ export default function Accounts() {
             <input type="checkbox" checked={form.interest_enabled} onChange={(e) => setForm((f) => ({ ...f, interest_enabled: e.target.checked }))} />
             Matura interessi (conto deposito, vincolato o corrente remunerato)
           </label>
+
+          <label className="flex items-center gap-2 rounded-xl border border-border bg-gray-50 px-3 py-2.5 text-sm font-medium">
+            <input type="checkbox" checked={form.exclude_from_networth} onChange={(e) => setForm((f) => ({ ...f, exclude_from_networth: e.target.checked }))} />
+            Escludi dal patrimonio netto
+          </label>
+          {form.exclude_from_networth && (
+            <p className="text-xs text-muted">
+              Il conto resta pienamente utilizzabile (transazioni, saldo mostrato qui) ma il suo saldo non
+              entra nel totale di Riepilogo, FIRE e Report — utile per un conto che non è davvero tuo, o che
+              tieni traccia separatamente per altri motivi.
+            </p>
+          )}
 
           {form.interest_enabled && (
             <div className="space-y-3 rounded-xl border border-accent/20 bg-accentSoft p-3">

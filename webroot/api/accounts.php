@@ -179,8 +179,8 @@ switch (method()) {
         }
 
         $stmt = db()->prepare("INSERT INTO accounts
-            (user_id, name, type, initial_balance, color, sort_order, interest_enabled, interest_rate, interest_tax_rate, interest_frequency, next_interest_date, currency)
-            VALUES (:uid, :name, :type, :initial_balance, :color, :sort_order, :interest_enabled, :interest_rate, :interest_tax_rate, :interest_frequency, :next_interest_date, :currency)");
+            (user_id, name, type, initial_balance, color, sort_order, interest_enabled, interest_rate, interest_tax_rate, interest_frequency, next_interest_date, currency, exclude_from_networth)
+            VALUES (:uid, :name, :type, :initial_balance, :color, :sort_order, :interest_enabled, :interest_rate, :interest_tax_rate, :interest_frequency, :next_interest_date, :currency, :exclude_from_networth)");
         $stmt->execute([
             'uid' => $uid,
             'name' => $in['name'],
@@ -194,6 +194,7 @@ switch (method()) {
             'interest_frequency' => $in['interest_frequency'] ?? 'annuale',
             'next_interest_date' => $interestEnabled ? ($in['next_interest_date'] ?? date('Y-m-d')) : null,
             'currency' => strtoupper($in['currency'] ?? 'EUR'),
+            'exclude_from_networth' => !empty($in['exclude_from_networth']) ? 1 : 0,
         ]);
         $newAccountId = (int)db()->lastInsertId();
 
@@ -219,11 +220,11 @@ switch (method()) {
         $fields = [];
         $params = ['id' => $in['id'], 'uid' => $uid];
         foreach (['name', 'type', 'initial_balance', 'color', 'sort_order', 'archived',
-                   'interest_enabled', 'interest_rate', 'interest_tax_rate', 'interest_frequency', 'next_interest_date', 'currency'] as $f) {
+                   'interest_enabled', 'interest_rate', 'interest_tax_rate', 'interest_frequency', 'next_interest_date', 'currency', 'exclude_from_networth'] as $f) {
             if (array_key_exists($f, $in)) {
                 $fields[] = "$f = :$f";
                 $value = $in[$f];
-                if (in_array($f, ['archived', 'interest_enabled'], true)) {
+                if (in_array($f, ['archived', 'interest_enabled', 'exclude_from_networth'], true)) {
                     $value = $value ? 1 : 0;
                 }
                 if ($f === 'currency') {
