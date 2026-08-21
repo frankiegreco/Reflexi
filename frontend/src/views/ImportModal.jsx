@@ -343,7 +343,7 @@ export default function ImportModal({ open, onClose, onSaved }) {
 
           <div>
             <label className="field-label">Colonna tipo/causale (opzionale)</label>
-            <p className="mb-1 text-xs text-muted">Utile per export come quello di Trade Republic che mescolano movimenti di cassa e operazioni di trading: per ogni valore trovato scegli se contarlo come entrata, uscita, o ignorarlo del tutto (es. "Buy"/"Sell" se tieni già traccia degli investimenti nel modulo Investimenti).</p>
+            <p className="mb-1 text-xs text-muted">Utile per export come quello di Trade Republic che mescolano movimenti di cassa e operazioni di trading: per ogni valore trovato scegli se contarlo come entrata, uscita, o ignorarlo del tutto (es. "Buy"/"Sell" se tieni già traccia degli investimenti nel modulo Investimenti, oppure "Saveback"/"Cash Reward" — il cashback dell'1% di Trade Republic finisce in automatico nel PAC, non resta liquidità sul conto).</p>
             <select className="field" value={columns.type} onChange={(e) => setCol('type', e.target.value)}>
               <option value="">-- nessuna, usa solo il segno dell'importo --</option>
               {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
