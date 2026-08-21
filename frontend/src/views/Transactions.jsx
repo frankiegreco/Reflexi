@@ -32,8 +32,23 @@ export default function Transactions() {
     setLoading(true);
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); });
-    const data = await apiGet(`transactions.php?${params.toString()}`);
-    setRows(data);
+    params.set('limit', '1000');
+
+    // L'API pagina lato server (max 1000 righe a chiamata): la vista attuale
+    // pagina invece lato client sull'array completo, quindi qui carichiamo
+    // tutte le pagine finche' non ne troviamo una incompleta, altrimenti con
+    // piu' di 1000 transazioni filtrate se ne vedrebbero solo le prime 1000.
+    let all = [];
+    let offset = 0;
+    for (;;) {
+      params.set('offset', String(offset));
+      const batch = await apiGet(`transactions.php?${params.toString()}`);
+      all = all.concat(batch);
+      if (batch.length < 1000) break;
+      offset += 1000;
+    }
+
+    setRows(all);
     setPage(1);
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
