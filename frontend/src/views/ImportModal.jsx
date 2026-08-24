@@ -1,9 +1,85 @@
 import { useEffect, useState } from 'react';
-import { Upload, AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import {
+  Upload, AlertTriangle, CheckCircle2, ArrowLeft, Check, Landmark,
+  CalendarClock, Coins, Tags, SlidersHorizontal, Sparkles,
+} from 'lucide-react';
 import Modal from '../components/Modal';
 import { useData } from '../context/DataContext';
 import { apiSend } from '../api';
 import { euro, formatDate } from '../lib/format';
+
+// Elenco puramente informativo (dove trovare l'export nel proprio internet
+// banking): l'app mappa comunque qualsiasi colonna manualmente al passo
+// successivo, quindi questa lista non deve essere esaustiva o esatta al 100%
+// per funzionare — serve solo a orientare l'utente. Gli id di 'trade_republic'
+// e 'bancoposta' coincidono con quelli riconosciuti automaticamente dal
+// backend (vedi BANK_PRESETS in import.php) cosi' il badge "Rilevato" dopo
+// l'analisi puo' precompilare la stessa selezione.
+const BANKS = [
+  { id: 'trade_republic', name: 'Trade Republic', hint: 'Profilo → Estratti conto → Esporta transazioni (CSV).' },
+  { id: 'bancoposta', name: 'BancoPosta / Poste', hint: 'App o sito Poste → Lista movimenti → Esporta (CSV/Excel).' },
+  { id: 'fineco', name: 'Fineco', hint: 'Movimenti conto → filtra periodo → "Esporta risultato" (Excel).' },
+  { id: 'intesa', name: 'Intesa Sanpaolo', hint: 'Internet banking → Archivio → Documenti → Estratti conto.' },
+  { id: 'unicredit', name: 'UniCredit', hint: 'App o sito → Conto corrente → Movimenti → esporta/scarica.' },
+  { id: 'n26', name: 'N26', hint: 'App N26 → Conto → Estratti conto (Statements) → CSV.' },
+  { id: 'revolut', name: 'Revolut', hint: 'App Revolut → Conto → Estratto conto → esporta CSV.' },
+  { id: 'ing', name: 'ING', hint: 'App o sito ING → Movimenti conto → esporta.' },
+  { id: 'widiba', name: 'Widiba', hint: 'Sito Widiba → Lista movimenti → esporta.' },
+  { id: 'sella', name: 'Banca Sella', hint: 'App o sito → Movimenti conto → esporta.' },
+  { id: 'hype', name: 'Hype', hint: 'App Hype → Movimenti → condividi/esporta.' },
+  { id: 'chebanca', name: 'CheBanca!', hint: 'App o sito → Movimenti → esporta.' },
+  { id: 'bper', name: 'BPER Banca', hint: 'App o sito → Movimenti conto → esporta.' },
+  { id: 'directa', name: 'Directa (trading)', hint: 'Area riservata → Rendiconto/Movimenti → esporta CSV.' },
+  { id: 'other', name: 'Altra banca / broker', hint: 'Cerca una voce "Esporta", "Scarica movimenti" o "Estratto conto".' },
+];
+
+const STEPS = [
+  { key: 'upload', label: 'Carica' },
+  { key: 'mapping', label: 'Mappa colonne' },
+  { key: 'preview', label: 'Anteprima' },
+  { key: 'result', label: 'Fine' },
+];
+
+function Stepper({ current }) {
+  const idx = STEPS.findIndex((s) => s.key === current);
+  return (
+    <div className="mb-5 flex items-center">
+      {STEPS.map((s, i) => (
+        <div key={s.key} className={`flex items-center ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
+          <div className="flex flex-col items-center gap-1">
+            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+              i < idx ? 'bg-accent text-white' : i === idx ? 'bg-accent text-white ring-4 ring-accentSoft' : 'bg-gray-100 text-muted'
+            }`}>
+              {i < idx ? <Check size={14} /> : i + 1}
+            </div>
+            <span className={`whitespace-nowrap text-[11px] ${i === idx ? 'font-semibold text-gray-900' : 'text-muted'}`}>{s.label}</span>
+          </div>
+          {i < STEPS.length - 1 && (
+            <div className={`mx-2 mb-4 h-0.5 flex-1 rounded ${i < idx ? 'bg-accent' : 'bg-gray-100'}`} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Section({ icon: Icon, title, subtitle, tone = 'default', children }) {
+  const toneClass = tone === 'accent' ? 'border-accent/20 bg-accentSoft' : 'border-border';
+  return (
+    <div className={`rounded-xl border ${toneClass} p-4`}>
+      <div className="mb-3 flex items-start gap-2.5">
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+          <Icon size={15} />
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+          {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
+        </div>
+      </div>
+      <div className="space-y-3">{children}</div>
+    </div>
+  );
+}
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // limite lato client, coerente con post_max_size=8M lato PHP (il base64 gonfia ~1.37x)
 
@@ -45,6 +121,8 @@ export default function ImportModal({ open, onClose, onSaved }) {
 
   const [step, setStep] = useState('upload');
   const [file, setFile] = useState(null);
+  const [bankId, setBankId] = useState('');
+  const [detectedBank, setDetectedBank] = useState(null);
   const [accountId, setAccountId] = useState('');
   const [csvBase64, setCsvBase64] = useState('');
   const [delimiter, setDelimiter] = useState(';');
@@ -70,6 +148,8 @@ export default function ImportModal({ open, onClose, onSaved }) {
     if (!open) return;
     setStep('upload');
     setFile(null);
+    setBankId('');
+    setDetectedBank(null);
     setAccountId(activeAccounts[0]?.id || '');
     setCsvBase64('');
     setParseData(null);
@@ -113,7 +193,9 @@ export default function ImportModal({ open, onClose, onSaved }) {
       setColumns(suggested);
       setAmountMode(!data.suggested_mapping.amount && (data.suggested_mapping.debit || data.suggested_mapping.credit) ? 'debit_credit' : 'single');
       setDateFormat(data.suggested_date_format || 'auto');
-      setSource(file.name.replace(/\.[Cc][Ss][Vv]$|\.[Xx][Ll][Ss][Xx]$/, ''));
+      setDetectedBank(data.detected_bank || null);
+      if (data.detected_bank && !bankId) setBankId(data.detected_bank.id);
+      setSource(data.detected_bank?.name || file.name.replace(/\.[Cc][Ss][Vv]$|\.[Xx][Ll][Ss][Xx]$/, ''));
       setStep('mapping');
     } catch (err) {
       setError(err.message);
@@ -231,17 +313,47 @@ export default function ImportModal({ open, onClose, onSaved }) {
         )}
       </>
     }>
+      <Stepper current={step} />
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
       {step === 'upload' && (
         <div className="space-y-4">
           <div className="rounded-xl border border-accent/20 bg-accentSoft px-4 py-3 text-sm text-gray-700">
-            Carica l'export CSV o Excel (.xlsx) di una banca o broker (es. Trade Republic — Profilo → Estratti conto
-            → Esporta transazioni, o BancoPosta — Lista movimenti → Esporta) e conferma la mappatura delle colonne al
-            passo successivo. Eventuali righe di intestazione prima della tabella (conto, saldo, periodo) vengono
-            riconosciute e ignorate automaticamente. Ogni riga viene assegnata al conto scelto qui sotto; i duplicati
-            rispetto a transazioni già presenti vengono rilevati e saltati automaticamente.
+            Carica l'export CSV o Excel (.xlsx) di una banca o broker: al passo successivo potrai confermare o
+            correggere come vengono interpretate le colonne. Eventuali righe di intestazione prima della tabella
+            (conto, saldo, periodo) vengono riconosciute e ignorate automaticamente. Ogni riga viene assegnata al
+            conto scelto qui sotto; i duplicati rispetto a transazioni già presenti vengono rilevati e saltati.
           </div>
+
+          <div>
+            <label className="field-label">Da quale banca o broker viene il file? (opzionale)</label>
+            <p className="mb-2 text-xs text-muted">
+              Serve solo per mostrarti dove trovare l'export nel tuo internet banking — il percorso esatto può
+              variare tra versioni dell'app o del sito.
+            </p>
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+              {BANKS.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => setBankId((cur) => (cur === b.id ? '' : b.id))}
+                  className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-left text-xs transition-colors ${
+                    bankId === b.id ? 'border-accent bg-accentSoft font-medium text-accentDark' : 'border-border text-gray-700 hover:border-accent/40'
+                  }`}
+                >
+                  <Landmark size={13} className={bankId === b.id ? 'text-accent' : 'text-muted'} />
+                  <span className="truncate">{b.name}</span>
+                </button>
+              ))}
+            </div>
+            {bankId && (
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-700">
+                <Sparkles size={13} className="mt-0.5 shrink-0 text-accent" />
+                Dove trovarlo: {BANKS.find((b) => b.id === bankId)?.hint}
+              </p>
+            )}
+          </div>
+
           <div>
             <label className="field-label">Conto di destinazione</label>
             <select className="field" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
@@ -250,23 +362,53 @@ export default function ImportModal({ open, onClose, onSaved }) {
           </div>
           <div>
             <label className="field-label">File CSV o Excel (.xlsx)</label>
+            <label
+              htmlFor="import-file-input"
+              className={`flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-4 text-sm transition-colors ${
+                file ? 'border-accent bg-accentSoft' : 'border-border hover:border-accent/50 hover:bg-gray-50'
+              }`}
+            >
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${file ? 'bg-accent text-white' : 'bg-gray-100 text-muted'}`}>
+                <Upload size={17} />
+              </div>
+              <div className="min-w-0">
+                {file ? (
+                  <>
+                    <p className="truncate font-medium text-gray-900">{file.name}</p>
+                    <p className="text-xs text-muted">{(file.size / 1024).toFixed(0)} KB — clicca per cambiare file</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-gray-900">Clicca per scegliere un file</p>
+                    <p className="text-xs text-muted">CSV o Excel (.xlsx), fino a {MAX_FILE_BYTES / 1024 / 1024} MB</p>
+                  </>
+                )}
+              </div>
+            </label>
             <input
-              className="field"
+              id="import-file-input"
+              className="sr-only"
               type="file"
               accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
-            {file && <p className="mt-1 text-xs text-muted">{file.name} — {(file.size / 1024).toFixed(0)} KB</p>}
           </div>
         </div>
       )}
 
       {step === 'mapping' && parseData && (
         <div className="space-y-4">
-          <p className="text-sm text-muted">
-            {parseData.total_rows} righe rilevate
-            {parseData.is_xlsx ? ' (foglio Excel)' : <> , separatore <code>{delimiter === '\t' ? 'tab' : delimiter}</code></>}.
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm text-muted">
+              {parseData.total_rows} righe rilevate
+              {parseData.is_xlsx ? ' (foglio Excel)' : <> , separatore <code>{delimiter === '\t' ? 'tab' : delimiter}</code></>}.
+            </p>
+            {detectedBank && (
+              <span className="flex items-center gap-1 rounded-full bg-income/10 px-2.5 py-1 text-xs font-medium text-income">
+                <CheckCircle2 size={13} /> Riconosciuto: {detectedBank.name}
+              </span>
+            )}
+          </div>
 
           {parseData.saved_mappings.length > 0 && (
             <div>
@@ -278,108 +420,137 @@ export default function ImportModal({ open, onClose, onSaved }) {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="field-label">Colonna data</label>
-              <select className="field" value={columns.date} onChange={(e) => setCol('date', e.target.value)}>
-                <option value="">-- seleziona --</option>
-                {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="field-label">Formato data</label>
-              <select className="field" value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}>
-                {DATE_FORMAT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="field-label">Importo</label>
-            <div className="mb-2 flex gap-4 text-sm">
-              <label className="flex items-center gap-1.5">
-                <input type="radio" checked={amountMode === 'single'} onChange={() => setAmountMode('single')} /> Colonna unica (segno +/-)
-              </label>
-              <label className="flex items-center gap-1.5">
-                <input type="radio" checked={amountMode === 'debit_credit'} onChange={() => setAmountMode('debit_credit')} /> Colonne separate dare/avere
-              </label>
-            </div>
-            {amountMode === 'single' ? (
-              <select className="field" value={columns.amount} onChange={(e) => setCol('amount', e.target.value)}>
-                <option value="">-- seleziona --</option>
-                {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
-              </select>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <select className="field" value={columns.credit} onChange={(e) => setCol('credit', e.target.value)}>
-                  <option value="">Avere / entrate: --</option>
-                  {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
-                </select>
-                <select className="field" value={columns.debit} onChange={(e) => setCol('debit', e.target.value)}>
-                  <option value="">Dare / uscite: --</option>
+          <Section icon={CalendarClock} title="Data e importo" subtitle="I due campi obbligatori per riconoscere ogni movimento.">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="field-label">Colonna data</label>
+                <select className="field" value={columns.date} onChange={(e) => setCol('date', e.target.value)}>
+                  <option value="">-- seleziona --</option>
                   {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
                 </select>
               </div>
-            )}
-          </div>
-
-          {amountMode === 'single' && (
-            <div>
-              <label className="field-label">Separatore decimale</label>
-              <select className="field" value={decimalSeparator} onChange={(e) => setDecimalSeparator(e.target.value)}>
-                {DECIMAL_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <div>
+                <label className="field-label">Formato data</label>
+                <select className="field" value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}>
+                  {DATE_FORMAT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
             </div>
-          )}
 
-          <div>
-            <label className="field-label">Colonna descrizione (opzionale)</label>
-            <select className="field" value={columns.description} onChange={(e) => setCol('description', e.target.value)}>
-              <option value="">-- nessuna --</option>
-              {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
-            </select>
-          </div>
+            <div>
+              <label className="field-label">Importo</label>
+              <div className="mb-2 flex gap-4 text-sm">
+                <label className="flex items-center gap-1.5">
+                  <input type="radio" checked={amountMode === 'single'} onChange={() => setAmountMode('single')} /> Colonna unica (segno +/-)
+                </label>
+                <label className="flex items-center gap-1.5">
+                  <input type="radio" checked={amountMode === 'debit_credit'} onChange={() => setAmountMode('debit_credit')} /> Colonne separate dare/avere
+                </label>
+              </div>
+              {amountMode === 'single' ? (
+                <select className="field" value={columns.amount} onChange={(e) => setCol('amount', e.target.value)}>
+                  <option value="">-- seleziona --</option>
+                  {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                </select>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <select className="field" value={columns.credit} onChange={(e) => setCol('credit', e.target.value)}>
+                    <option value="">Avere / entrate: --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                  <select className="field" value={columns.debit} onChange={(e) => setCol('debit', e.target.value)}>
+                    <option value="">Dare / uscite: --</option>
+                    {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
 
-          <div>
-            <label className="field-label">Colonna tipo/causale (opzionale)</label>
-            <p className="mb-1 text-xs text-muted">Utile per export come quello di Trade Republic che mescolano movimenti di cassa e operazioni di trading: per ogni valore trovato scegli se contarlo come entrata, uscita, operazione su uno strumento (genera acquisto/vendita nel modulo Investimenti, incluse le esecuzioni di un PAC), interesse (per broker esteri che non trattengono l'imposta: registra il netto dopo l'imposta sostitutiva del conto, con lordo/imposta/netto in descrizione — categoria "Interessi attivi") oppure ignorarlo del tutto (es. "Saveback"/"Cash Reward" — il cashback dell'1% di Trade Republic finisce in automatico nel PAC, non resta liquidità sul conto — o eventi senza contropartita in denaro come migrazioni titoli).</p>
-            <select className="field" value={columns.type} onChange={(e) => setCol('type', e.target.value)}>
-              <option value="">-- nessuna, usa solo il segno dell'importo --</option>
-              {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
-            </select>
-            {columns.type && typeColumnValues === null && (
-              <p className="mt-1 flex items-center gap-1 text-xs text-amber-600"><AlertTriangle size={13} /> Troppi valori distinti in questa colonna: verrà usato solo il segno dell'importo per tutte le righe.</p>
-            )}
-            {columns.type && Array.isArray(typeColumnValues) && (
-              <div className="mt-2 max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
-                {typeColumnValues.map((v) => (
-                  <div key={v} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="truncate" title={v}>{v}</span>
-                    <select
-                      className="field w-52 py-1 text-xs"
-                      value={typeActions[v] || 'auto'}
-                      onChange={(e) => setTypeActions((t) => ({ ...t, [v]: e.target.value }))}
-                    >
-                      <option value="auto">Auto (segno importo)</option>
-                      <option value="entrata">Entrata</option>
-                      <option value="uscita">Uscita</option>
-                      <option value="investimento">Investimento (acquisto/vendita titolo)</option>
-                      <option value="interesse">Interesse (netta l'imposta sostitutiva)</option>
-                      <option value="ignora">Ignora (non importare)</option>
-                    </select>
-                  </div>
-                ))}
+            {amountMode === 'single' && (
+              <div>
+                <label className="field-label">Separatore decimale</label>
+                <select className="field" value={decimalSeparator} onChange={(e) => setDecimalSeparator(e.target.value)}>
+                  {DECIMAL_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
               </div>
             )}
-          </div>
+          </Section>
+
+          <Section icon={Tags} title="Descrizione, tipo e categoria" subtitle="Come vengono etichettate le righe importate.">
+            <div>
+              <label className="field-label">Colonna descrizione (opzionale)</label>
+              <select className="field" value={columns.description} onChange={(e) => setCol('description', e.target.value)}>
+                <option value="">-- nessuna --</option>
+                {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="field-label">Colonna tipo/causale (opzionale)</label>
+              <p className="mb-1 text-xs text-muted">Utile per export come quello di Trade Republic che mescolano movimenti di cassa e operazioni di trading: per ogni valore trovato scegli se contarlo come entrata, uscita, operazione su uno strumento (genera acquisto/vendita nel modulo Investimenti, incluse le esecuzioni di un PAC), interesse (per broker esteri che non trattengono l'imposta: registra il netto dopo l'imposta sostitutiva del conto, con lordo/imposta/netto in descrizione — categoria "Interessi attivi") oppure ignorarlo del tutto (es. "Saveback"/"Cash Reward" — il cashback dell'1% di Trade Republic finisce in automatico nel PAC, non resta liquidità sul conto — o eventi senza contropartita in denaro come migrazioni titoli).</p>
+              <select className="field" value={columns.type} onChange={(e) => setCol('type', e.target.value)}>
+                <option value="">-- nessuna, usa solo il segno dell'importo --</option>
+                {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+              {columns.type && typeColumnValues === null && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600"><AlertTriangle size={13} /> Troppi valori distinti in questa colonna: verrà usato solo il segno dell'importo per tutte le righe.</p>
+              )}
+              {columns.type && Array.isArray(typeColumnValues) && (
+                <div className="mt-2 max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
+                  {typeColumnValues.map((v) => (
+                    <div key={v} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate" title={v}>{v}</span>
+                      <select
+                        className="field w-52 py-1 text-xs"
+                        value={typeActions[v] || 'auto'}
+                        onChange={(e) => setTypeActions((t) => ({ ...t, [v]: e.target.value }))}
+                      >
+                        <option value="auto">Auto (segno importo)</option>
+                        <option value="entrata">Entrata</option>
+                        <option value="uscita">Uscita</option>
+                        <option value="investimento">Investimento (acquisto/vendita titolo)</option>
+                        <option value="interesse">Interesse (netta l'imposta sostitutiva)</option>
+                        <option value="ignora">Ignora (non importare)</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="field-label">Colonna categoria (opzionale)</label>
+              <p className="mb-1 text-xs text-muted">Se mappata, le categorie non ancora esistenti vengono create automaticamente. Le categorie predefinite qui sotto si usano comunque quando il valore è vuoto o la colonna non è mappata.</p>
+              <select className="field" value={columns.category} onChange={(e) => setCol('category', e.target.value)}>
+                <option value="">-- nessuna --</option>
+                {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="field-label">Categoria entrate predefinita{needsDefaultCategories && ' *'}</label>
+                <select className="field" value={defaultIncomeCat} onChange={(e) => setDefaultIncomeCat(e.target.value)}>
+                  <option value="">-- nessuna --</option>
+                  {incomeCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="field-label">Categoria uscite predefinita{needsDefaultCategories && ' *'}</label>
+                <select className="field" value={defaultExpenseCat} onChange={(e) => setDefaultExpenseCat(e.target.value)}>
+                  <option value="">-- nessuna --</option>
+                  {expenseCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+          </Section>
 
           {hasInvestmentRows && (
-            <div className="space-y-3 rounded-xl border border-accent/20 bg-accentSoft p-3">
+            <Section icon={Coins} title="Investimenti" tone="accent" subtitle="Colonne per le righe marcate 'Investimento'.">
               <p className="text-xs text-gray-700">
-                Colonne per le righe marcate "Investimento": generano un acquisto/vendita nello strumento
-                (creato in automatico se non esiste già, cercato per simbolo) più il movimento di cassa collegato
-                sul conto, con la stessa formula usata dall'inserimento manuale in Investimenti (netto = valore
-                scambio ± commissioni ± imposta).
+                Generano un acquisto/vendita nello strumento (creato in automatico se non esiste già, cercato per
+                simbolo) più il movimento di cassa collegato sul conto, con la stessa formula usata dall'inserimento
+                manuale in Investimenti (netto = valore scambio ± commissioni ± imposta).
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -436,50 +607,26 @@ export default function ImportModal({ open, onClose, onSaved }) {
                   </select>
                 </div>
               </div>
-            </div>
+            </Section>
           )}
 
-          <div>
-            <label className="field-label">Colonna categoria (opzionale)</label>
-            <p className="mb-1 text-xs text-muted">Se mappata, le categorie non ancora esistenti vengono create automaticamente. Le categorie predefinite qui sotto si usano comunque quando il valore è vuoto o la colonna non è mappata.</p>
-            <select className="field" value={columns.category} onChange={(e) => setCol('category', e.target.value)}>
-              <option value="">-- nessuna --</option>
-              {parseData.headers.map((h) => <option key={h} value={h}>{h}</option>)}
-            </select>
-          </div>
+          <Section icon={SlidersHorizontal} title="Impostazioni avanzate" subtitle="Duplicati, etichetta della sorgente e mappature riusabili.">
+            <div className="flex items-center gap-2">
+              <input id="skip-dup" type="checkbox" checked={skipDuplicates} onChange={(e) => setSkipDuplicates(e.target.checked)} />
+              <label htmlFor="skip-dup" className="text-sm">Salta automaticamente le righe già presenti (stesso conto, data, importo e descrizione)</label>
+            </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="field-label">Categoria entrate predefinita{needsDefaultCategories && ' *'}</label>
-              <select className="field" value={defaultIncomeCat} onChange={(e) => setDefaultIncomeCat(e.target.value)}>
-                <option value="">-- nessuna --</option>
-                {incomeCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="field-label">Nome sorgente (etichetta import)</label>
+                <input className="field" type="text" value={source} onChange={(e) => setSource(e.target.value)} placeholder="Es. Trade Republic" />
+              </div>
+              <div>
+                <label className="field-label">Salva questa mappatura come (opzionale)</label>
+                <input className="field" type="text" value={saveMappingAs} onChange={(e) => setSaveMappingAs(e.target.value)} placeholder="Es. Trade Republic" />
+              </div>
             </div>
-            <div>
-              <label className="field-label">Categoria uscite predefinita{needsDefaultCategories && ' *'}</label>
-              <select className="field" value={defaultExpenseCat} onChange={(e) => setDefaultExpenseCat(e.target.value)}>
-                <option value="">-- nessuna --</option>
-                {expenseCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input id="skip-dup" type="checkbox" checked={skipDuplicates} onChange={(e) => setSkipDuplicates(e.target.checked)} />
-            <label htmlFor="skip-dup" className="text-sm">Salta automaticamente le righe già presenti (stesso conto, data, importo e descrizione)</label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
-            <div>
-              <label className="field-label">Nome sorgente (etichetta import)</label>
-              <input className="field" type="text" value={source} onChange={(e) => setSource(e.target.value)} placeholder="Es. Trade Republic" />
-            </div>
-            <div>
-              <label className="field-label">Salva questa mappatura come (opzionale)</label>
-              <input className="field" type="text" value={saveMappingAs} onChange={(e) => setSaveMappingAs(e.target.value)} placeholder="Es. Trade Republic" />
-            </div>
-          </div>
+          </Section>
         </div>
       )}
 

@@ -17,12 +17,12 @@ require __DIR__ . '/db.php';
 $uid = require_auth();
 
 const FIELD_ALIASES = [
-    'date' => ['data', 'date', 'datum', 'data operazione', 'data valuta', 'data contabile', 'booking date', 'transaction date', 'value date', 'trade date'],
+    'date' => ['data', 'date', 'datum', 'data operazione', 'data valuta', 'data contabile', 'data registrazione', 'data esecuzione', 'booking date', 'transaction date', 'value date', 'trade date', 'started date', 'completed date'],
     'amount' => ['importo', 'amount', 'wert', 'value', 'betrag', 'ammontare', 'importo eur', 'amount eur', 'importo movimento'],
     'debit' => ['dare', 'uscite', 'debit', 'addebito', 'addebiti', 'ausgang'],
     'credit' => ['avere', 'entrate', 'credit', 'accredito', 'accrediti', 'eingang'],
-    'description' => ['descrizione', 'description', 'causale', 'note', 'notiz', 'beschreibung', 'merchant', 'controparte', 'beneficiario ordinante', 'memo', 'details', 'narrative', 'nota'],
-    'type' => ['tipo', 'type', 'typ', 'transaction type', 'event type'],
+    'description' => ['descrizione', 'description', 'causale', 'note', 'notiz', 'beschreibung', 'merchant', 'controparte', 'beneficiario ordinante', 'memo', 'details', 'narrative', 'nota', 'descrizione operazioni', 'descrizione completa', 'partner name', 'payment reference', 'reference'],
+    'type' => ['tipo', 'type', 'typ', 'transaction type', 'event type', 'tipologia', 'tipo movimento'],
     'category' => ['categoria', 'category', 'kategorie'],
     'symbol' => ['symbol', 'isin', 'ticker', 'simbolo'],
     'shares' => ['shares', 'quote', 'quantity', 'quantita', 'nr azioni'],
@@ -32,6 +32,58 @@ const FIELD_ALIASES = [
     'fee' => ['fee', 'fees', 'commissione', 'commissioni', 'gebuhr'],
     'tax' => ['tax', 'imposta', 'imposte', 'steuer'],
 ];
+
+// Elenco banche/broker italiani piu' comuni, mostrato in UI nel passo di
+// upload per aiutare l'utente a trovare la funzione di export nel proprio
+// internet banking (non e' garanzia di percorso menu esatto: cambia spesso
+// tra versioni app). 'signature' e' presente solo per gli istituti di cui
+// abbiamo verificato le intestazioni reali (file di esempio in docs/ per
+// Trade Republic e BancoPosta, fonti pubbliche per Fineco/N26/Revolut): la
+// usiamo per il rilevamento automatico in detect_bank(), gli altri restano
+// solo informativi perche' non abbiamo un campione verificato.
+const BANK_PRESETS = [
+    ['id' => 'trade_republic', 'name' => 'Trade Republic', 'hint' => 'Profilo → Estratti conto → Esporta transazioni (CSV).',
+        'signature' => ['datetime', 'account type', 'asset class', 'transaction id', 'counterparty name', 'counterparty iban', 'payment reference', 'mcc code']],
+    ['id' => 'bancoposta', 'name' => 'BancoPosta / Poste Italiane', 'hint' => 'App BancoPosta o sito Poste → Lista movimenti → Esporta (CSV o Excel).',
+        'signature' => ['data contabile', 'data valuta', 'addebiti euro', 'accrediti euro', 'descrizione operazioni']],
+    ['id' => 'fineco', 'name' => 'Fineco', 'hint' => 'Area Movimenti conto → filtra il periodo → "Esporta risultato" (Excel).',
+        'signature' => ['data operazione', 'data valuta', 'descrizione', 'entrate', 'uscite', 'saldo']],
+    ['id' => 'n26', 'name' => 'N26', 'hint' => 'App N26 → Conto → Estratti conto (Statements) → scarica CSV.',
+        'signature' => ['booking date', 'value date', 'partner name', 'partner iban', 'payment reference', 'account name']],
+    ['id' => 'revolut', 'name' => 'Revolut', 'hint' => 'App Revolut → Conto → Estratto conto → genera ed esporta in CSV.',
+        'signature' => ['type', 'product', 'started date', 'completed date', 'description', 'fee', 'state', 'balance']],
+    ['id' => 'intesa', 'name' => 'Intesa Sanpaolo', 'hint' => 'Internet banking → Archivio → Documenti → Estratti conto → Excel/CSV.', 'signature' => []],
+    ['id' => 'unicredit', 'name' => 'UniCredit', 'hint' => 'App o sito → Conto corrente → Movimenti → icona esporta/scarica.', 'signature' => []],
+    ['id' => 'ing', 'name' => 'ING', 'hint' => 'App o sito ING → Movimenti conto → esporta.', 'signature' => []],
+    ['id' => 'widiba', 'name' => 'Widiba', 'hint' => 'Sito Widiba → Lista movimenti → esporta.', 'signature' => []],
+    ['id' => 'sella', 'name' => 'Banca Sella', 'hint' => 'App o sito → Movimenti conto → esporta.', 'signature' => []],
+    ['id' => 'hype', 'name' => 'Hype', 'hint' => 'App Hype → Movimenti → condividi/esporta.', 'signature' => []],
+    ['id' => 'chebanca', 'name' => 'CheBanca!', 'hint' => 'App o sito → Movimenti → esporta.', 'signature' => []],
+    ['id' => 'bper', 'name' => 'BPER Banca', 'hint' => 'App o sito → Movimenti conto → esporta.', 'signature' => []],
+    ['id' => 'directa', 'name' => 'Directa (trading)', 'hint' => 'Area riservata → Rendiconto/Movimenti → esporta CSV.', 'signature' => []],
+    ['id' => 'other', 'name' => 'Altra banca o broker', 'hint' => 'Cerca nel tuo internet banking una voce tipo "Esporta", "Scarica movimenti" o "Estratto conto" (CSV o Excel).', 'signature' => []],
+];
+
+/** Confronta gli header normalizzati del file con le firme note (solo istituti verificati): richiede almeno 3 colonne riconosciute e >=60% della firma per evitare falsi positivi su termini generici condivisi da piu' banche. */
+function detect_bank(array $normalizedHeaders): ?array
+{
+    $headerSet = array_flip($normalizedHeaders);
+    $best = null;
+    $bestScore = 0.0;
+    foreach (BANK_PRESETS as $preset) {
+        if (empty($preset['signature'])) continue;
+        $matched = 0;
+        foreach ($preset['signature'] as $sig) {
+            if (isset($headerSet[$sig])) $matched++;
+        }
+        $score = $matched / count($preset['signature']);
+        if ($matched >= 3 && $score >= 0.6 && $score > $bestScore) {
+            $bestScore = $score;
+            $best = ['id' => $preset['id'], 'name' => $preset['name']];
+        }
+    }
+    return $best;
+}
 
 // Mappa la classificazione dell'export (spesso in inglese, un broker specifico)
 // sull'enum instruments.type di Reflexi. Tutto cio' che non riconosciamo
@@ -331,6 +383,11 @@ switch (method()) {
     case 'GET':
         $action = $_GET['action'] ?? 'batches';
 
+        if ($action === 'banks') {
+            respond(array_map(fn($b) => ['id' => $b['id'], 'name' => $b['name'], 'hint' => $b['hint']], BANK_PRESETS));
+            break;
+        }
+
         if ($action === 'mappings') {
             $stmt = db()->prepare("SELECT id, name, config, created_at FROM import_mappings WHERE user_id = :uid ORDER BY name");
             $stmt->execute(['uid' => $uid]);
@@ -399,6 +456,7 @@ switch (method()) {
             }
 
             $suggestedMapping = guess_mapping($headers);
+            $detectedBank = detect_bank(array_map('normalize_header', $headers));
 
             // Negli .xlsx le date sono numeri seriali (giorni dal 30/12/1899), non
             // testo: se la colonna data suggerita contiene solo numeri, il formato
@@ -427,6 +485,7 @@ switch (method()) {
                 'suggested_mapping' => $suggestedMapping,
                 'suggested_date_format' => $suggestedDateFormat,
                 'saved_mappings' => $savedMappings,
+                'detected_bank' => $detectedBank,
             ]);
             break;
         }
