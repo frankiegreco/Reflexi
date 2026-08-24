@@ -151,44 +151,57 @@ export default function Dashboard() {
               {totalResidual > 0 && <> − debiti residui {euro(totalResidual)} ({debtPctOfAssets.toFixed(0)}% del lordo)</>}
             </p>
 
-            {/* Barra di composizione: quota di ciascuna area sul patrimonio lordo */}
-            <div className="mb-3 flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full bg-gray-100">
-              {areas.map((a) => {
-                const pct = grossAssets > 0 ? (Math.max(0, a.value) / grossAssets) * 100 : 0;
-                if (pct <= 0) return null;
-                return (
-                  <div key={a.key} className="h-full" title={`${a.label}: ${euro(a.value)} (${pct.toFixed(0)}%)`}
-                    style={{ width: `${pct}%`, background: a.color }} />
-                );
-              })}
-            </div>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-stretch">
+              {grossAssets > 0 && (
+                <div className="w-36 flex-shrink-0 self-center sm:self-auto">
+                  <Doughnut
+                    data={{
+                      labels: areas.map((a) => a.label),
+                      datasets: [{
+                        data: areas.map((a) => Math.max(0, a.value)),
+                        backgroundColor: areas.map((a) => a.color),
+                        borderColor: '#fff', borderWidth: 2,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      cutout: '68%',
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${euro(ctx.parsed)} (${(ctx.parsed / grossAssets * 100).toFixed(0)}%)` } },
+                      },
+                    }}
+                  />
+                </div>
+              )}
 
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              {areas.map((a) => {
-                const pct = grossAssets > 0 ? (Math.max(0, a.value) / grossAssets) * 100 : 0;
-                const Icon = a.icon;
-                return (
-                  <div key={a.key} className="min-w-0 rounded-lg border border-border p-2.5">
-                    <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
-                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
-                      <Icon size={12} style={{ color: a.color }} />
-                      <span className="truncate">{a.label}</span>
+              <div className="grid flex-1 grid-cols-2 gap-2.5">
+                {areas.map((a) => {
+                  const pct = grossAssets > 0 ? (Math.max(0, a.value) / grossAssets) * 100 : 0;
+                  const Icon = a.icon;
+                  return (
+                    <div key={a.key} className="min-w-0 rounded-lg border border-border p-2.5">
+                      <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
+                        <Icon size={12} style={{ color: a.color }} />
+                        <span className="truncate">{a.label}</span>
+                      </div>
+                      <div className="truncate font-mono text-sm font-semibold text-gray-900">{euro(a.value)}</div>
+                      <div className="text-[11px] text-muted">{pct.toFixed(0)}% del lordo</div>
                     </div>
-                    <div className="truncate font-mono text-sm font-semibold text-gray-900">{euro(a.value)}</div>
-                    <div className="text-[11px] text-muted">{pct.toFixed(0)}% del lordo</div>
+                  );
+                })}
+                <div className="min-w-0 rounded-lg border border-loan/30 bg-loan/5 p-2.5">
+                  <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: '#f59e0b' }} />
+                    <Landmark size={12} className="text-loan" />
+                    <span className="truncate">Debiti (mutui)</span>
                   </div>
-                );
-              })}
-              <div className="min-w-0 rounded-lg border border-loan/30 bg-loan/5 p-2.5">
-                <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: '#f59e0b' }} />
-                  <Landmark size={12} className="text-loan" />
-                  <span className="truncate">Debiti (mutui)</span>
+                  <div className="truncate font-mono text-sm font-semibold text-gray-900">
+                    {totalResidual > 0 ? `-${euro(totalResidual)}` : euro(0)}
+                  </div>
+                  <div className="text-[11px] text-muted">{debtPctOfAssets.toFixed(0)}% del lordo</div>
                 </div>
-                <div className="truncate font-mono text-sm font-semibold text-gray-900">
-                  {totalResidual > 0 ? `-${euro(totalResidual)}` : euro(0)}
-                </div>
-                <div className="text-[11px] text-muted">{debtPctOfAssets.toFixed(0)}% del lordo</div>
               </div>
             </div>
             {otherCurrencies.length > 0 && (
