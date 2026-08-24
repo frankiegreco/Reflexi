@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
-import { Landmark, CalendarClock, Percent, LineChart, TrendingUp, Home, Plus, Trash2 } from 'lucide-react';
+import { Landmark, CalendarClock, Percent, LineChart, TrendingUp, Home, Plus, Trash2, Wallet, PiggyBank } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { apiGet, apiSend, apiDelete } from '../api';
 import { euro, monthLabel } from '../lib/format';
@@ -126,19 +126,70 @@ export default function Dashboard() {
           return parseFloat(r.estimated_value) * pct / 100;
         };
         const realEstateTotal = realEstate.reduce((sum, r) => sum + realEstateShare(r), 0);
-        const netWorth = (dash.total_balance || 0) + portfolioEur + realEstateTotal - totalResidual;
+        const liquidBalance = dash.total_balance || 0;
+        const netWorth = liquidBalance + portfolioEur + realEstateTotal - totalResidual;
+
+        // Composizione per area: le tre voci che sommate danno il patrimonio "lordo" (prima dei
+        // debiti). Il debito e' mostrato a parte (sottrae, non e' una fetta dello stesso 100%).
+        const grossAssets = Math.max(0, liquidBalance) + Math.max(0, portfolioEur) + Math.max(0, realEstateTotal);
+        const areas = [
+          { key: 'liquid', label: 'Liquidità', value: liquidBalance, color: '#4f46e5', icon: Wallet },
+          { key: 'invest', label: 'Investimenti', value: portfolioEur, color: '#0ea5e9', icon: LineChart },
+          { key: 'realestate', label: 'Immobili', value: realEstateTotal, color: '#a855f7', icon: Home },
+        ];
+        const debtPctOfAssets = grossAssets > 0 ? (totalResidual / grossAssets) * 100 : 0;
+
         return (
           <div className="card p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h6 className="flex items-center gap-1.5 text-sm font-semibold"><Home size={15} className="text-accent" /> Patrimonio netto</h6>
+              <h6 className="flex items-center gap-1.5 text-sm font-semibold"><PiggyBank size={15} className="text-accent" /> Patrimonio netto</h6>
               <button className="btn-outline text-xs" onClick={() => setReModalOpen(true)}><Plus size={13} /> Immobile</button>
             </div>
-            <div className="mb-3 font-mono text-2xl font-bold">{euro(netWorth)}</div>
-            <div className="grid grid-cols-2 gap-2 text-xs text-muted sm:grid-cols-4">
-              <div>Liquidità: <span className="font-mono text-gray-700">{euro(dash.total_balance || 0)}</span></div>
-              <div>Investimenti: <span className="font-mono text-gray-700">{euro(portfolioEur)}</span></div>
-              <div>Immobili: <span className="font-mono text-gray-700">{euro(realEstateTotal)}</span></div>
-              <div>Mutui residui: <span className="font-mono text-gray-700">-{euro(totalResidual)}</span></div>
+            <div className="font-mono text-2xl font-bold">{euro(netWorth)}</div>
+            <p className="mb-3 text-xs text-muted">
+              Patrimonio lordo {euro(grossAssets)}
+              {totalResidual > 0 && <> − debiti residui {euro(totalResidual)} ({debtPctOfAssets.toFixed(0)}% del lordo)</>}
+            </p>
+
+            {/* Barra di composizione: quota di ciascuna area sul patrimonio lordo */}
+            <div className="mb-3 flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full bg-gray-100">
+              {areas.map((a) => {
+                const pct = grossAssets > 0 ? (Math.max(0, a.value) / grossAssets) * 100 : 0;
+                if (pct <= 0) return null;
+                return (
+                  <div key={a.key} className="h-full" title={`${a.label}: ${euro(a.value)} (${pct.toFixed(0)}%)`}
+                    style={{ width: `${pct}%`, background: a.color }} />
+                );
+              })}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              {areas.map((a) => {
+                const pct = grossAssets > 0 ? (Math.max(0, a.value) / grossAssets) * 100 : 0;
+                const Icon = a.icon;
+                return (
+                  <div key={a.key} className="min-w-0 rounded-lg border border-border p-2.5">
+                    <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
+                      <Icon size={12} style={{ color: a.color }} />
+                      <span className="truncate">{a.label}</span>
+                    </div>
+                    <div className="truncate font-mono text-sm font-semibold text-gray-900">{euro(a.value)}</div>
+                    <div className="text-[11px] text-muted">{pct.toFixed(0)}% del lordo</div>
+                  </div>
+                );
+              })}
+              <div className="min-w-0 rounded-lg border border-loan/30 bg-loan/5 p-2.5">
+                <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: '#f59e0b' }} />
+                  <Landmark size={12} className="text-loan" />
+                  <span className="truncate">Debiti (mutui)</span>
+                </div>
+                <div className="truncate font-mono text-sm font-semibold text-gray-900">
+                  {totalResidual > 0 ? `-${euro(totalResidual)}` : euro(0)}
+                </div>
+                <div className="text-[11px] text-muted">{debtPctOfAssets.toFixed(0)}% del lordo</div>
+              </div>
             </div>
             {otherCurrencies.length > 0 && (
               <p className="mt-2 text-xs text-muted">
