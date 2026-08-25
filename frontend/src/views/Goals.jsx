@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash, Trash2, Target, Compass } from 'lucide-react';
+import { Plus, Trash, Trash2, Target, Compass, Pencil } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { apiGet, apiSend, apiDelete } from '../api';
 import { euro, formatDate, todayISO } from '../lib/format';
@@ -98,9 +98,12 @@ export default function Goals() {
                     <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${reached ? 'bg-income/15' : 'bg-accentSoft'}`}>
                       <Target size={16} className={reached ? 'text-income' : 'text-accent'} />
                     </div>
-                    <button onClick={() => openEdit(g)} className="font-semibold hover:underline">{g.name}</button>
+                    <span className="font-semibold">{g.name}</span>
                   </div>
-                  <button onClick={() => handleDelete(g.id)} className="text-muted hover:text-red-600"><Trash2 size={15} /></button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => openEdit(g)} className="text-muted hover:text-accent"><Pencil size={15} /></button>
+                    <button onClick={() => handleDelete(g.id)} className="text-muted hover:text-red-600"><Trash2 size={15} /></button>
+                  </div>
                 </div>
                 <div className="mb-1 flex items-baseline justify-between">
                   <span className="font-mono text-lg font-semibold">{euro(g.current_amount)}</span>
