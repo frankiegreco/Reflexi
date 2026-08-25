@@ -11,7 +11,7 @@ switch (method()) {
         $stmt->execute(['uid' => $uid]);
         $goals = $stmt->fetchAll();
         foreach ($goals as &$g) {
-            $g['current_amount'] = round(goal_progress($uid, $g['start_date']), 2);
+            $g['current_amount'] = round(goal_current_amount($uid, $g), 2);
             $g['pct'] = $g['target_amount'] > 0 ? round(min(100, max(0, $g['current_amount'] / $g['target_amount'] * 100)), 1) : 0;
         }
         respond($goals);
@@ -22,12 +22,15 @@ switch (method()) {
         foreach (['name', 'target_amount'] as $f) {
             if (empty($in[$f])) respond_error("Campo obbligatorio mancante: $f");
         }
-        $stmt = db()->prepare("INSERT INTO savings_goals (user_id, name, target_amount, start_date, target_date)
-            VALUES (:uid, :name, :target_amount, :start_date, :target_date)");
+        if (($in['account_id'] ?? null) === '') $in['account_id'] = null;
+        assert_owned('accounts', $in['account_id'] ?? null, $uid, 'conto');
+        $stmt = db()->prepare("INSERT INTO savings_goals (user_id, name, target_amount, account_id, start_date, target_date)
+            VALUES (:uid, :name, :target_amount, :account_id, :start_date, :target_date)");
         $stmt->execute([
             'uid' => $uid,
             'name' => $in['name'],
             'target_amount' => $in['target_amount'],
+            'account_id' => $in['account_id'] ?? null,
             'start_date' => $in['start_date'] ?? date('Y-m-d'),
             'target_date' => $in['target_date'] ?? null,
         ]);
@@ -37,10 +40,12 @@ switch (method()) {
     case 'PUT':
         $in = json_input();
         if (empty($in['id'])) respond_error('ID mancante');
+        if (($in['account_id'] ?? null) === '') $in['account_id'] = null;
+        if (array_key_exists('account_id', $in)) assert_owned('accounts', $in['account_id'], $uid, 'conto');
 
         $fields = [];
         $params = ['id' => $in['id'], 'uid' => $uid];
-        foreach (['name', 'target_amount', 'start_date', 'target_date'] as $f) {
+        foreach (['name', 'target_amount', 'account_id', 'start_date', 'target_date'] as $f) {
             if (array_key_exists($f, $in)) {
                 $fields[] = "$f = :$f";
                 $params[$f] = $in[$f];

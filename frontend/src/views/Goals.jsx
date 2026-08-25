@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash, Trash2, Target, Compass, Pencil } from 'lucide-react';
+import { Plus, Trash, Trash2, Target, Compass, Pencil, Wallet } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { apiGet, apiSend, apiDelete } from '../api';
 import { euro, formatDate, todayISO } from '../lib/format';
@@ -7,10 +7,10 @@ import Modal from '../components/Modal';
 import ProgressBar from '../components/ProgressBar';
 import GoalPlan from '../components/GoalPlan';
 
-const empty = { id: null, name: '', target_amount: '', start_date: todayISO(), target_date: '' };
+const empty = { id: null, name: '', target_amount: '', account_id: '', start_date: todayISO(), target_date: '' };
 
 export default function Goals() {
-  const { signal } = useData();
+  const { accounts, activeAccounts, signal } = useData();
   const [goals, setGoals] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(empty);
@@ -26,9 +26,13 @@ export default function Goals() {
     setModalOpen(true);
   }
   function openEdit(g) {
-    setForm({ id: g.id, name: g.name, target_amount: g.target_amount, start_date: g.start_date, target_date: g.target_date || '' });
+    setForm({ id: g.id, name: g.name, target_amount: g.target_amount, account_id: g.account_id || '', start_date: g.start_date, target_date: g.target_date || '' });
     setError('');
     setModalOpen(true);
+  }
+
+  function accountName(id) {
+    return accounts.find((a) => a.id === id)?.name || null;
   }
 
   async function handleSubmit(e) {
@@ -36,6 +40,7 @@ export default function Goals() {
     const payload = {
       name: form.name,
       target_amount: parseFloat(form.target_amount),
+      account_id: form.account_id || null,
       start_date: form.start_date,
       target_date: form.target_date || null,
     };
@@ -77,9 +82,11 @@ export default function Goals() {
       </div>
 
       <div className="mb-4 rounded-xl border border-accent/20 bg-accentSoft px-4 py-3 text-sm text-gray-700">
-        Imposta quanto vuoi mettere da parte ed entro quando. Il progresso si calcola da solo dal
-        tuo risparmio reale (entrate meno uscite) accumulato dalla data di inizio — non serve
-        aggiornarlo a mano, si muove insieme alle tue transazioni.
+        Imposta quanto vuoi mettere da parte ed entro quando. Il progresso si calcola da solo:
+        di default sulla base del risparmio reale (entrate meno uscite) accumulato dalla data di
+        inizio, oppure — se vuoi accantonare i soldi in modo esplicito — collega l'obiettivo a un
+        conto dedicato e trasferiscici quello che vuoi mettere da parte: il progresso diventa il
+        saldo di quel conto.
       </div>
 
       {goals.length === 0 ? (
@@ -109,6 +116,11 @@ export default function Goals() {
                   <span className="font-mono text-lg font-semibold">{euro(g.current_amount)}</span>
                   <span className="text-sm text-muted">di {euro(g.target_amount)}</span>
                 </div>
+                {g.account_id && accountName(g.account_id) && (
+                  <div className="mb-1 flex items-center gap-1 text-xs text-muted">
+                    <Wallet size={12} /> Accantonato in "{accountName(g.account_id)}"
+                  </div>
+                )}
                 <ProgressBar pct={g.pct} color={reached ? '#10b981' : '#4f46e5'} />
                 <div className="mt-2 flex items-center justify-between text-xs text-muted">
                   <span>{g.pct}%</span>
@@ -143,20 +155,40 @@ export default function Goals() {
             <label className="field-label">Importo obiettivo (€)</label>
             <input className="field" type="number" step="0.01" min="0" required value={form.target_amount} onChange={(e) => setForm((f) => ({ ...f, target_amount: e.target.value }))} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="field-label">Inizia a contare dal</label>
-              <input className="field" type="date" required value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} />
-            </div>
+          <div>
+            <label className="field-label">Conto dedicato (opzionale)</label>
+            <select className="field" value={form.account_id} onChange={(e) => setForm((f) => ({ ...f, account_id: e.target.value }))}>
+              <option value="">Nessuno — calcolo automatico dal risparmio reale</option>
+              {activeAccounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </div>
+          {form.account_id ? (
             <div>
               <label className="field-label">Scadenza (opzionale)</label>
               <input className="field" type="date" value={form.target_date} onChange={(e) => setForm((f) => ({ ...f, target_date: e.target.value }))} />
+              <p className="mt-1 text-xs text-muted">
+                Il progresso sarà il saldo reale di questo conto: trasferiscici quello che vuoi
+                accantonare per l'obiettivo (dalla vista Transazioni, come trasferimento tra conti).
+              </p>
             </div>
-          </div>
-          <p className="text-xs text-muted">
-            Il progresso somma tutte le tue entrate e uscite (esclusi trasferimenti e investimenti) da
-            questa data ad oggi — su tutti i conti insieme.
-          </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="field-label">Inizia a contare dal</label>
+                <input className="field" type="date" required value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Scadenza (opzionale)</label>
+                <input className="field" type="date" value={form.target_date} onChange={(e) => setForm((f) => ({ ...f, target_date: e.target.value }))} />
+              </div>
+            </div>
+          )}
+          {!form.account_id && (
+            <p className="text-xs text-muted">
+              Il progresso somma tutte le tue entrate e uscite (esclusi trasferimenti e investimenti) da
+              questa data ad oggi — su tutti i conti insieme.
+            </p>
+          )}
         </form>
       </Modal>
 

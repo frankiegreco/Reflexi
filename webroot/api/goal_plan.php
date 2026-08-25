@@ -20,7 +20,7 @@ $goal = $stmt->fetch();
 if (!$goal) respond_error('Obiettivo non trovato', 404);
 
 $targetAmount = (float)$goal['target_amount'];
-$currentAmount = round(goal_progress($uid, $goal['start_date']), 2);
+$currentAmount = round(goal_current_amount($uid, $goal), 2);
 $remainingAmount = round($targetAmount - $currentAmount, 2);
 
 // Obiettivo già raggiunto: niente proiezioni, solo il messaggio di congratulazioni.

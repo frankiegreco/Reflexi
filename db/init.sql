@@ -226,10 +226,12 @@ CREATE TABLE IF NOT EXISTS savings_goals (
     user_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
     target_amount DECIMAL(12,2) NOT NULL,
+    account_id INT DEFAULT NULL,
     start_date DATE NOT NULL,
     target_date DATE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS real_estate_assets (
