@@ -1,18 +1,14 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/db.php';
+require_once __DIR__ . '/lib_projection.php';
 
 $uid = require_auth();
 
 /** Proiezione del capitale a una data età di pensionamento, con versamenti mensili costanti. */
 function project_pension(float $balance, float $monthlyContribution, float $employerContribution, float $annualReturn, int $months): float
 {
-    $monthlyRate = ($annualReturn / 100) / 12;
-    $totalMonthly = $monthlyContribution + $employerContribution;
-    for ($i = 0; $i < $months; $i++) {
-        $balance = $balance * (1 + $monthlyRate) + $totalMonthly;
-    }
-    return $balance;
+    return compound_growth_project($balance, $monthlyContribution + $employerContribution, $annualReturn, $months);
 }
 
 switch (method()) {

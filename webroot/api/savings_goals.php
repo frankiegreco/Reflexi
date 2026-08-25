@@ -1,26 +1,9 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/db.php';
+require_once __DIR__ . '/lib_goals.php';
 
 $uid = require_auth();
-
-// Stesse esclusioni usate in analytics.php: i movimenti di investimento e i
-// trasferimenti tra conti propri non sono "risparmio", sono spostamenti.
-const GOAL_EXCLUDED_CATEGORIES = ['Investimenti (acquisto)', 'Investimenti (vendita)'];
-
-function goal_progress(int $uid, string $startDate): float
-{
-    $placeholders = implode(',', array_fill(0, count(GOAL_EXCLUDED_CATEGORIES), '?'));
-    $stmt = db()->prepare("
-        SELECT COALESCE(SUM(CASE WHEN t.type = 'entrata' THEN t.amount ELSE -t.amount END), 0) AS net
-        FROM transactions t
-        JOIN categories c ON c.id = t.category_id
-        WHERE t.user_id = ? AND t.date >= ? AND t.type IN ('entrata','uscita')
-        AND c.name NOT IN ($placeholders)
-    ");
-    $stmt->execute(array_merge([$uid, $startDate], GOAL_EXCLUDED_CATEGORIES));
-    return (float)$stmt->fetchColumn();
-}
 
 switch (method()) {
     case 'GET':

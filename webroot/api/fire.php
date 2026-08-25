@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require __DIR__ . '/db.php';
 require_once __DIR__ . '/lib_networth.php';
+require_once __DIR__ . '/lib_savings.php';
+require_once __DIR__ . '/lib_projection.php';
 
 $uid = require_auth();
 
@@ -26,24 +28,11 @@ $expectedReturn = (float)$user['fire_expected_return'];
 
 // Spesa media mensile reale, sugli ultimi 12 mesi di storico disponibili
 // (esclusi investimenti e trasferimenti, che non sono vero "consumo").
-$excludedCategories = ['Investimenti (acquisto)', 'Investimenti (vendita)'];
-$placeholders = implode(',', array_fill(0, count($excludedCategories), '?'));
-$stmt = db()->prepare("
-    SELECT
-        COALESCE(SUM(CASE WHEN t.type = 'uscita' THEN t.amount ELSE 0 END), 0) AS total_expense,
-        COALESCE(SUM(CASE WHEN t.type = 'entrata' THEN t.amount ELSE 0 END), 0) AS total_income,
-        COUNT(DISTINCT DATE_FORMAT(t.date, '%Y-%m')) AS months_with_data
-    FROM transactions t
-    JOIN categories c ON c.id = t.category_id
-    WHERE t.user_id = ? AND t.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) AND t.type IN ('entrata','uscita')
-    AND c.name NOT IN ($placeholders)
-");
-$stmt->execute(array_merge([$uid], $excludedCategories));
-$row = $stmt->fetch();
-$monthsWithData = max(1, (int)$row['months_with_data']);
-$monthlyExpense = (float)$row['total_expense'] / $monthsWithData;
-$monthlyIncome = (float)$row['total_income'] / $monthsWithData;
-$monthlySavings = max(0, $monthlyIncome - $monthlyExpense);
+$savings = compute_avg_monthly_savings($uid, 12);
+$monthsWithData = $savings['months_with_data'];
+$monthlyExpense = $savings['monthly_expense'];
+$monthlyIncome = $savings['monthly_income'];
+$monthlySavings = max(0, $savings['monthly_savings']);
 $annualExpense = $monthlyExpense * 12;
 
 $fireNumber = $withdrawalRate > 0 ? $annualExpense * (100 / $withdrawalRate) : 0;
@@ -55,21 +44,8 @@ $progressPct = $fireNumber > 0 ? min(100, ($investableAssets / $fireNumber) * 10
 
 // Proiezione: quanti anni mancano al numero FIRE, dato il capitale attuale,
 // il risparmio mensile attuale, e il rendimento atteso configurato.
-$monthlyRate = ($expectedReturn / 100) / 12;
-$years = null;
-if ($investableAssets < $fireNumber && $fireNumber > 0) {
-    $balance = $investableAssets;
-    $months = 0;
-    $maxMonths = 100 * 12; // limite di sicurezza: non proiettare oltre 100 anni
-    while ($balance < $fireNumber && $months < $maxMonths) {
-        $balance = $balance * (1 + $monthlyRate) + $monthlySavings;
-        $months++;
-        if ($monthlySavings <= 0 && $monthlyRate <= 0) break; // non arriverà mai, evita loop infinito
-    }
-    $years = $balance >= $fireNumber ? round($months / 12, 1) : null;
-} else {
-    $years = 0;
-}
+$monthsToFire = compound_growth_months_to_target($investableAssets, $monthlySavings, $expectedReturn, $fireNumber);
+$years = $monthsToFire === null ? null : round($monthsToFire / 12, 1);
 
 respond([
     'withdrawal_rate' => $withdrawalRate,

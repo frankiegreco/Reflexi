@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash, Trash2, Target } from 'lucide-react';
+import { Plus, Trash, Trash2, Target, Compass } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { apiGet, apiSend, apiDelete } from '../api';
 import { euro, formatDate, todayISO } from '../lib/format';
 import Modal from '../components/Modal';
 import ProgressBar from '../components/ProgressBar';
+import GoalPlan from '../components/GoalPlan';
 
 const empty = { id: null, name: '', target_amount: '', start_date: todayISO(), target_date: '' };
 
@@ -14,6 +15,7 @@ export default function Goals() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [error, setError] = useState('');
+  const [planGoal, setPlanGoal] = useState(null);
 
   const load = useCallback(async () => setGoals(await apiGet('savings_goals.php')), []);
   useEffect(() => { load(); }, [load, signal]);
@@ -111,6 +113,11 @@ export default function Goals() {
                     <span>{reached ? 'Obiettivo raggiunto 🎉' : left >= 0 ? `${left} giorni rimasti` : 'Scaduto'}</span>
                   )}
                 </div>
+                {!reached && (
+                  <button className="btn-outline mt-3 w-full justify-center text-sm" onClick={() => setPlanGoal(g)}>
+                    <Compass size={15} /> Piano per raggiungerlo
+                  </button>
+                )}
               </div>
             );
           })}
@@ -149,6 +156,8 @@ export default function Goals() {
           </p>
         </form>
       </Modal>
+
+      <GoalPlan goal={planGoal} onClose={() => setPlanGoal(null)} />
     </div>
   );
 }
