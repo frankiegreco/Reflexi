@@ -26,11 +26,21 @@ ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
 // Sessione PHP: e' cosi' che sappiamo "chi sta chiedendo" in ogni endpoint.
+// 'secure' e' condizionato a HTTPS reale: in locale (XAMPP, o accesso diretto
+// alla porta 8080 senza passare da Caddy) resta http puro e il cookie deve
+// comunque partire, altrimenti il login smette di funzionare li'. Dietro
+// Caddy il traffico arriva sempre come reverse proxy in HTTP verso questo
+// container, quindi la rilevazione vera e' l'header X-Forwarded-Proto che
+// Caddy imposta di default (stesso principio di client_ip() con X-Forwarded-For).
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
     'httponly' => true,
     'samesite' => 'Lax',
+    'secure' => $isHttps,
 ]);
 session_start();
 
