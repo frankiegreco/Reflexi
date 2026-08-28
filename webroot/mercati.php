@@ -85,14 +85,14 @@ include '_nav.php';
       <span class="text-xs text-muted">Aggiornato ogni ~15 min</span>
     </div>
     <div class="mb-12 overflow-x-auto rounded-2xl border border-border">
-      <table class="w-full min-w-[560px] border-collapse text-sm">
+      <table class="w-full border-collapse sm:min-w-[560px] text-sm">
         <thead>
           <tr class="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
-            <th class="px-4 py-3 font-semibold">#</th>
-            <th class="px-4 py-3 font-semibold">Nome</th>
-            <th class="px-4 py-3 text-right font-semibold">Prezzo</th>
-            <th class="px-4 py-3 text-right font-semibold">24h</th>
-            <th class="hidden px-4 py-3 text-right font-semibold sm:table-cell">Ultimi 14gg</th>
+            <th class="px-3 py-3 sm:px-4 font-semibold">#</th>
+            <th class="px-3 py-3 sm:px-4 font-semibold">Nome</th>
+            <th class="px-3 py-3 sm:px-4 text-right font-semibold">Prezzo</th>
+            <th class="px-3 py-3 sm:px-4 text-right font-semibold">24h</th>
+            <th class="hidden px-3 py-3 sm:px-4 text-right font-semibold sm:table-cell">Ultimi 14gg</th>
           </tr>
         </thead>
         <tbody id="mkt-watchlist-body">
@@ -107,14 +107,14 @@ include '_nav.php';
       <span class="text-xs text-muted">Tra gli strumenti tracciati dagli utenti Reflexi</span>
     </div>
     <div class="overflow-x-auto rounded-2xl border border-border">
-      <table class="w-full min-w-[560px] border-collapse text-sm">
+      <table class="w-full border-collapse sm:min-w-[560px] text-sm">
         <thead>
           <tr class="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
-            <th class="px-4 py-3 font-semibold">#</th>
-            <th class="px-4 py-3 font-semibold">Nome</th>
-            <th class="px-4 py-3 text-right font-semibold">Prezzo</th>
-            <th class="px-4 py-3 text-right font-semibold">24h</th>
-            <th class="hidden px-4 py-3 text-right font-semibold sm:table-cell">Ultimi 14gg</th>
+            <th class="px-3 py-3 sm:px-4 font-semibold">#</th>
+            <th class="px-3 py-3 sm:px-4 font-semibold">Nome</th>
+            <th class="px-3 py-3 sm:px-4 text-right font-semibold">Prezzo</th>
+            <th class="px-3 py-3 sm:px-4 text-right font-semibold">24h</th>
+            <th class="hidden px-3 py-3 sm:px-4 text-right font-semibold sm:table-cell">Ultimi 14gg</th>
           </tr>
         </thead>
         <tbody id="mkt-movers-body">
@@ -191,14 +191,14 @@ function marketRow(i, rank) {
   const name = i.name.replace(/"/g, '&quot;');
   return `
     <tr data-ticker="${i.ticker}" data-name="${name}" class="mkt-row cursor-pointer border-b border-border last:border-0 transition hover:bg-gray-50">
-      <td class="px-4 py-3 font-mono text-xs text-muted">${rank}</td>
-      <td class="px-4 py-3">
+      <td class="px-3 py-3 sm:px-4 font-mono text-xs text-muted">${rank}</td>
+      <td class="px-3 py-3 sm:px-4">
         <div class="font-semibold text-gray-900">${i.name}</div>
         <div class="text-xs text-muted">${i.ticker} · ${typeLabel(i.type)}</div>
       </td>
-      <td class="px-4 py-3 text-right font-mono text-gray-900">${fmtPrice(i.price, i.currency)}</td>
-      <td class="px-4 py-3 text-right">${changePill(i.change_pct)}</td>
-      <td class="hidden px-4 py-3 text-right sm:table-cell">${sparklineSVG(i.sparkline)}</td>
+      <td class="px-3 py-3 sm:px-4 text-right font-mono text-gray-900">${fmtPrice(i.price, i.currency)}</td>
+      <td class="px-3 py-3 sm:px-4 text-right">${changePill(i.change_pct)}</td>
+      <td class="hidden px-3 py-3 sm:px-4 text-right sm:table-cell">${sparklineSVG(i.sparkline)}</td>
     </tr>`;
 }
 
@@ -292,7 +292,13 @@ function renderChart(points) {
   }
   empty.classList.add('hidden');
 
-  const W = 800, H = 280, PADL = 8, PADR = 60, PADT = 16, PADB = 24;
+  // viewBox = dimensioni reali del contenitore (non un 800x280 fisso): così
+  // il font-size delle etichette (in unità di viewBox) corrisponde a pixel
+  // fisici veri, invece di rimpicciolirsi illeggibile quando lo schermo è
+  // più stretto di 800px come su mobile.
+  const W = Math.round(svgBox.clientWidth) || 800;
+  const H = Math.round(svgBox.clientHeight) || 280;
+  const PADL = 8, PADR = 56, PADT = 16, PADB = 24;
   const prices = points.map(p => parseFloat(p.price));
   const min = Math.min(...prices), max = Math.max(...prices);
   const range = (max - min) || 1;
@@ -342,9 +348,9 @@ function renderChart(points) {
   const crossLine = crosshair.querySelector('line');
   const crossDot = crosshair.querySelector('circle');
 
-  svgEl.addEventListener('mousemove', (e) => {
+  function moveCrosshair(clientX) {
     const rect = svgEl.getBoundingClientRect();
-    const relX = ((e.clientX - rect.left) / rect.width) * W;
+    const relX = ((clientX - rect.left) / rect.width) * W;
     let idx = Math.round((relX - PADL) / stepX);
     idx = Math.max(0, Math.min(points.length - 1, idx));
     const [x, y] = coords[idx];
@@ -357,8 +363,16 @@ function renderChart(points) {
     tooltip.style.top = Math.max(0, (y * (rect.height / H)) - 36) + 'px';
     tooltip.innerHTML = `<div class="font-mono font-semibold">${fmtPrice(prices[idx], points[0].currency)}</div><div class="text-muted">${points[idx].date}</div>`;
     tooltip.classList.remove('hidden');
-  });
-  svgEl.addEventListener('mouseleave', () => { crosshair.style.opacity = '0'; tooltip.classList.add('hidden'); });
+  }
+  function hideCrosshair() { crosshair.style.opacity = '0'; tooltip.classList.add('hidden'); }
+
+  svgEl.addEventListener('mousemove', (e) => moveCrosshair(e.clientX));
+  svgEl.addEventListener('mouseleave', hideCrosshair);
+  // Touch: mousemove non scatta sui device touch, altrimenti il crosshair
+  // sarebbe una funzione solo desktop.
+  svgEl.addEventListener('touchstart', (e) => moveCrosshair(e.touches[0].clientX), { passive: true });
+  svgEl.addEventListener('touchmove', (e) => moveCrosshair(e.touches[0].clientX), { passive: true });
+  svgEl.addEventListener('touchend', hideCrosshair);
 }
 
 document.querySelectorAll('.mkt-range').forEach(btn => {

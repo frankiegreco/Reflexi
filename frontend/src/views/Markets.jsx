@@ -50,14 +50,14 @@ function MarketTable({ title, hint, items, onSelect, emptyLabel }) {
         {hint && <span className="text-xs text-muted">{hint}</span>}
       </div>
       <div className="overflow-x-auto rounded-2xl border border-border">
-        <table className="w-full min-w-[520px] border-collapse text-sm">
+        <table className="w-full border-collapse text-sm sm:min-w-[520px]">
           <thead>
             <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
-              <th className="px-4 py-3 font-semibold">#</th>
-              <th className="px-4 py-3 font-semibold">Nome</th>
-              <th className="px-4 py-3 text-right font-semibold">Prezzo</th>
-              <th className="px-4 py-3 text-right font-semibold">24h</th>
-              <th className="hidden px-4 py-3 text-right font-semibold sm:table-cell">Ultimi 14gg</th>
+              <th className="px-3 py-3 sm:px-4 font-semibold">#</th>
+              <th className="px-3 py-3 sm:px-4 font-semibold">Nome</th>
+              <th className="px-3 py-3 sm:px-4 text-right font-semibold">Prezzo</th>
+              <th className="px-3 py-3 sm:px-4 text-right font-semibold">24h</th>
+              <th className="hidden px-3 py-3 sm:px-4 text-right font-semibold sm:table-cell">Ultimi 14gg</th>
             </tr>
           </thead>
           <tbody>
@@ -73,14 +73,14 @@ function MarketTable({ title, hint, items, onSelect, emptyLabel }) {
                 onClick={() => onSelect(i.ticker, i.name)}
                 className="cursor-pointer border-b border-border last:border-0 transition hover:bg-gray-50"
               >
-                <td className="px-4 py-3 font-mono text-xs text-muted">{idx + 1}</td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 sm:px-4 font-mono text-xs text-muted">{idx + 1}</td>
+                <td className="px-3 py-3 sm:px-4">
                   <div className="font-semibold text-gray-900">{i.name}</div>
                   <div className="text-xs text-muted">{i.ticker} · {TYPE_LABELS[i.type] || i.type}</div>
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-gray-900">{fmtPrice(i.price, i.currency)}</td>
-                <td className="px-4 py-3 text-right"><ChangePill pct={i.change_pct} /></td>
-                <td className="hidden px-4 py-3 text-right sm:table-cell"><div className="flex justify-end"><Sparkline prices={i.sparkline} /></div></td>
+                <td className="px-3 py-3 sm:px-4 text-right font-mono text-gray-900">{fmtPrice(i.price, i.currency)}</td>
+                <td className="px-3 py-3 sm:px-4 text-right"><ChangePill pct={i.change_pct} /></td>
+                <td className="hidden px-3 py-3 sm:px-4 text-right sm:table-cell"><div className="flex justify-end"><Sparkline prices={i.sparkline} /></div></td>
               </tr>
             ))}
           </tbody>
