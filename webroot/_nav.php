@@ -17,6 +17,7 @@ function navlink($href, $key, $label, $active) {
     <nav class="hidden items-center gap-3 text-sm font-medium xl:flex">
       <?= navlink('/mutui.php', 'mutui', 'Mutui', $active) ?>
       <?= navlink('/investimenti.php', 'investimenti', 'Investimenti', $active) ?>
+      <?= navlink('/mercati.php', 'mercati', 'Mercati', $active) ?>
       <?= navlink('/budget.php', 'budget', 'Budget', $active) ?>
       <?= navlink('/analisi.php', 'analisi', 'Analisi predittiva', $active) ?>
       <?= navlink('/calcolatori.php', 'calcolatori', 'Calcolatori', $active) ?>
@@ -52,6 +53,7 @@ function navlink($href, $key, $label, $active) {
     $items = [
         ['mutui.php', 'mutui', 'Mutui'],
         ['investimenti.php', 'investimenti', 'Investimenti'],
+        ['mercati.php', 'mercati', 'Mercati'],
         ['budget.php', 'budget', 'Budget'],
         ['analisi.php', 'analisi', 'Analisi predittiva'],
         ['about.php', 'about', 'Chi siamo'],

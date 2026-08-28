@@ -10,6 +10,7 @@ $staticUrls = [
     ['/', '1.0', 'monthly'],
     ['/mutui.php', '0.8', 'monthly'],
     ['/investimenti.php', '0.8', 'monthly'],
+    ['/mercati.php', '0.8', 'daily'],
     ['/budget.php', '0.8', 'monthly'],
     ['/analisi.php', '0.8', 'monthly'],
     ['/calcolatori.php', '0.9', 'monthly'],

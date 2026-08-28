@@ -27,6 +27,7 @@
         <ul class="space-y-2 text-sm">
           <li><a href="/mutui.php" class="text-gray-600 hover:text-accent">Mutui</a></li>
           <li><a href="/investimenti.php" class="text-gray-600 hover:text-accent">Investimenti</a></li>
+          <li><a href="/mercati.php" class="text-gray-600 hover:text-accent">Mercati</a></li>
           <li><a href="/budget.php" class="text-gray-600 hover:text-accent">Budget</a></li>
           <li><a href="/analisi.php" class="text-gray-600 hover:text-accent">Analisi predittiva</a></li>
           <li><a href="/calcolatori.php" class="text-gray-600 hover:text-accent">Calcolatori gratuiti</a></li>
