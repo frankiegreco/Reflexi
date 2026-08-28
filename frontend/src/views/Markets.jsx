@@ -12,12 +12,12 @@ function fmtPrice(price, currency) {
 }
 
 function changeColor(pct) {
-  return pct > 0 ? '#10b981' : pct < 0 ? '#f43f5e' : '#838b9c';
+  return pct > 0 ? '#10b981' : pct < 0 ? '#f43f5e' : '#6b7080';
 }
 
 function ChangePill({ pct }) {
-  if (pct === null || pct === undefined) return <span className="text-xs text-marketMuted">—</span>;
-  const cls = pct > 0 ? 'bg-income/10 text-income' : pct < 0 ? 'bg-expense/10 text-expense' : 'bg-white/5 text-marketMuted';
+  if (pct === null || pct === undefined) return <span className="text-xs text-muted">—</span>;
+  const cls = pct > 0 ? 'bg-income/10 text-income' : pct < 0 ? 'bg-expense/10 text-expense' : 'bg-gray-100 text-muted';
   const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '';
   return (
     <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 font-mono text-xs font-semibold ${cls}`}>
@@ -27,7 +27,7 @@ function ChangePill({ pct }) {
 }
 
 function Sparkline({ prices }) {
-  if (!Array.isArray(prices) || prices.length < 2) return <span className="text-xs text-marketMuted">—</span>;
+  if (!Array.isArray(prices) || prices.length < 2) return <span className="text-xs text-muted">—</span>;
   const W = 96, H = 30, PAD = 2;
   const min = Math.min(...prices), max = Math.max(...prices);
   const range = (max - min) || 1;
@@ -45,13 +45,13 @@ function MarketTable({ title, hint, items, onSelect, emptyLabel }) {
   return (
     <div className="mb-8">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-marketMuted">{title}</h2>
-        {hint && <span className="text-xs text-marketMuted">{hint}</span>}
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted">{title}</h2>
+        {hint && <span className="text-xs text-muted">{hint}</span>}
       </div>
-      <div className="overflow-x-auto rounded-2xl border border-marketBorder">
+      <div className="overflow-x-auto rounded-2xl border border-border">
         <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-marketBorder text-left text-[11px] uppercase tracking-wider text-marketMuted">
+            <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
               <th className="px-4 py-3 font-semibold">#</th>
               <th className="px-4 py-3 font-semibold">Nome</th>
               <th className="px-4 py-3 text-right font-semibold">Prezzo</th>
@@ -61,23 +61,23 @@ function MarketTable({ title, hint, items, onSelect, emptyLabel }) {
           </thead>
           <tbody>
             {items === null && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-marketMuted">Caricamento...</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted">Caricamento...</td></tr>
             )}
             {items !== null && items.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-marketMuted">{emptyLabel}</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted">{emptyLabel}</td></tr>
             )}
             {items?.map((i, idx) => (
               <tr
                 key={i.ticker}
                 onClick={() => onSelect(i.ticker, i.name)}
-                className="cursor-pointer border-b border-marketBorder last:border-0 transition hover:bg-white/[0.04]"
+                className="cursor-pointer border-b border-border last:border-0 transition hover:bg-gray-50"
               >
-                <td className="px-4 py-3 font-mono text-xs text-marketMuted">{idx + 1}</td>
+                <td className="px-4 py-3 font-mono text-xs text-muted">{idx + 1}</td>
                 <td className="px-4 py-3">
-                  <div className="font-semibold text-marketText">{i.name}</div>
-                  <div className="text-xs text-marketMuted">{i.ticker} · {TYPE_LABELS[i.type] || i.type}</div>
+                  <div className="font-semibold text-gray-900">{i.name}</div>
+                  <div className="text-xs text-muted">{i.ticker} · {TYPE_LABELS[i.type] || i.type}</div>
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-marketText">{fmtPrice(i.price, i.currency)}</td>
+                <td className="px-4 py-3 text-right font-mono text-gray-900">{fmtPrice(i.price, i.currency)}</td>
                 <td className="px-4 py-3 text-right"><ChangePill pct={i.change_pct} /></td>
                 <td className="hidden px-4 py-3 text-right sm:table-cell"><div className="flex justify-end"><Sparkline prices={i.sparkline} /></div></td>
               </tr>
@@ -146,35 +146,35 @@ export default function Markets() {
   }, [history]);
 
   return (
-    <div className="-m-4 rounded-none bg-marketBg p-4 sm:-m-8 sm:rounded-2xl sm:p-8">
+    <div>
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-marketText">Mercati</h1>
-        <p className="text-sm text-marketMuted">Andamenti di azioni, ETF e crypto — dati Yahoo Finance, non solo il tuo portafoglio.</p>
+        <h1 className="text-xl font-bold">Mercati</h1>
+        <p className="text-sm text-muted">Andamenti di azioni, ETF e crypto — dati Yahoo Finance, non solo il tuo portafoglio.</p>
       </div>
 
       {/* Ricerca */}
       <div className="relative mb-8">
-        <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-marketMuted" />
+        <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
         <input
-          className="w-full rounded-xl border border-marketBorder bg-marketPanel py-3 pl-11 pr-4 text-sm text-marketText placeholder:text-marketMuted outline-none transition focus:border-accent"
+          className="w-full rounded-xl border border-border bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-muted outline-none transition focus:border-accent"
           placeholder='Cerca un ticker o un nome — es. Apple, VWCE, Bitcoin'
           value={query}
           onChange={(e) => { setQuery(e.target.value); setShowResults(true); }}
           onFocus={() => setShowResults(true)}
         />
         {showResults && query.trim().length >= 2 && (
-          <div className="absolute left-0 right-0 top-full z-10 mt-2 max-h-72 overflow-y-auto rounded-xl border border-marketBorder bg-marketPanel shadow-2xl">
-            {searching && <div className="px-4 py-3 text-sm text-marketMuted">Ricerca in corso...</div>}
-            {!searching && results.length === 0 && <div className="px-4 py-3 text-sm text-marketMuted">Nessun risultato.</div>}
+          <div className="absolute left-0 right-0 top-full z-10 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border bg-white shadow-2xl">
+            {searching && <div className="px-4 py-3 text-sm text-muted">Ricerca in corso...</div>}
+            {!searching && results.length === 0 && <div className="px-4 py-3 text-sm text-muted">Nessun risultato.</div>}
             {!searching && results.map((r) => (
               <button
                 key={r.ticker}
                 type="button"
                 onClick={() => pick(r.ticker, r.name)}
-                className="flex w-full items-center justify-between gap-2 border-b border-marketBorder px-4 py-2.5 text-left text-sm last:border-0 hover:bg-white/[0.05]"
+                className="flex w-full items-center justify-between gap-2 border-b border-border px-4 py-2.5 text-left text-sm last:border-0 hover:bg-accentSoft"
               >
-                <span className="text-marketText">{r.name} <span className="text-xs text-marketMuted">{r.exchange}</span></span>
-                <span className="flex-shrink-0 font-mono text-xs text-marketMuted">{r.ticker}</span>
+                <span className="text-gray-900">{r.name} <span className="text-xs text-muted">{r.exchange}</span></span>
+                <span className="flex-shrink-0 font-mono text-xs text-muted">{r.ticker}</span>
               </button>
             ))}
           </div>
@@ -183,23 +183,23 @@ export default function Markets() {
 
       {/* Grafico titolo selezionato */}
       {selected && (
-        <div className="mb-10 rounded-2xl border border-marketBorder bg-marketPanel p-5 sm:p-6">
+        <div className="mb-10 rounded-2xl border border-border bg-white p-5 sm:p-6">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="text-sm font-semibold text-marketMuted">{selected.name} · {selected.ticker}</div>
+              <div className="text-sm font-semibold text-muted">{selected.name} · {selected.ticker}</div>
               {quote && (
                 <div className="mt-1 flex items-baseline gap-2.5">
-                  <span className="font-mono text-2xl font-bold text-marketText">{fmtPrice(quote.price, quote.currency)}</span>
+                  <span className="font-mono text-2xl font-bold text-gray-900">{fmtPrice(quote.price, quote.currency)}</span>
                   <ChangePill pct={quote.change_pct} />
                 </div>
               )}
             </div>
-            <div className="flex gap-1 rounded-lg bg-white/5 p-1">
+            <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
               {[30, 90, 365].map((d) => (
                 <button
                   key={d}
                   onClick={() => setDays(d)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${days === d ? 'bg-accent text-white' : 'text-marketMuted hover:text-marketText'}`}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${days === d ? 'bg-accent text-white' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                   {d === 365 ? '1 anno' : d === 30 ? '1M' : '3M'}
                 </button>
@@ -207,7 +207,7 @@ export default function Markets() {
             </div>
           </div>
           {history.length < 2 ? (
-            <p className="py-10 text-center text-sm text-marketMuted">
+            <p className="py-10 text-center text-sm text-muted">
               Non c'è ancora abbastanza storico per questo titolo — si costruisce da solo, torna a controllare tra qualche giorno.
             </p>
           ) : (
@@ -232,7 +232,7 @@ export default function Markets() {
                     pointRadius: 0,
                     pointHoverRadius: 4,
                     pointHoverBackgroundColor: trendColor,
-                    pointHoverBorderColor: '#0b0e14',
+                    pointHoverBorderColor: '#ffffff',
                   }],
                 }}
                 options={{
@@ -241,11 +241,11 @@ export default function Markets() {
                   plugins: {
                     legend: { display: false },
                     tooltip: {
-                      backgroundColor: '#0b0e14',
-                      borderColor: '#232733',
+                      backgroundColor: '#ffffff',
+                      borderColor: '#e7e9f0',
                       borderWidth: 1,
-                      titleColor: '#838b9c',
-                      bodyColor: '#e5e7eb',
+                      titleColor: '#6b7080',
+                      bodyColor: '#111827',
                       bodyFont: { family: '"IBM Plex Mono", monospace', weight: '600' },
                       padding: 10,
                       displayColors: false,
@@ -253,10 +253,10 @@ export default function Markets() {
                     },
                   },
                   scales: {
-                    x: { grid: { display: false }, ticks: { color: '#838b9c', maxTicksLimit: 6, font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { color: '#6b7080', maxTicksLimit: 6, font: { size: 10 } } },
                     y: {
-                      grid: { color: 'rgba(255,255,255,0.06)' },
-                      ticks: { color: '#838b9c', font: { size: 10, family: '"IBM Plex Mono", monospace' }, callback: (v) => fmtPrice(v, history[0]?.currency) },
+                      grid: { color: '#e7e9f0' },
+                      ticks: { color: '#6b7080', font: { size: 10, family: '"IBM Plex Mono", monospace' }, callback: (v) => fmtPrice(v, history[0]?.currency) },
                     },
                   },
                 }}
@@ -282,7 +282,7 @@ export default function Markets() {
         emptyLabel="Non ci sono ancora abbastanza dati per calcolare i movimenti di oggi."
       />
 
-      <p className="text-center text-xs text-marketMuted">Dati da Yahoo Finance. A scopo informativo, non è una raccomandazione di investimento.</p>
+      <p className="text-center text-xs text-muted">Dati da Yahoo Finance. A scopo informativo, non è una raccomandazione di investimento.</p>
     </div>
   );
 }

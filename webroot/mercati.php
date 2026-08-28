@@ -46,47 +46,47 @@ include '_nav.php';
   </div>
 </section>
 
-<!-- TERMINALE MERCATI (dark, stile CoinMarketCap/TradingView) -->
-<section class="bg-marketBg px-4 py-10 sm:px-6 sm:py-14">
+<!-- TERMINALE MERCATI (stile CoinMarketCap/TradingView) -->
+<section class="border-t border-border bg-white px-4 py-10 sm:px-6 sm:py-14">
   <div class="mx-auto max-w-6xl">
 
     <!-- Ricerca -->
     <div class="relative mb-8">
-      <svg class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-marketMuted" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="mkt-search-input" type="text" autocomplete="off" placeholder="Cerca un ticker o un nome — es. Apple, VWCE, Bitcoin"
-        class="w-full rounded-xl border border-marketBorder bg-marketPanel py-3.5 pl-11 pr-4 text-sm text-marketText placeholder:text-marketMuted outline-none transition focus:border-accent">
-      <div id="mkt-search-results" class="absolute left-0 right-0 top-full z-20 mt-2 hidden max-h-72 overflow-y-auto rounded-xl border border-marketBorder bg-marketPanel shadow-2xl"></div>
+        class="w-full rounded-xl border border-border bg-white py-3.5 pl-11 pr-4 text-sm text-gray-900 placeholder:text-muted outline-none transition focus:border-accent">
+      <div id="mkt-search-results" class="absolute left-0 right-0 top-full z-20 mt-2 hidden max-h-72 overflow-y-auto rounded-xl border border-border bg-white shadow-2xl"></div>
     </div>
 
     <!-- Grafico titolo selezionato -->
-    <div id="mkt-chart-box" class="mb-12 hidden rounded-2xl border border-marketBorder bg-marketPanel p-5 sm:p-6">
+    <div id="mkt-chart-box" class="mb-12 hidden rounded-2xl border border-border bg-white p-5 sm:p-6">
       <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div id="mkt-chart-title" class="text-sm font-semibold text-marketMuted"></div>
+          <div id="mkt-chart-title" class="text-sm font-semibold text-muted"></div>
           <div class="mt-1 flex items-baseline gap-2.5">
-            <span id="mkt-chart-price" class="font-mono text-2xl font-bold text-marketText"></span>
+            <span id="mkt-chart-price" class="font-mono text-2xl font-bold text-gray-900"></span>
             <span id="mkt-chart-change" class="font-mono text-sm font-semibold"></span>
           </div>
         </div>
-        <div class="flex gap-1 rounded-lg bg-white/5 p-1">
-          <button data-days="30" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-marketMuted transition">1M</button>
-          <button data-days="90" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-marketMuted transition">3M</button>
-          <button data-days="365" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-marketMuted transition">1A</button>
+        <div class="flex gap-1 rounded-lg bg-gray-100 p-1">
+          <button data-days="30" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">1M</button>
+          <button data-days="90" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">3M</button>
+          <button data-days="365" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">1A</button>
         </div>
       </div>
       <div id="mkt-chart-svg" class="relative h-64 w-full sm:h-72"></div>
-      <p id="mkt-chart-empty" class="hidden py-10 text-center text-sm text-marketMuted">Non c'è ancora storico per questo ticker — si costruisce da solo, torna a controllare tra qualche giorno.</p>
+      <p id="mkt-chart-empty" class="hidden py-10 text-center text-sm text-muted">Non c'è ancora storico per questo ticker — si costruisce da solo, torna a controllare tra qualche giorno.</p>
     </div>
 
     <!-- Watchlist -->
     <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-marketMuted">Titoli più seguiti</h2>
-      <span class="text-xs text-marketMuted">Aggiornato ogni ~15 min</span>
+      <h2 class="text-xs font-bold uppercase tracking-wider text-muted">Titoli più seguiti</h2>
+      <span class="text-xs text-muted">Aggiornato ogni ~15 min</span>
     </div>
-    <div class="mb-12 overflow-x-auto rounded-2xl border border-marketBorder">
+    <div class="mb-12 overflow-x-auto rounded-2xl border border-border">
       <table class="w-full min-w-[560px] border-collapse text-sm">
         <thead>
-          <tr class="border-b border-marketBorder text-left text-[11px] uppercase tracking-wider text-marketMuted">
+          <tr class="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
             <th class="px-4 py-3 font-semibold">#</th>
             <th class="px-4 py-3 font-semibold">Nome</th>
             <th class="px-4 py-3 text-right font-semibold">Prezzo</th>
@@ -95,20 +95,20 @@ include '_nav.php';
           </tr>
         </thead>
         <tbody id="mkt-watchlist-body">
-          <tr><td colspan="5" class="px-4 py-8 text-center text-sm text-marketMuted">Caricamento quotazioni...</td></tr>
+          <tr><td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Caricamento quotazioni...</td></tr>
         </tbody>
       </table>
     </div>
 
     <!-- Top mover -->
     <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-marketMuted">I movimenti più forti oggi</h2>
-      <span class="text-xs text-marketMuted">Tra gli strumenti tracciati dagli utenti Reflexi</span>
+      <h2 class="text-xs font-bold uppercase tracking-wider text-muted">I movimenti più forti oggi</h2>
+      <span class="text-xs text-muted">Tra gli strumenti tracciati dagli utenti Reflexi</span>
     </div>
-    <div class="overflow-x-auto rounded-2xl border border-marketBorder">
+    <div class="overflow-x-auto rounded-2xl border border-border">
       <table class="w-full min-w-[560px] border-collapse text-sm">
         <thead>
-          <tr class="border-b border-marketBorder text-left text-[11px] uppercase tracking-wider text-marketMuted">
+          <tr class="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
             <th class="px-4 py-3 font-semibold">#</th>
             <th class="px-4 py-3 font-semibold">Nome</th>
             <th class="px-4 py-3 text-right font-semibold">Prezzo</th>
@@ -117,12 +117,12 @@ include '_nav.php';
           </tr>
         </thead>
         <tbody id="mkt-movers-body">
-          <tr><td colspan="5" class="px-4 py-8 text-center text-sm text-marketMuted">Caricamento...</td></tr>
+          <tr><td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Caricamento...</td></tr>
         </tbody>
       </table>
     </div>
 
-    <p class="mt-6 text-center text-xs text-marketMuted">Dati da Yahoo Finance. A scopo informativo, non è una raccomandazione di investimento.</p>
+    <p class="mt-6 text-center text-xs text-muted">Dati da Yahoo Finance. A scopo informativo, non è una raccomandazione di investimento.</p>
   </div>
 </section>
 
@@ -160,11 +160,11 @@ const euroLike = (currency) => new Intl.NumberFormat('it-IT', { style: 'currency
 function fmtPrice(price, currency) {
   try { return euroLike(currency).format(price); } catch (e) { return price.toFixed(2) + ' ' + (currency || ''); }
 }
-function changeColor(pct) { return pct > 0 ? '#10b981' : (pct < 0 ? '#f43f5e' : '#838b9c'); }
+function changeColor(pct) { return pct > 0 ? '#10b981' : (pct < 0 ? '#f43f5e' : '#6b7080'); }
 function changePill(pct) {
-  if (pct === null || pct === undefined) return '<span class="text-xs text-marketMuted">—</span>';
+  if (pct === null || pct === undefined) return '<span class="text-xs text-muted">—</span>';
   const sign = pct > 0 ? '+' : '';
-  const cls = pct > 0 ? 'bg-income/10 text-income' : (pct < 0 ? 'bg-expense/10 text-expense' : 'bg-white/5 text-marketMuted');
+  const cls = pct > 0 ? 'bg-income/10 text-income' : (pct < 0 ? 'bg-expense/10 text-expense' : 'bg-gray-100 text-muted');
   const arrow = pct > 0 ? '▲' : (pct < 0 ? '▼' : '');
   return `<span class="inline-flex items-center gap-1 rounded-md px-2 py-1 font-mono text-xs font-semibold ${cls}">${arrow} ${sign}${pct.toFixed(2)}%</span>`;
 }
@@ -172,7 +172,7 @@ function typeLabel(t) {
   return { etf: 'ETF', azione: 'Azione', crypto: 'Crypto', fondo: 'Fondo', altro: 'Altro' }[t] || t;
 }
 function sparklineSVG(prices) {
-  if (!Array.isArray(prices) || prices.length < 2) return '<span class="text-xs text-marketMuted">—</span>';
+  if (!Array.isArray(prices) || prices.length < 2) return '<span class="text-xs text-muted">—</span>';
   const W = 96, H = 30, PAD = 2;
   const min = Math.min(...prices), max = Math.max(...prices);
   const range = (max - min) || 1;
@@ -189,13 +189,13 @@ function sparklineSVG(prices) {
 function marketRow(i, rank) {
   const name = i.name.replace(/"/g, '&quot;');
   return `
-    <tr data-ticker="${i.ticker}" data-name="${name}" class="mkt-row cursor-pointer border-b border-marketBorder last:border-0 transition hover:bg-white/[0.04]">
-      <td class="px-4 py-3 font-mono text-xs text-marketMuted">${rank}</td>
+    <tr data-ticker="${i.ticker}" data-name="${name}" class="mkt-row cursor-pointer border-b border-border last:border-0 transition hover:bg-gray-50">
+      <td class="px-4 py-3 font-mono text-xs text-muted">${rank}</td>
       <td class="px-4 py-3">
-        <div class="font-semibold text-marketText">${i.name}</div>
-        <div class="text-xs text-marketMuted">${i.ticker} · ${typeLabel(i.type)}</div>
+        <div class="font-semibold text-gray-900">${i.name}</div>
+        <div class="text-xs text-muted">${i.ticker} · ${typeLabel(i.type)}</div>
       </td>
-      <td class="px-4 py-3 text-right font-mono text-marketText">${fmtPrice(i.price, i.currency)}</td>
+      <td class="px-4 py-3 text-right font-mono text-gray-900">${fmtPrice(i.price, i.currency)}</td>
       <td class="px-4 py-3 text-right">${changePill(i.change_pct)}</td>
       <td class="hidden px-4 py-3 text-right sm:table-cell">${sparklineSVG(i.sparkline)}</td>
     </tr>`;
@@ -208,18 +208,18 @@ function bindRows(tbody) {
 // --- Watchlist ---
 fetch('/api/market_trends.php?action=watchlist').then(r => r.json()).then(items => {
   const tbody = document.getElementById('mkt-watchlist-body');
-  if (!Array.isArray(items) || !items.length) { tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-marketMuted">Quotazioni non disponibili al momento.</td></tr>'; return; }
+  if (!Array.isArray(items) || !items.length) { tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Quotazioni non disponibili al momento.</td></tr>'; return; }
   tbody.innerHTML = items.map((i, idx) => marketRow(i, idx + 1)).join('');
   bindRows(tbody);
-}).catch(() => { document.getElementById('mkt-watchlist-body').innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-marketMuted">Quotazioni non disponibili al momento.</td></tr>'; });
+}).catch(() => { document.getElementById('mkt-watchlist-body').innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Quotazioni non disponibili al momento.</td></tr>'; });
 
 // --- Top mover ---
 fetch('/api/market_trends.php?action=top_movers').then(r => r.json()).then(items => {
   const tbody = document.getElementById('mkt-movers-body');
-  if (!Array.isArray(items) || !items.length) { tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-marketMuted">Non ci sono ancora abbastanza dati per calcolare i movimenti di oggi.</td></tr>'; return; }
+  if (!Array.isArray(items) || !items.length) { tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Non ci sono ancora abbastanza dati per calcolare i movimenti di oggi.</td></tr>'; return; }
   tbody.innerHTML = items.map((i, idx) => marketRow(i, idx + 1)).join('');
   bindRows(tbody);
-}).catch(() => { document.getElementById('mkt-movers-body').innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-marketMuted">Dati non disponibili al momento.</td></tr>'; });
+}).catch(() => { document.getElementById('mkt-movers-body').innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Dati non disponibili al momento.</td></tr>'; });
 
 // --- Ricerca ---
 const searchInput = document.getElementById('mkt-search-input');
@@ -231,11 +231,11 @@ searchInput.addEventListener('input', () => {
   if (q.length < 2) { searchResults.classList.add('hidden'); return; }
   searchTimer = setTimeout(() => {
     fetch('/api/market_trends.php?action=search&q=' + encodeURIComponent(q)).then(r => r.json()).then(items => {
-      if (!Array.isArray(items) || !items.length) { searchResults.innerHTML = '<div class="px-4 py-3 text-sm text-marketMuted">Nessun risultato</div>'; searchResults.classList.remove('hidden'); return; }
+      if (!Array.isArray(items) || !items.length) { searchResults.innerHTML = '<div class="px-4 py-3 text-sm text-muted">Nessun risultato</div>'; searchResults.classList.remove('hidden'); return; }
       searchResults.innerHTML = items.map(i => `
-        <button data-ticker="${i.ticker}" data-name="${i.name.replace(/"/g, '&quot;')}" class="mkt-result flex w-full items-center justify-between border-b border-marketBorder px-4 py-2.5 text-left last:border-0 hover:bg-white/[0.05]">
-          <span class="text-sm font-medium text-marketText">${i.name} <span class="text-xs text-marketMuted">${i.ticker}</span></span>
-          <span class="text-[10px] font-semibold uppercase text-marketMuted">${typeLabel(i.type)}</span>
+        <button data-ticker="${i.ticker}" data-name="${i.name.replace(/"/g, '&quot;')}" class="mkt-result flex w-full items-center justify-between border-b border-border px-4 py-2.5 text-left last:border-0 hover:bg-accentSoft">
+          <span class="text-sm font-medium text-gray-900">${i.name} <span class="text-xs text-muted">${i.ticker}</span></span>
+          <span class="text-[10px] font-semibold uppercase text-muted">${typeLabel(i.type)}</span>
         </button>`).join('');
       searchResults.classList.remove('hidden');
       searchResults.querySelectorAll('.mkt-result').forEach(btn => btn.addEventListener('click', () => {
@@ -305,8 +305,8 @@ function renderChart(points) {
   const gridLevels = [min, min + range / 2, max];
   const gridLines = gridLevels.map(v => {
     const y = yAt(v);
-    return `<line x1="${PADL}" y1="${y.toFixed(1)}" x2="${W - PADR}" y2="${y.toFixed(1)}" stroke="#ffffff" stroke-opacity="0.06"/>
-      <text x="${W - PADR + 8}" y="${(y + 3.5).toFixed(1)}" fill="#838b9c" font-size="10" font-family="IBM Plex Mono, monospace">${fmtPrice(v, points[0].currency)}</text>`;
+    return `<line x1="${PADL}" y1="${y.toFixed(1)}" x2="${W - PADR}" y2="${y.toFixed(1)}" stroke="#e7e9f0"/>
+      <text x="${W - PADR + 8}" y="${(y + 3.5).toFixed(1)}" fill="#6b7080" font-size="10" font-family="IBM Plex Mono, monospace">${fmtPrice(v, points[0].currency)}</text>`;
   }).join('');
 
   svgBox.innerHTML = `
@@ -321,12 +321,12 @@ function renderChart(points) {
       <path d="${areaPath}" fill="url(#${gradId})" stroke="none"></path>
       <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2"></path>
       <g id="mkt-crosshair" style="opacity:0">
-        <line x1="0" y1="${PADT}" x2="0" y2="${PADT + plotH}" stroke="#ffffff" stroke-opacity="0.15"></line>
-        <circle r="3.5" fill="${color}" stroke="#0b0e14" stroke-width="1.5"></circle>
+        <line x1="0" y1="${PADT}" x2="0" y2="${PADT + plotH}" stroke="#000000" stroke-opacity="0.12"></line>
+        <circle r="3.5" fill="${color}" stroke="#ffffff" stroke-width="1.5"></circle>
       </g>
     </svg>
-    <div id="mkt-tooltip" class="pointer-events-none absolute hidden rounded-lg border border-marketBorder bg-marketBg px-2.5 py-1.5 text-xs text-marketText shadow-xl"></div>
-    <div class="mt-1 flex justify-between text-[11px] text-marketMuted">
+    <div id="mkt-tooltip" class="pointer-events-none absolute hidden rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs text-gray-900 shadow-lg"></div>
+    <div class="mt-1 flex justify-between text-[11px] text-muted">
       <span>${points[0].date}</span>
       <span>${points[points.length - 1].date}</span>
     </div>`;
@@ -350,7 +350,7 @@ function renderChart(points) {
     const pxRatio = rect.width / W;
     tooltip.style.left = Math.min(rect.width - 100, Math.max(0, x * pxRatio + 8)) + 'px';
     tooltip.style.top = Math.max(0, (y * (rect.height / H)) - 36) + 'px';
-    tooltip.innerHTML = `<div class="font-mono font-semibold">${fmtPrice(prices[idx], points[0].currency)}</div><div class="text-marketMuted">${points[idx].date}</div>`;
+    tooltip.innerHTML = `<div class="font-mono font-semibold">${fmtPrice(prices[idx], points[0].currency)}</div><div class="text-muted">${points[idx].date}</div>`;
     tooltip.classList.remove('hidden');
   });
   svgEl.addEventListener('mouseleave', () => { crosshair.style.opacity = '0'; tooltip.classList.add('hidden'); });
@@ -359,7 +359,7 @@ function renderChart(points) {
 document.querySelectorAll('.mkt-range').forEach(btn => {
   btn.addEventListener('click', () => {
     currentDays = parseInt(btn.dataset.days, 10);
-    document.querySelectorAll('.mkt-range').forEach(b => b.className = 'mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-marketMuted transition');
+    document.querySelectorAll('.mkt-range').forEach(b => b.className = 'mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-muted transition');
     btn.className = 'mkt-range rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition';
     if (currentTicker) loadHistory();
   });

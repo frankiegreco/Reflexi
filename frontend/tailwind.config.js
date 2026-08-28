@@ -15,13 +15,6 @@ export default {
         bg: '#f3f4f8',
         border: '#e7e9f0',
         muted: '#6b7080',
-        // Vista "Mercati" (views/Markets.jsx): stesso terminale dati dark
-        // stile CoinMarketCap/TradingView del sito pubblico (webroot/mercati.php).
-        marketBg: '#0b0e14',
-        marketPanel: '#12151d',
-        marketBorder: '#232733',
-        marketText: '#e5e7eb',
-        marketMuted: '#838b9c',
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
