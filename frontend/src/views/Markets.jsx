@@ -5,6 +5,7 @@ import { apiGet } from '../api';
 import { formatDate } from '../lib/format';
 
 const TYPE_LABELS = { etf: 'ETF', azione: 'Azione', crypto: 'Crypto', fondo: 'Fondo', altro: 'Altro' };
+const RANGE_DAYS = { '1m': 30, '1a': 365, all: 3650 };
 
 function fmtPrice(price, currency) {
   try { return new Intl.NumberFormat('it-IT', { style: 'currency', currency: currency || 'EUR' }).format(price); }
@@ -100,7 +101,7 @@ export default function Markets() {
   const [selected, setSelected] = useState(null); // { ticker, name }
   const [quote, setQuote] = useState(null);
   const [history, setHistory] = useState([]);
-  const [days, setDays] = useState(90);
+  const [range, setRange] = useState('1m');
 
   useEffect(() => {
     apiGet('market_trends.php?action=watchlist').then(setWatchlist).catch(() => setWatchlist([]));
@@ -137,8 +138,11 @@ export default function Markets() {
 
   useEffect(() => {
     if (!selected) return;
-    apiGet(`market_trends.php?action=history&ticker=${encodeURIComponent(selected.ticker)}&days=${days}`).then(setHistory).catch(() => setHistory([]));
-  }, [selected, days]);
+    const path = range === '24h'
+      ? `market_trends.php?action=intraday&ticker=${encodeURIComponent(selected.ticker)}`
+      : `market_trends.php?action=history&ticker=${encodeURIComponent(selected.ticker)}&days=${RANGE_DAYS[range]}`;
+    apiGet(path).then(setHistory).catch(() => setHistory([]));
+  }, [selected, range]);
 
   const trendColor = useMemo(() => {
     if (history.length < 2) return '#4f46e5';
@@ -195,13 +199,13 @@ export default function Markets() {
               )}
             </div>
             <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
-              {[30, 90, 365].map((d) => (
+              {['24h', '1m', '1a', 'all'].map((r) => (
                 <button
-                  key={d}
-                  onClick={() => setDays(d)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${days === d ? 'bg-accent text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                  key={r}
+                  onClick={() => setRange(r)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${range === r ? 'bg-accent text-white' : 'text-gray-600 hover:text-gray-900'}`}
                 >
-                  {d === 365 ? '1 anno' : d === 30 ? '1M' : '3M'}
+                  {r === 'all' ? 'All' : r}
                 </button>
               ))}
             </div>

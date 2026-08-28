@@ -156,6 +156,43 @@ function backfill_price_history(string $ticker, int $days = 90): int
     return $written;
 }
 
+/**
+ * Serie infragiornaliera (oggi, un punto ogni 15 minuti circa) via l'endpoint
+ * chart di Yahoo con range=1d — a differenza delle chiusure in price_history
+ * (granularità giornaliera) non viene mai salvata in cache: la vista "24h" ha
+ * senso solo per la giornata corrente, non c'è uno storico da costruire.
+ */
+function fetch_intraday(string $ticker): array
+{
+    $url = 'https://query1.finance.yahoo.com/v8/finance/chart/' . rawurlencode($ticker)
+        . '?range=1d&interval=15m';
+    $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+    $raw = function_exists('curl_init')
+        ? fetch_via_curl($url, $userAgent)
+        : fetch_via_file_get_contents($url, $userAgent);
+    if (!$raw) return [];
+
+    $data = json_decode($raw, true);
+    $result = $data['chart']['result'][0] ?? null;
+    if (!$result) return [];
+
+    $timestamps = $result['timestamp'] ?? [];
+    $closes = $result['indicators']['quote'][0]['close'] ?? [];
+    $currency = $result['meta']['currency'] ?? null;
+    if (!$timestamps || !$closes) return [];
+
+    $tz = $result['meta']['exchangeTimezoneName'] ?? 'UTC';
+    try { $zone = new DateTimeZone($tz); } catch (Exception $e) { $zone = new DateTimeZone('UTC'); }
+
+    $out = [];
+    foreach ($timestamps as $i => $ts) {
+        if (!isset($closes[$i]) || $closes[$i] === null) continue;
+        $dt = (new DateTime('@' . $ts))->setTimezone($zone);
+        $out[] = ['date' => $dt->format('H:i'), 'price' => (float)$closes[$i], 'currency' => $currency];
+    }
+    return $out;
+}
+
 /** Interroga l'endpoint pubblico (non ufficiale) di Yahoo Finance per un ticker. */
 function fetch_price_from_yahoo(string $ticker): ?array
 {

@@ -69,9 +69,10 @@ include '_nav.php';
           </div>
         </div>
         <div class="flex gap-1 rounded-lg bg-gray-100 p-1">
-          <button data-days="30" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">1M</button>
-          <button data-days="90" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">3M</button>
-          <button data-days="365" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">1A</button>
+          <button data-range="24h" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">24h</button>
+          <button data-range="1m" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">1m</button>
+          <button data-range="1a" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">1a</button>
+          <button data-range="all" class="mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition">All</button>
         </div>
       </div>
       <div id="mkt-chart-svg" class="relative h-64 w-full sm:h-72"></div>
@@ -249,8 +250,9 @@ searchInput.addEventListener('input', () => {
 document.addEventListener('click', (e) => { if (!e.target.closest('#mkt-search-input') && !e.target.closest('#mkt-search-results')) searchResults.classList.add('hidden'); });
 
 // --- Grafico principale ---
+const RANGE_DAYS = { '1m': 30, '1a': 365, all: 3650 };
 let currentTicker = null;
-let currentDays = 90;
+let currentRange = '1m';
 let currentHistory = [];
 
 function selectTicker(ticker, name) {
@@ -271,7 +273,10 @@ function loadQuote() {
 }
 
 function loadHistory() {
-  fetch(`/api/market_trends.php?action=history&ticker=${encodeURIComponent(currentTicker)}&days=${currentDays}`).then(r => r.json()).then(points => {
+  const url = currentRange === '24h'
+    ? `/api/market_trends.php?action=intraday&ticker=${encodeURIComponent(currentTicker)}`
+    : `/api/market_trends.php?action=history&ticker=${encodeURIComponent(currentTicker)}&days=${RANGE_DAYS[currentRange]}`;
+  fetch(url).then(r => r.json()).then(points => {
     currentHistory = points;
     renderChart(points);
   });
@@ -358,13 +363,13 @@ function renderChart(points) {
 
 document.querySelectorAll('.mkt-range').forEach(btn => {
   btn.addEventListener('click', () => {
-    currentDays = parseInt(btn.dataset.days, 10);
-    document.querySelectorAll('.mkt-range').forEach(b => b.className = 'mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-muted transition');
+    currentRange = btn.dataset.range;
+    document.querySelectorAll('.mkt-range').forEach(b => b.className = 'mkt-range rounded-md px-3 py-1.5 text-xs font-semibold text-gray-600 transition');
     btn.className = 'mkt-range rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition';
     if (currentTicker) loadHistory();
   });
 });
-document.querySelector('.mkt-range[data-days="90"]').className = 'mkt-range rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition';
+document.querySelector('.mkt-range[data-range="1m"]').className = 'mkt-range rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition';
 </script>
 
 </body>

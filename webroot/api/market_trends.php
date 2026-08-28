@@ -76,10 +76,21 @@ switch ($action) {
         ]);
         break;
 
+    case 'intraday':
+        // Vista "24h": granularità infragiornaliera, non passa da price_history
+        // (che è a chiusura giornaliera) — proxy diretto a Yahoo ogni volta,
+        // per questo rate-limitato come 'search'.
+        $ticker = strtoupper(trim($_GET['ticker'] ?? ''));
+        if (!is_valid_public_ticker($ticker)) respond_error('Ticker non valido');
+        rate_limit_check('market_intraday', 30, 300);
+        rate_limit_record('market_intraday');
+        respond(fetch_intraday($ticker));
+        break;
+
     case 'history':
         $ticker = strtoupper(trim($_GET['ticker'] ?? ''));
         if (!is_valid_public_ticker($ticker)) respond_error('Ticker non valido');
-        $days = min((int)($_GET['days'] ?? 90), 730);
+        $days = min((int)($_GET['days'] ?? 90), 3650);
 
         // Garantisce il dato di oggi + lo storico reale già pronto al primo
         // sguardo (non solo da oggi in poi): ensure_price_history() backfilla
