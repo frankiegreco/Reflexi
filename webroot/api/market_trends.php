@@ -19,6 +19,7 @@ switch ($action) {
         foreach (MARKET_TRENDS_WATCHLIST as $item) {
             $live = fetch_live_price($item['ticker']);
             if (!$live) continue;
+            ensure_price_history($item['ticker']);
             $out[] = $item + [
                 'price' => $live['price'],
                 'currency' => $live['currency'],
@@ -43,6 +44,7 @@ switch ($action) {
 
         $out = [];
         foreach ($rows as $row) {
+            ensure_price_history($row['ticker']);
             $changePct = market_change_pct($row['ticker'], (float)$row['price']);
             if ($changePct === null) continue;
             $out[] = [
@@ -64,6 +66,7 @@ switch ($action) {
         if (!is_valid_public_ticker($ticker)) respond_error('Ticker non valido');
         $live = fetch_live_price($ticker);
         if (!$live) respond_error('Quotazione non disponibile', 404);
+        ensure_price_history($ticker);
         respond([
             'ticker' => $ticker,
             'price' => $live['price'],
@@ -78,10 +81,12 @@ switch ($action) {
         if (!is_valid_public_ticker($ticker)) respond_error('Ticker non valido');
         $days = min((int)($_GET['days'] ?? 90), 730);
 
-        // Garantisce almeno il dato di oggi anche per un ticker mai
-        // interrogato prima: da qui in poi lo storico si costruisce da solo,
-        // come per gli strumenti di portafoglio.
+        // Garantisce il dato di oggi + lo storico reale già pronto al primo
+        // sguardo (non solo da oggi in poi): ensure_price_history() backfilla
+        // in un colpo solo fino a $days di chiusure vere se non ce ne sono
+        // già a sufficienza in cache.
         fetch_live_price($ticker);
+        ensure_price_history($ticker, $days);
 
         $stmt = db()->prepare("SELECT date, price, currency FROM price_history
             WHERE ticker = :ticker AND date >= DATE_SUB(CURDATE(), INTERVAL :days DAY)

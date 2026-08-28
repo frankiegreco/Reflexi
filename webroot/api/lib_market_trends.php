@@ -67,3 +67,18 @@ function market_sparkline(string $ticker, int $days = 14): array
     $stmt->execute();
     return array_map('floatval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 }
+
+/**
+ * Backfilla lo storico di un ticker (vedi price_fetch.php::backfill_price_history)
+ * solo se non ne ha già a sufficienza — così la chiamata a Yahoo per il range
+ * completo scatta una volta sola per ticker, mai più una volta che lo storico
+ * è stato seminato: le richieste successive leggono solo da price_history.
+ */
+function ensure_price_history(string $ticker, int $days = 90, int $minRows = 3): void
+{
+    $stmt = db()->prepare("SELECT COUNT(*) FROM price_history WHERE ticker = :ticker");
+    $stmt->execute(['ticker' => $ticker]);
+    if ((int)$stmt->fetchColumn() >= $minRows) return;
+
+    backfill_price_history($ticker, $days);
+}

@@ -107,6 +107,55 @@ function fetch_historical_price(string $ticker, string $date): ?array
     ];
 }
 
+/**
+ * Scarica fino a $days di chiusure giornaliere reali in UNA sola chiamata a
+ * Yahoo (range period1..period2, interval 1d) e le scrive in price_history.
+ * Serve a "seminare" subito lo storico di un ticker nuovo — es. la watchlist
+ * curata di Mercati, o un ticker appena cercato — invece di aspettare che si
+ * accumuli un giorno alla volta con fetch_live_price(). Il prezzo di oggi non
+ * viene scritto qui: resta di competenza di fetch_live_price(), che ha il
+ * dato intraday più fresco (quello del grafico storico è la chiusura, spesso
+ * in ritardo di qualche ora rispetto al prezzo corrente). Torna il numero di
+ * giorni effettivamente scritti.
+ */
+function backfill_price_history(string $ticker, int $days = 90): int
+{
+    $period2 = time();
+    $period1 = $period2 - ($days + 5) * 86400;
+    $url = 'https://query1.finance.yahoo.com/v8/finance/chart/' . rawurlencode($ticker)
+        . "?period1={$period1}&period2={$period2}&interval=1d";
+    $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+    $raw = function_exists('curl_init')
+        ? fetch_via_curl($url, $userAgent)
+        : fetch_via_file_get_contents($url, $userAgent);
+    if (!$raw) return 0;
+
+    $data = json_decode($raw, true);
+    $result = $data['chart']['result'][0] ?? null;
+    if (!$result) return 0;
+
+    $timestamps = $result['timestamp'] ?? [];
+    $closes = $result['indicators']['quote'][0]['close'] ?? [];
+    $currency = $result['meta']['currency'] ?? null;
+    if (!$timestamps || !$closes) return 0;
+
+    $today = date('Y-m-d');
+    $upsert = db()->prepare("INSERT INTO price_history (ticker, price, currency, date)
+        VALUES (:ticker, :price, :currency, :date)
+        ON DUPLICATE KEY UPDATE price = VALUES(price), currency = VALUES(currency)");
+
+    $written = 0;
+    foreach ($timestamps as $i => $ts) {
+        if (!isset($closes[$i]) || $closes[$i] === null) continue;
+        $date = date('Y-m-d', (int)$ts);
+        if ($date === $today) continue;
+        $upsert->execute(['ticker' => $ticker, 'price' => (float)$closes[$i], 'currency' => $currency, 'date' => $date]);
+        $written++;
+    }
+    return $written;
+}
+
 /** Interroga l'endpoint pubblico (non ufficiale) di Yahoo Finance per un ticker. */
 function fetch_price_from_yahoo(string $ticker): ?array
 {
