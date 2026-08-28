@@ -23,6 +23,7 @@ switch ($action) {
                 'price' => $live['price'],
                 'currency' => $live['currency'],
                 'change_pct' => market_change_pct($item['ticker'], $live['price']),
+                'sparkline' => market_sparkline($item['ticker']),
                 'stale' => $live['stale'],
             ];
         }
@@ -51,6 +52,7 @@ switch ($action) {
                 'price' => (float)$row['price'],
                 'currency' => $row['currency'],
                 'change_pct' => $changePct,
+                'sparkline' => market_sparkline($row['ticker']),
             ];
         }
         usort($out, fn($a, $b) => abs($b['change_pct']) <=> abs($a['change_pct']));

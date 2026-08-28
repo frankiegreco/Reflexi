@@ -27,6 +27,15 @@ module.exports = {
         bg: '#f3f4f8',
         border: '#e7e9f0',
         muted: '#6b7080',
+        // Sezione "Mercati" (webroot/mercati.php): terminale dati in stile
+        // CoinMarketCap/TradingView, deliberatamente dark anche se il resto
+        // del sito pubblico è chiaro — coerenza interna alla sezione, non con
+        // le altre pagine.
+        marketBg: '#0b0e14',
+        marketPanel: '#12151d',
+        marketBorder: '#232733',
+        marketText: '#e5e7eb',
+        marketMuted: '#838b9c',
       },
     },
   },

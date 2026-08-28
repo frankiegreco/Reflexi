@@ -51,3 +51,19 @@ function market_change_pct(string $ticker, float $currentPrice): ?float
     if ($prev === false || (float)$prev == 0.0) return null;
     return round((($currentPrice - (float)$prev) / (float)$prev) * 100, 2);
 }
+
+/**
+ * Ultimi N giorni di prezzo (ascendente), per lo sparkline inline nelle
+ * tabelle stile CoinMarketCap — solo i valori, niente date: al piccolo
+ * formato basta l'andamento, non l'asse temporale preciso.
+ */
+function market_sparkline(string $ticker, int $days = 14): array
+{
+    $stmt = db()->prepare("SELECT price FROM price_history
+        WHERE ticker = :ticker AND date >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+        ORDER BY date");
+    $stmt->bindValue('ticker', $ticker, PDO::PARAM_STR);
+    $stmt->bindValue('days', $days, PDO::PARAM_INT);
+    $stmt->execute();
+    return array_map('floatval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+}
