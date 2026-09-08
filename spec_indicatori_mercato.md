@@ -206,7 +206,21 @@ dentro la scheda strumento come Indicatori, perché mostra la stima per
 tutti gli strumenti del portafoglio insieme, non solo quello aperto in quel
 momento. `frontend/src/views/Forecasts.jsx`.
 
-Ogni card mostra, sempre nello stesso ordine:
+Due parti sulla stessa pagina:
+
+1. **I tuoi strumenti**: una card per ogni strumento del portafoglio
+   dell'utente (vedi sotto per il contenuto di ogni card).
+2. **Classifiche**: 4 liste (griglia 2×2) — migliori/peggiori 10 per
+   andamento storico (CAGR) e migliori/peggiori 10 per previsione a 12
+   mesi. Universo: ogni ticker presente nella tabella `instruments` di
+   **tutti** gli utenti (stesso pattern di aggregazione di
+   `market_trends.php::top_movers` — solo ticker/nome/tipo, nessun dato
+   che identifichi chi lo possiede), non solo il portafoglio di chi guarda
+   la pagina. Se l'universo tracciato ha meno di 10 strumenti idonei per
+   una classifica, la lista mostra solo quelli disponibili — mai
+   placeholder finti per arrivare a 10.
+
+Ogni card del portafoglio mostra, sempre nello stesso ordine:
 
 1. Il numero previsto, in evidenza
 2. Da quale training viene (data, numero di campioni/ticker, R²) — così chi
