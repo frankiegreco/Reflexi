@@ -6,10 +6,12 @@ declare(strict_types=1);
 // lanciato da riga di comando (php cron/retrain_forecast_model.php dentro
 // il container "web"), MAI come endpoint HTTP: e' un lavoro da batch che
 // scansiona tutto price_history, non qualcosa da far scattare a ogni
-// richiesta di un utente. Non e' collegato a un cron automatico per ora:
-// va rilanciato manualmente quando si accumula storico prezzi nuovo
-// (ogni pochi mesi ha senso, non ogni giorno — i coefficienti non
-// cambiano velocemente con pochi giorni di dati in piu').
+// richiesta di un utente. Schedulato via crontab sulla VM, mensile (stesso
+// pattern di send_digest.php/process_recurring.php — vedi `crontab -l`):
+// una cadenza più stretta non avrebbe senso, pochi giorni di dati in più
+// non cambiano sensibilmente i coefficienti (i ticker della lista curata
+// hanno già tutto il loro storico disponibile backfillato in un colpo
+// solo, non accumulato giorno per giorno).
 if (php_sapi_name() !== 'cli') {
     http_response_code(403);
     exit('Questo script va eseguito solo da riga di comando (cron), non via web.');

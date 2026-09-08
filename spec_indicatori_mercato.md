@@ -197,9 +197,17 @@ esplicitamente (non inserisce una riga), e Previsioni mostra "modello non
 ancora addestrato" per gli strumenti di quella classe invece di un numero
 a caso.
 
-Non è collegato a un cron automatico: va rilanciato manualmente quando si
-accumula storico prezzi nuovo (ha senso ogni pochi mesi, non ogni giorno —
-pochi giorni di dati in più non cambiano sensibilmente i coefficienti).
+Schedulato via crontab sulla VM, mensile (`0 4 1 * *`, stesso pattern di
+`send_digest.php`/`process_recurring.php`, log in
+`/var/log/reflexi_forecast_retrain.log`) — richiesto esplicitamente dal
+titolare del progetto. Una cadenza più stretta (es. ogni pochi giorni) non
+avrebbe aggiunto molto: i ticker della lista curata hanno già tutto il
+loro storico disponibile backfillato in un colpo solo al primo caricamento
+di Previsioni (`ensure_price_history`), non accumulato giorno per
+giorno — pochi giorni in più cambiano solo 3-4 chiusure per ticker, non
+sposta sensibilmente i coefficienti. Un mese ha più probabilità di portare
+storico realmente nuovo: nuovi ticker aggiunti da utenti reali, o
+semplicemente più chiusure giornaliere accumulate.
 
 ### Universo di training e delle classifiche
 
