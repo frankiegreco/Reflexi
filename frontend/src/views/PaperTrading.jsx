@@ -26,6 +26,7 @@ export default function PaperTrading() {
   const [accounts, setAccounts] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [history, setHistory] = useState(null);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', starting_balance: '100000' });
@@ -59,6 +60,14 @@ export default function PaperTrading() {
   }, [activeId]);
 
   useEffect(() => { loadDetail(); }, [loadDetail]);
+
+  const loadHistory = useCallback(() => {
+    if (!activeId) { setHistory(null); return; }
+    setHistory(null);
+    apiGet(`paper_trading.php?action=history&id=${activeId}`).then(setHistory).catch(() => setHistory([]));
+  }, [activeId]);
+
+  useEffect(() => { loadHistory(); }, [loadHistory]);
 
   // Ricerca ticker con debounce, stesso pattern di Markets.jsx.
   useEffect(() => {
@@ -119,6 +128,7 @@ export default function PaperTrading() {
       setTradeTarget(null);
       loadAccounts();
       loadDetail();
+      loadHistory();
     } catch (err) {
       setTradeError(err.message);
     } finally {
@@ -131,6 +141,7 @@ export default function PaperTrading() {
     await apiDelete(`paper_trading.php?action=delete_trade&id=${id}`);
     loadAccounts();
     loadDetail();
+    loadHistory();
   }
 
   async function resetAccount() {
@@ -138,6 +149,7 @@ export default function PaperTrading() {
     await apiSend('paper_trading.php?action=reset', 'POST', { account_id: activeId });
     loadAccounts();
     loadDetail();
+    loadHistory();
   }
 
   async function deleteAccount() {
@@ -190,6 +202,47 @@ export default function PaperTrading() {
                 />
                 <StatCard label="Liquidità virtuale" value={euro(detail.cash_balance)} />
                 <StatCard label="Valore posizioni" value={euro(detail.positions_value_eur)} />
+              </div>
+
+              <div className="mb-6 rounded-2xl border border-border bg-white p-5">
+                <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">Andamento del conto</h3>
+                {history === null && <p className="py-10 text-center text-sm text-muted">Calcolo storico...</p>}
+                {history !== null && history.length < 2 && (
+                  <p className="py-10 text-center text-sm text-muted">
+                    Il conto è stato creato oggi — lo storico si costruisce da solo giorno per giorno, torna a controllare domani.
+                  </p>
+                )}
+                {history !== null && history.length >= 2 && (
+                  <div className="h-56">
+                    <Line
+                      data={{
+                        labels: history.map((p) => p.date),
+                        datasets: [{
+                          data: history.map((p) => p.total_value_eur),
+                          borderColor: history[history.length - 1].total_value_eur >= history[0].total_value_eur ? '#10b981' : '#f43f5e',
+                          backgroundColor: history[history.length - 1].total_value_eur >= history[0].total_value_eur ? 'rgba(16,185,129,0.08)' : 'rgba(244,63,94,0.08)',
+                          fill: true,
+                          tension: 0.25,
+                          pointRadius: 0,
+                          pointHoverRadius: 4,
+                        }],
+                      }}
+                      options={{
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: { callbacks: { label: (ctx) => euro(ctx.parsed.y) } },
+                        },
+                        scales: {
+                          x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+                          y: { grid: { color: '#e7e9f0' }, ticks: { font: { size: 10, family: '"IBM Plex Mono", monospace' }, callback: (v) => euro(v) } },
+                        },
+                      }}
+                    />
+                  </div>
+                )}
+                <p className="mt-2 text-[11px] text-muted">Ricostruito dai prezzi di chiusura storici reali — non uno snapshot, cambia se annulli o aggiungi operazioni passate.</p>
               </div>
 
               <div className="mb-3 flex items-center justify-end gap-2">

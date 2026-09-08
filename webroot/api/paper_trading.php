@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/db.php';
-require_once __DIR__ . '/price_fetch.php';       // fetch_live_price(), fx_rate_to_eur()
-require_once __DIR__ . '/lib_market_trends.php'; // is_valid_public_ticker()
+require_once __DIR__ . '/price_fetch.php';         // fetch_live_price(), fx_rate_to_eur()
+require_once __DIR__ . '/lib_market_trends.php';   // is_valid_public_ticker(), ensure_price_history()
+require_once __DIR__ . '/lib_instrument_metrics.php'; // closest_row_to()
 
 // Trading simulato: conti e transazioni completamente separati da
 // accounts/instruments/investment_transactions (vedi migrazione 039) — non
@@ -102,6 +103,84 @@ function paper_load_transactions(int $accountId): array
     $stmt = db()->prepare("SELECT * FROM paper_trading_transactions WHERE account_id = :id ORDER BY executed_at, id");
     $stmt->execute(['id' => $accountId]);
     return $stmt->fetchAll();
+}
+
+/**
+ * Andamento del valore totale del conto, un punto al giorno dalla creazione
+ * del conto a oggi — ricostruito dai prezzi di CHIUSURA storici reali (stessa
+ * tabella price_history usata da Mercati/Previsioni/Investimenti), non da
+ * snapshot salvati: non serve un cron dedicato e la storia esiste già anche
+ * per un conto aperto oggi ma con strumenti seguiti da tempo su Reflexi.
+ * Backfilla lo storico mancante al volo (ensure_price_history, come altrove)
+ * per ogni ticker E per ogni coppia valuta/EUR toccati dalle transazioni —
+ * il tasso di cambio storico non è mai stato salvato a parte in Reflexi, ma
+ * fetch_live_price() scrive comunque in price_history anche per i ticker
+ * "USDEUR=X" ecc. (sono trattati come un ticker qualunque), quindi lo stesso
+ * meccanismo copre anche il cambio storico senza una tabella dedicata.
+ */
+function paper_account_history(array $account, array $transactions): array
+{
+    $startDate = substr($account['created_at'], 0, 10);
+    $today = date('Y-m-d');
+    $daysSpan = max(5, (int)((strtotime($today) - strtotime($startDate)) / 86400) + 5);
+
+    $tickers = array_unique(array_column($transactions, 'ticker'));
+    $currencies = array_unique(array_filter(array_map(fn($t) => $t['currency'] !== 'EUR' ? $t['currency'] : null, $transactions)));
+
+    $priceHistory = [];
+    foreach ($tickers as $ticker) {
+        ensure_price_history($ticker, $daysSpan);
+        $stmt = db()->prepare("SELECT date, price FROM price_history WHERE ticker = :t ORDER BY date");
+        $stmt->execute(['t' => $ticker]);
+        $priceHistory[$ticker] = $stmt->fetchAll();
+    }
+    $fxHistory = [];
+    foreach ($currencies as $ccy) {
+        $fxTicker = "{$ccy}EUR=X";
+        ensure_price_history($fxTicker, $daysSpan);
+        $stmt = db()->prepare("SELECT date, price FROM price_history WHERE ticker = :t ORDER BY date");
+        $stmt->execute(['t' => $fxTicker]);
+        $fxHistory[$ccy] = $stmt->fetchAll();
+    }
+
+    $txIdx = 0;
+    $n = count($transactions);
+    $cash = (float)$account['starting_balance'];
+    $qty = [];              // ticker -> quantità detenuta a mano a mano che si avanza nel tempo
+    $currencyByTicker = [];
+
+    $points = [];
+    $cursor = $startDate;
+    while ($cursor <= $today) {
+        $cutoffTs = strtotime($cursor . ' 23:59:59');
+        while ($txIdx < $n && strtotime($transactions[$txIdx]['executed_at']) <= $cutoffTs) {
+            $t = $transactions[$txIdx];
+            $cash += (float)$t['cash_impact_eur'];
+            $delta = $t['type'] === 'acquisto' ? (float)$t['quantity'] : -(float)$t['quantity'];
+            $qty[$t['ticker']] = ($qty[$t['ticker']] ?? 0.0) + $delta;
+            $currencyByTicker[$t['ticker']] = $t['currency'];
+            $txIdx++;
+        }
+
+        $positionsValue = 0.0;
+        foreach ($qty as $ticker => $q) {
+            if ($q <= 1e-9) continue;
+            $hist = $priceHistory[$ticker] ?? [];
+            if (!$hist) continue;
+            $price = (float)closest_row_to($hist, $cutoffTs)['price'];
+            $ccy = $currencyByTicker[$ticker];
+            $fxRate = 1.0;
+            if ($ccy !== 'EUR') {
+                $fxHist = $fxHistory[$ccy] ?? [];
+                $fxRate = $fxHist ? (float)closest_row_to($fxHist, $cutoffTs)['price'] : 1.0;
+            }
+            $positionsValue += $q * $price * $fxRate;
+        }
+
+        $points[] = ['date' => $cursor, 'total_value_eur' => round($cash + $positionsValue, 2)];
+        $cursor = date('Y-m-d', strtotime($cursor . ' +1 day'));
+    }
+    return $points;
 }
 
 /** Riepilogo completo di un conto simulato (saldo, posizioni valorizzate, totale, rendimento) — riusato sia dalla lista sia dal dettaglio. */
@@ -215,6 +294,15 @@ switch (method()) {
             $txStmt->execute(['id' => $id]);
             $summary['transactions'] = $txStmt->fetchAll();
             respond($summary);
+        }
+
+        if ($action === 'history') {
+            $id = $_GET['id'] ?? null;
+            assert_owned('paper_trading_accounts', $id, $uid, 'conto simulato');
+            $accountStmt = db()->prepare("SELECT * FROM paper_trading_accounts WHERE id = :id AND user_id = :uid");
+            $accountStmt->execute(['id' => $id, 'uid' => $uid]);
+            $account = $accountStmt->fetch();
+            respond(paper_account_history($account, paper_load_transactions((int)$id)));
         }
 
         $stmt = db()->prepare("SELECT * FROM paper_trading_accounts WHERE user_id = :uid ORDER BY created_at");
