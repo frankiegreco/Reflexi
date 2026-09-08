@@ -278,6 +278,7 @@ export default function PaperTrading() {
                         <th className="px-3 py-2 font-semibold">Tipo</th>
                         <th className="px-3 py-2 text-right font-semibold">Quantità</th>
                         <th className="px-3 py-2 text-right font-semibold">Prezzo</th>
+                        <th className="px-3 py-2 text-right font-semibold">Commissione</th>
                         <th className="px-3 py-2 text-right font-semibold">Impatto cassa</th>
                         <th className="px-3 py-2"></th>
                       </tr>
@@ -298,6 +299,7 @@ export default function PaperTrading() {
                           </td>
                           <td className="px-3 py-2 text-right font-mono">{fmtQty(t.quantity)}</td>
                           <td className="px-3 py-2 text-right font-mono">{euro(parseFloat(t.price_per_unit), t.currency)}</td>
+                          <td className="px-3 py-2 text-right font-mono text-muted">{euro(t.fees_eur)}</td>
                           <td className={`px-3 py-2 text-right font-mono ${parseFloat(t.cash_impact_eur) >= 0 ? 'text-income' : 'text-expense'}`}>
                             {parseFloat(t.cash_impact_eur) >= 0 ? '+' : ''}{euro(t.cash_impact_eur)}
                           </td>
@@ -388,6 +390,7 @@ export default function PaperTrading() {
                 <p className="text-xs text-muted">
                   Stima: {fmtQty(tradeQuantity)} × {euro(tradeQuote.price, tradeQuote.currency)} ≈ {euro(previewNative, tradeQuote.currency)}
                   {tradeQuote.currency !== 'EUR' && ' — convertito in € al cambio corrente al momento dell\'esecuzione'}
+                  {' '}+ {euro(1)} di commissione simulata
                 </p>
               )}
             </form>

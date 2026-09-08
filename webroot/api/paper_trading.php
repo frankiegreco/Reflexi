@@ -13,6 +13,17 @@ require_once __DIR__ . '/lib_market_trends.php'; // is_valid_public_ticker()
 // prezzo inventato, rendendo inutile la pratica.
 $uid = require_auth();
 
+// € fissi per operazione (acquisto o vendita), stessa cifra e stesso motivo
+// dell'advisor investimenti (INVEST_ADVISOR_FEE_PER_TRADE): senza
+// commissioni un trade piccolo o frequente non ha mai controindicazioni,
+// mentre nella realtà le commissioni fisse penalizzano proprio quello —
+// una lezione che vale la pena far vivere anche qui, non solo dichiararla.
+// Non tocca il costo medio di carico (native currency): la commissione è
+// sempre in EUR, sommarla a un accumulatore in valuta nativa senza
+// conversione produrrebbe un costo medio sbagliato — resta quindi solo un
+// costo di cassa (cash_impact_eur), coerente con come viene mostrata.
+const PAPER_TRADING_FEE_PER_TRADE = 1.0;
+
 /** Somma di tutte le transazioni di un conto -> saldo cassa (mai persistito, vedi migrazione 039) e posizioni aperte per ticker (costo medio ponderato, stessa logica di investments.php). */
 function paper_compute_state(float $startingBalance, array $transactions): array
 {
@@ -144,23 +155,25 @@ if ($action === 'trade' && method() === 'POST') {
     $state = paper_compute_state((float)$account['starting_balance'], $transactions);
 
     $amountEur = $quantity * $live['price'] * $fx['rate'];
+    $feeEur = PAPER_TRADING_FEE_PER_TRADE;
 
     if ($type === 'acquisto') {
-        if ($amountEur > $state['cash_balance'] + 0.01) {
-            respond_error(sprintf('Fondi virtuali insufficienti: servirebbero %.2f€, ne hai %.2f€ disponibili in questo conto', $amountEur, $state['cash_balance']));
+        $totalCost = $amountEur + $feeEur;
+        if ($totalCost > $state['cash_balance'] + 0.01) {
+            respond_error(sprintf('Fondi virtuali insufficienti: servirebbero %.2f€ (incluso %.2f€ di commissione), ne hai %.2f€ disponibili in questo conto', $totalCost, $feeEur, $state['cash_balance']));
         }
-        $cashImpact = -$amountEur;
+        $cashImpact = -$totalCost;
     } else {
         $held = paper_held_quantity($state['positions'], $ticker);
         if ($quantity > $held + 1e-9) {
             respond_error(sprintf('Non possiedi abbastanza quote di %s in questo conto simulato (detenute: %s, richieste: %s)', $ticker, rtrim(rtrim(number_format($held, 6, '.', ''), '0'), '.'), rtrim(rtrim(number_format($quantity, 6, '.', ''), '0'), '.')));
         }
-        $cashImpact = $amountEur;
+        $cashImpact = $amountEur - $feeEur;
     }
 
     $stmt = db()->prepare("INSERT INTO paper_trading_transactions
-        (account_id, ticker, name, type, quantity, price_per_unit, currency, fx_rate_to_eur, cash_impact_eur)
-        VALUES (:account_id, :ticker, :name, :type, :quantity, :price_per_unit, :currency, :fx_rate, :cash_impact)");
+        (account_id, ticker, name, type, quantity, price_per_unit, currency, fx_rate_to_eur, cash_impact_eur, fees_eur)
+        VALUES (:account_id, :ticker, :name, :type, :quantity, :price_per_unit, :currency, :fx_rate, :cash_impact, :fees)");
     $stmt->execute([
         'account_id' => $account['id'],
         'ticker' => $ticker,
@@ -171,6 +184,7 @@ if ($action === 'trade' && method() === 'POST') {
         'currency' => $live['currency'],
         'fx_rate' => $fx['rate'],
         'cash_impact' => round($cashImpact, 2),
+        'fees' => $feeEur,
     ]);
 
     respond(paper_account_summary($account), 201);

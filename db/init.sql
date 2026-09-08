@@ -246,6 +246,7 @@ CREATE TABLE IF NOT EXISTS paper_trading_transactions (
     currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
     fx_rate_to_eur DECIMAL(14,6) NOT NULL DEFAULT 1,
     cash_impact_eur DECIMAL(14,2) NOT NULL,
+    fees_eur DECIMAL(10,2) NOT NULL DEFAULT 0,
     executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES paper_trading_accounts(id) ON DELETE CASCADE,
     INDEX idx_account_executed (account_id, executed_at)
