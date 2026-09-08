@@ -16,12 +16,23 @@ const INVEST_ADVISOR_FEE_PER_TRADE = 1.0; // € fissi per acquisto, addebitati 
  * che non avrebbe un effetto definito senza dire COSA cambia):
  *
  * - `volatility_exponent`: il punteggio è rendimento / volatilità^esponente.
- *   Con esponente 1 (bilanciato, il comportamento di prima) rendimento e
- *   volatilità pesano allo stesso modo. Sopra 1 (conservativo) la
- *   volatilità pesa di più nel punteggio — a parità di rendimento stimato,
- *   uno strumento più volatile perde posizioni più velocemente. Sotto 1
- *   (aggressivo) pesa di meno — il ranking segue più il rendimento stimato
- *   e meno quanto oscilla il prezzo.
+ *   Con esponente 1 rendimento e volatilità peserebbero "allo stesso modo"
+ *   — ma il modello di previsione (lib_forecast_model.php) ha un
+ *   coefficiente sulla volatilità che è LUI STESSO positivo e quasi
+ *   lineare (misurato: ~1.58 per la classe equity, l'unica che oggi supera
+ *   il filtro di confidenza qui sotto): per uno strumento con volatilità
+ *   molto alta, il rendimento previsto cresce già linearmente con la
+ *   volatilità, quindi dividere per volatilità^1 lascia il punteggio quasi
+ *   INVARIANTE al crescere della volatilità invece di scontarla — non un
+ *   vero risk-adjustment, solo apparente (caso concreto che l'ha rivelato:
+ *   INTC, volatilità 78,94%, arrivava comunque in cima alla classifica).
+ *   Serve un esponente sensibilmente sopra 1 perché la divisione superi la
+ *   crescita quasi lineare del numeratore e la volatilità estrema perda
+ *   davvero posizioni; i tre valori sotto sono i precedenti (0.5/1.0/1.6)
+ *   spostati di +1, così l'ordine relativo tra i profili — conservativo
+ *   sconta la volatilità più di bilanciato, che la sconta più di aggressivo
+ *   — resta lo stesso, ma ora ogni profilo applica uno sconto reale, non
+ *   solo nominale.
  * - `max_weight_pct`: tetto massimo per singolo strumento. Più basso per
  *   il profilo conservativo (più spalmato, meno concentrazione su un solo
  *   strumento), più alto per l'aggressivo (permette scommesse più
@@ -31,9 +42,9 @@ const INVEST_ADVISOR_FEE_PER_TRADE = 1.0; // € fissi per acquisto, addebitati 
  * storica) — solo come vengono classificati e pesati i candidati.
  */
 const INVEST_ADVISOR_RISK_PROFILES = [
-    'conservativo' => ['volatility_exponent' => 1.6, 'max_weight_pct' => 20.0],
-    'bilanciato' => ['volatility_exponent' => 1.0, 'max_weight_pct' => 35.0],
-    'aggressivo' => ['volatility_exponent' => 0.5, 'max_weight_pct' => 50.0],
+    'conservativo' => ['volatility_exponent' => 2.6, 'max_weight_pct' => 20.0],
+    'bilanciato' => ['volatility_exponent' => 2.0, 'max_weight_pct' => 35.0],
+    'aggressivo' => ['volatility_exponent' => 1.5, 'max_weight_pct' => 50.0],
 ];
 
 /**
