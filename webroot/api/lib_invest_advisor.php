@@ -90,8 +90,6 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         if (!isset($globalMeta[$ticker])) continue;
         if (!$c['forecast_available']) continue;
 
-        if ($c['forecast_pct'] <= 0) continue; // non ha senso "raccomandare" un calo previsto
-
         $volatilityPct = $c['features']['volatility']['annualized_pct'];
         if ($volatilityPct <= 0) continue;
 
@@ -103,25 +101,44 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         // comunque (mostrare "consigliato: 0€" sarebbe solo confuso).
         if ($confidence <= 0) continue;
 
-        // Lo score usa il rendimento e la volatilità ANNUALIZZATI (12
-        // mesi), non quelli capitalizzati sull'orizzonte scelto: quale
-        // titolo sia il miglior compromesso rischio/rendimento non deve
-        // dipendere da quanto a lungo lo si tiene in portafoglio, solo il
-        // valore finale proiettato deve farlo. Con lo score capitalizzato
-        // sull'orizzonte (versione precedente), allungare l'orizzonte
-        // amplificava il numeratore in modo convesso (la capitalizzazione
-        // composta di un rendimento annuo alto cresce più che proporzionalmente
-        // rispetto a uno basso) senza toccare il denominatore, quindi un
-        // titolo molto volatile con un rendimento previsto molto alto (es.
-        // INTC, +116%/anno, volatilità 78,94%) tornava in cima a 36 mesi
-        // nonostante l'esponente di rischio alzato per il caso a 12 mesi.
-        // Capitalizzare un rendimento annuo costante su più anni è già di
-        // per sé un'assunzione forte (vedi disclaimer nel frontend): non
-        // deve anche distorcere QUALI titoli vengono scelti.
-        $rawScore = $c['forecast_pct'] / ($volatilityPct ** $profile['volatility_exponent']);
+        // Il rendimento previsto dal modello viene "temperato" verso la
+        // media storica REALE di quello specifico titolo (CAGR sui
+        // migliori 3 anni disponibili, la stessa feature 'trend' già usata
+        // in input al modello — non un nuovo calcolo): tanto più la
+        // confidenza out-of-sample del modello è bassa (equity oggi ~0.38
+        // su scala 0-1), tanto più il numero usato per classificare e
+        // proiettare si avvicina al rendimento storico realmente
+        // realizzato da quel titolo invece che alla previsione grezza
+        // della regressione. Non è una soglia arbitraria: riusa la stessa
+        // confidenza (sqrt(R² out-of-sample)) già calcolata sopra, non un
+        // nuovo parametro deciso a mano. Un titolo la cui previsione è
+        // molto più ottimistica della propria media storica (es. INTC:
+        // previsione 12 mesi ben sopra il proprio CAGR storico) finisce
+        // così scontato verso quella media, invece di essere preso alla
+        // lettera.
+        $trendPct = $c['features']['trend']['value_pct'];
+        $blendedReturnPct = $confidence * $c['forecast_pct'] + (1 - $confidence) * $trendPct;
+        if ($blendedReturnPct <= 0) continue; // non ha senso "raccomandare" un calo previsto
+
+        // Lo score usa il rendimento (temperato sopra) e la volatilità
+        // ANNUALIZZATI (12 mesi), non quelli capitalizzati sull'orizzonte
+        // scelto: quale titolo sia il miglior compromesso rischio/
+        // rendimento non deve dipendere da quanto a lungo lo si tiene in
+        // portafoglio, solo il valore finale proiettato deve farlo. Con lo
+        // score capitalizzato sull'orizzonte (versione precedente),
+        // allungare l'orizzonte amplificava il numeratore in modo convesso
+        // (la capitalizzazione composta di un rendimento annuo alto cresce
+        // più che proporzionalmente rispetto a uno basso) senza toccare il
+        // denominatore, quindi un titolo molto volatile con un rendimento
+        // previsto molto alto tornava in cima a orizzonti lunghi
+        // nonostante l'esponente di rischio. Capitalizzare un rendimento
+        // annuo costante su più anni è già di per sé un'assunzione forte
+        // (vedi disclaimer nel frontend): non deve anche distorcere QUALI
+        // titoli vengono scelti.
+        $rawScore = $blendedReturnPct / ($volatilityPct ** $profile['volatility_exponent']);
 
         $years = $months / 12;
-        $horizonReturnPct = ((1 + $c['forecast_pct'] / 100) ** $years - 1) * 100;
+        $horizonReturnPct = ((1 + $blendedReturnPct / 100) ** $years - 1) * 100;
 
         $meta = $globalMeta[$ticker];
         $byClass[$c['asset_class']][] = [
@@ -132,9 +149,12 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
             'current_price' => $c['current_price'],
             'currency' => $c['currency'],
             'horizon_return_pct' => round($horizonReturnPct, 2),
+            'model_forecast_pct' => $c['forecast_pct'],
+            'historical_trend_pct' => $trendPct,
             'volatility_pct' => $volatilityPct,
             'r_squared' => $c['model']['r_squared'],
             'r_squared_oos' => $rSquaredOos,
+            'confidence' => round($confidence, 4),
             'score' => $rawScore * $confidence,
         ];
     }

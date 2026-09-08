@@ -212,6 +212,9 @@ function InvestAdvisor() {
                     <td className="px-3 py-2">
                       <div className="font-semibold text-gray-900">{a.name}</div>
                       <div className="text-xs text-muted">{a.ticker} · {TYPE_LABELS[a.type] || a.type} · R² out-of-sample {(a.r_squared_oos * 100).toFixed(0)}%</div>
+                      <div className="text-[10px] text-muted">
+                        Modello 12m {pct(a.model_forecast_pct)} · Storico 3y {pct(a.historical_trend_pct)} · pesati {(a.confidence * 100).toFixed(0)}/{(100 - a.confidence * 100).toFixed(0)}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-right font-mono">{a.weight_pct}%</td>
                     <td className="px-3 py-2 text-right font-mono">{fmtPrice(a.allocated_amount, 'EUR')}</td>
@@ -226,9 +229,13 @@ function InvestAdvisor() {
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] text-amber-900">
             <AlertTriangle size={13} className="mt-0.5 flex-shrink-0 text-amber-600" />
             <p>
-              <strong>Non è consulenza finanziaria.</strong> Orizzonte di {result.months} mesi ottenuto proiettando
-              matematicamente la stima a 12 mesi del modello (capitalizzazione composta) — il modello NON è validato
-              su questo orizzonte specifico, solo su 12 mesi. Profilo <strong>{RISK_PROFILES.find((r) => r.key === result.risk_profile)?.label}</strong>:
+              <strong>Non è consulenza finanziaria.</strong> Il rendimento usato per scegliere e proiettare non è la
+              previsione grezza del modello, ma un mix pesato tra quella e il rendimento storico realmente realizzato
+              dal titolo (CAGR sui migliori 3 anni disponibili) — il peso è la confidenza out-of-sample del modello
+              (vedi "Modello 12m · Storico 3y · pesati X/Y" sotto ogni riga): più il modello è incerto, più il numero
+              si avvicina alla media storica reale invece che alla previsione. Orizzonte di {result.months} mesi
+              ottenuto proiettando matematicamente questo rendimento (capitalizzazione composta) — il modello NON è
+              validato su questo orizzonte specifico, solo su 12 mesi. Profilo <strong>{RISK_PROFILES.find((r) => r.key === result.risk_profile)?.label}</strong>:
               max {result.max_weight_pct}% per strumento. Considera solo categorie (azioni/obbligazioni/crypto) il cui
               modello ha una capacità predittiva out-of-sample dimostrata (R² out-of-sample &gt; 0, misurato su dati
               mai usati per stimare i coefficienti) — le altre sono escluse del tutto, non incluse con un peso
