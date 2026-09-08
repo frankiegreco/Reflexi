@@ -96,16 +96,18 @@ function ForecastCard({ item }) {
 function InvestAdvisor() {
   const [amount, setAmount] = useState('10000');
   const [months, setMonths] = useState('4');
+  const [count, setCount] = useState('9');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
   async function calculate() {
     const amt = parseFloat(amount);
     const mo = parseInt(months, 10);
-    if (!amt || amt <= 0 || !mo || mo <= 0) return;
+    const cnt = parseInt(count, 10);
+    if (!amt || amt <= 0 || !mo || mo <= 0 || !cnt || cnt <= 0) return;
     setLoading(true);
     try {
-      const r = await apiGet(`invest_advisor.php?amount=${amt}&months=${mo}`);
+      const r = await apiGet(`invest_advisor.php?amount=${amt}&months=${mo}&count=${cnt}`);
       setResult(r);
     } catch {
       setResult({ allocation_available: false, message: 'Errore nel calcolo.' });
@@ -118,8 +120,8 @@ function InvestAdvisor() {
     <div className="mb-10 card p-5">
       <h2 className="mb-1 text-sm font-bold text-gray-800">Voglio investire</h2>
       <p className="mb-4 text-xs text-muted">
-        Inserisci un importo ipotetico in euro e un orizzonte: il modello alloca su un paniere di strumenti in base a
-        rendimento stimato, rischio storico e affidabilità del modello per quella categoria (azioni/obbligazioni/crypto).
+        Inserisci un importo ipotetico in euro, un orizzonte e su quanti strumenti diversificare: il modello alloca
+        in base a rendimento stimato, rischio storico e affidabilità del modello per quella categoria (azioni/obbligazioni/crypto).
       </p>
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <div>
@@ -130,8 +132,18 @@ function InvestAdvisor() {
           <label className="field-label">Orizzonte (mesi)</label>
           <input className="field w-28" type="number" min="1" max="60" value={months} onChange={(e) => setMonths(e.target.value)} />
         </div>
+        <div>
+          <label className="field-label">N. strumenti</label>
+          <input className="field w-28" type="number" min="1" max="15" value={count} onChange={(e) => setCount(e.target.value)} />
+        </div>
         <button className="btn-accent" onClick={calculate} disabled={loading}>{loading ? 'Calcolo...' : 'Calcola allocazione'}</button>
       </div>
+
+      {result?.allocation_available && result.allocations.length < result.requested_count && (
+        <p className="mb-3 text-xs text-muted">
+          Richiesti {result.requested_count} strumenti, disponibili solo {result.allocations.length} con previsione positiva su questo orizzonte.
+        </p>
+      )}
 
       {result && !result.allocation_available && (
         <p className="text-sm text-muted">{result.message}</p>

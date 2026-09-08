@@ -354,10 +354,20 @@ esplicite, pensato per essere spiegabile riga per riga:
    di un bond (R² = 0.50) a parità di rendimento/rischio grezzo, altrimenti
    il rumore di un modello poco affidabile potrebbe dominare la
    raccomandazione solo perché quel giorno la sua stima grezza è più alta.
-2. **Selezione**: al più 3 candidati per asset class (equity/bond/crypto),
-   poi uniti e ordinati per punteggio — garantisce diversificazione
-   strutturale invece di poter finire, per esempio, tutto su crypto solo
-   perché quel giorno hanno punteggi alti.
+2. **Selezione**: l'utente scelge anche il numero totale di strumenti
+   (1-15, default 9, oltre a importo e orizzonte). Per classe si pescano
+   al più `ceil(numero_richiesto / classi_con_candidati)` candidati (con 3
+   classi disponibili e default 9 = 3 a testa, come nella prima versione),
+   poi si uniscono, si ordinano per punteggio e si tagliano esattamente al
+   numero richiesto — con 1 solo strumento richiesto sceglie il migliore
+   assoluto invece di forzare la diversificazione quando non ha senso
+   (verificato: count=1 → il singolo bond col punteggio più alto, non un
+   candidato scelto a caso per "rappresentare" una classe). Con più
+   strumenti richiesti garantisce diversificazione strutturale invece di
+   poter finire, per esempio, tutto su crypto solo perché quel giorno hanno
+   punteggi alti. Se gli strumenti con previsione positiva disponibili sono
+   meno del numero richiesto, l'allocazione usa quelli che ci sono e lo
+   dichiara (`allocations.length < requested_count` in UI), non ne inventa.
 3. **Pesi**: proporzionali al punteggio, con un tetto del 35% per singolo
    strumento — l'eccesso oltre il tetto si ridistribuisce sugli altri
    candidati in proporzione (`cap_and_redistribute_weights()` in

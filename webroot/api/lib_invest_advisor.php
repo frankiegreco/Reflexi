@@ -2,19 +2,23 @@
 declare(strict_types=1);
 require_once __DIR__ . '/lib_forecast_model.php'; // FORECAST_ASSET_CLASSES, forecast_universe_computed()
 
-const INVEST_ADVISOR_MAX_PER_CLASS = 3;
 const INVEST_ADVISOR_MAX_WEIGHT_PCT = 35.0;
 const INVEST_ADVISOR_MIN_MONTHS = 1;
 const INVEST_ADVISOR_MAX_MONTHS = 60;
+const INVEST_ADVISOR_MIN_COUNT = 1;
+const INVEST_ADVISOR_MAX_COUNT = 15;
+const INVEST_ADVISOR_DEFAULT_COUNT = 9;
 
 /**
- * Alloca un importo ipotetico su un orizzonte in mesi, usando le previsioni
- * già calcolate da forecast_universe_computed(). NON è un'ottimizzazione di
- * portafoglio vera (niente Markowitz/covarianze tra strumenti) — è un
- * ranking rendimento/rischio con un tetto massimo per strumento (35%) e
- * diversificazione per asset class (al più 3 candidati per classe prima di
- * unire e pesare), pensato per essere spiegabile riga per riga, non per
- * essere matematicamente ottimale.
+ * Alloca un importo ipotetico su un orizzonte in mesi e un numero di
+ * strumenti scelti dall'utente, usando le previsioni già calcolate da
+ * forecast_universe_computed(). NON è un'ottimizzazione di portafoglio
+ * vera (niente Markowitz/covarianze tra strumenti) — è un ranking
+ * rendimento/rischio con un tetto massimo per strumento (35%) e
+ * diversificazione per asset class (i candidati per classe sono limitati
+ * in proporzione al numero richiesto, vedi sotto, prima di unire e
+ * pesare), pensato per essere spiegabile riga per riga, non per essere
+ * matematicamente ottimale.
  *
  * Il modello di Previsioni è addestrato/validato solo su orizzonte 12
  * mesi (vedi lib_forecast_model.php): un orizzonte diverso richiede di
@@ -29,9 +33,10 @@ const INVEST_ADVISOR_MAX_MONTHS = 60;
  * di un modello poco affidabile potrebbe dominare la raccomandazione solo
  * perché quel giorno la stima grezza è più alta.
  */
-function compute_investment_allocation(array $computed, array $globalMeta, float $amount, int $months): array
+function compute_investment_allocation(array $computed, array $globalMeta, float $amount, int $months, int $count = INVEST_ADVISOR_DEFAULT_COUNT): array
 {
     $months = max(INVEST_ADVISOR_MIN_MONTHS, min(INVEST_ADVISOR_MAX_MONTHS, $months));
+    $count = max(INVEST_ADVISOR_MIN_COUNT, min(INVEST_ADVISOR_MAX_COUNT, $count));
 
     $byClass = array_fill_keys(FORECAST_ASSET_CLASSES, []);
     foreach ($computed as $ticker => $c) {
@@ -63,10 +68,18 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         ];
     }
 
+    // Candidati per classe limitati in proporzione al numero totale
+    // richiesto (non un tetto fisso di 3): con 3 classi disponibili e
+    // count=9 si comporta come prima (3 per classe); con count=1 pesca 1
+    // per classe poi il taglio finale sotto sceglie il migliore assoluto
+    // invece di forzare la diversificazione quando l'utente ne vuole solo uno.
+    $classesWithCandidates = count(array_filter($byClass, fn($list) => count($list) > 0));
+    $maxPerClass = $classesWithCandidates > 0 ? max(1, (int)ceil($count / $classesWithCandidates)) : 1;
+
     $candidates = [];
     foreach ($byClass as $list) {
         usort($list, fn($a, $b) => $b['score'] <=> $a['score']);
-        foreach (array_slice($list, 0, INVEST_ADVISOR_MAX_PER_CLASS) as $c) $candidates[] = $c;
+        foreach (array_slice($list, 0, $maxPerClass) as $c) $candidates[] = $c;
     }
 
     if (!$candidates) {
@@ -78,6 +91,7 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
     }
 
     usort($candidates, fn($a, $b) => $b['score'] <=> $a['score']);
+    $candidates = array_slice($candidates, 0, $count); // rispetta esattamente il numero richiesto (o meno, se non ce ne sono abbastanza)
 
     $weights = cap_and_redistribute_weights(array_column($candidates, 'score'), INVEST_ADVISOR_MAX_WEIGHT_PCT);
 
@@ -99,6 +113,7 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         'allocation_available' => true,
         'months' => $months,
         'amount' => $amount,
+        'requested_count' => $count,
         'allocations' => $rows,
         'total_projected_value' => round($totalProjectedValue, 2),
         'total_projected_gain_pct' => round(($totalProjectedValue / $amount - 1) * 100, 2),
