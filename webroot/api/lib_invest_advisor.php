@@ -90,8 +90,7 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         if (!isset($globalMeta[$ticker])) continue;
         if (!$c['forecast_available']) continue;
 
-        $horizonReturnPct = ((1 + $c['forecast_pct'] / 100) ** ($months / 12) - 1) * 100;
-        if ($horizonReturnPct <= 0) continue; // non ha senso "raccomandare" un calo previsto
+        if ($c['forecast_pct'] <= 0) continue; // non ha senso "raccomandare" un calo previsto
 
         $volatilityPct = $c['features']['volatility']['annualized_pct'];
         if ($volatilityPct <= 0) continue;
@@ -104,7 +103,25 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         // comunque (mostrare "consigliato: 0€" sarebbe solo confuso).
         if ($confidence <= 0) continue;
 
-        $rawScore = $horizonReturnPct / ($volatilityPct ** $profile['volatility_exponent']);
+        // Lo score usa il rendimento e la volatilità ANNUALIZZATI (12
+        // mesi), non quelli capitalizzati sull'orizzonte scelto: quale
+        // titolo sia il miglior compromesso rischio/rendimento non deve
+        // dipendere da quanto a lungo lo si tiene in portafoglio, solo il
+        // valore finale proiettato deve farlo. Con lo score capitalizzato
+        // sull'orizzonte (versione precedente), allungare l'orizzonte
+        // amplificava il numeratore in modo convesso (la capitalizzazione
+        // composta di un rendimento annuo alto cresce più che proporzionalmente
+        // rispetto a uno basso) senza toccare il denominatore, quindi un
+        // titolo molto volatile con un rendimento previsto molto alto (es.
+        // INTC, +116%/anno, volatilità 78,94%) tornava in cima a 36 mesi
+        // nonostante l'esponente di rischio alzato per il caso a 12 mesi.
+        // Capitalizzare un rendimento annuo costante su più anni è già di
+        // per sé un'assunzione forte (vedi disclaimer nel frontend): non
+        // deve anche distorcere QUALI titoli vengono scelti.
+        $rawScore = $c['forecast_pct'] / ($volatilityPct ** $profile['volatility_exponent']);
+
+        $years = $months / 12;
+        $horizonReturnPct = ((1 + $c['forecast_pct'] / 100) ** $years - 1) * 100;
 
         $meta = $globalMeta[$ticker];
         $byClass[$c['asset_class']][] = [
