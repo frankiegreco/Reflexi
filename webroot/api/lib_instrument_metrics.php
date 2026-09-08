@@ -162,8 +162,10 @@ function historical_volatility_pct(array $rows, int $maxWindowDays = 365): array
  * raggiunto al punto più basso successivo, su tutto lo storico passato.
  * Estratta per lo stesso motivo di historical_volatility_pct() sopra.
  */
-function historical_max_drawdown(array $rows): array
+function historical_max_drawdown(array $rows): ?array
 {
+    if (!$rows) return null;
+
     $peak = (float)$rows[0]['price'];
     $peakDate = $rows[0]['date'];
     $maxDrawdownPct = 0.0;

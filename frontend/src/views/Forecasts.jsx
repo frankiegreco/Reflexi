@@ -15,6 +15,11 @@ function pct(n) {
   return `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
 }
 
+function PctPill({ value }) {
+  const cls = value > 0 ? 'bg-income/10 text-income' : value < 0 ? 'bg-expense/10 text-expense' : 'bg-gray-100 text-muted';
+  return <span className={`inline-flex items-center rounded-md px-2 py-1 font-mono text-xs font-semibold ${cls}`}>{pct(value)}</span>;
+}
+
 function FeatureRow({ label, value, hint }) {
   return (
     <div className="flex items-center justify-between py-1 text-xs">
@@ -81,18 +86,53 @@ function ForecastCard({ item }) {
   );
 }
 
+function RankingList({ title, hint, items }) {
+  return (
+    <div>
+      <div className="mb-2">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted">{title}</h3>
+        {hint && <p className="text-[11px] text-muted">{hint}</p>}
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-border">
+        {items === null && <div className="px-4 py-6 text-center text-sm text-muted">Calcolo...</div>}
+        {items !== null && items.length === 0 && (
+          <div className="px-4 py-6 text-center text-sm text-muted">Non ci sono ancora abbastanza strumenti tracciati per questa classifica.</div>
+        )}
+        {items?.map((i, idx) => (
+          <div key={i.ticker} className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5 last:border-0">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="w-4 flex-shrink-0 font-mono text-xs text-muted">{idx + 1}</span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-gray-900">{i.name}</div>
+                <div className="text-xs text-muted">{i.ticker} · {TYPE_LABELS[i.type] || i.type}</div>
+              </div>
+            </div>
+            <div className="flex-shrink-0 text-right">
+              <PctPill value={i.value_pct} />
+              <div className="mt-0.5 font-mono text-[10px] text-muted">{fmtPrice(i.current_price, i.currency)}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Forecasts() {
-  const [forecasts, setForecasts] = useState(null);
+  const [data, setData] = useState(null);
 
   useEffect(() => {
-    apiGet('forecasts.php').then(setForecasts).catch(() => setForecasts([]));
+    apiGet('forecasts.php').then(setData).catch(() => setData({ portfolio: [], rankings: null }));
   }, []);
+
+  const portfolio = data?.portfolio ?? null;
+  const rankings = data?.rankings ?? null;
 
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-bold">Previsioni</h1>
-        <p className="text-sm text-muted">Stima di rendimento a 12 mesi per gli strumenti nel tuo portafoglio, prodotta da un modello statistico addestrato sullo storico prezzi.</p>
+        <p className="text-sm text-muted">Stima di rendimento a 12 mesi, prodotta da un modello statistico addestrato sullo storico prezzi.</p>
       </div>
 
       <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
@@ -107,16 +147,29 @@ export default function Forecasts() {
         </p>
       </div>
 
-      {forecasts === null && <p className="py-10 text-center text-sm text-muted">Calcolo previsioni...</p>}
-      {forecasts !== null && forecasts.length === 0 && (
-        <p className="py-10 text-center text-sm text-muted">Aggiungi uno strumento in Investimenti per vedere qui la sua previsione.</p>
+      <h2 className="mb-3 text-sm font-bold text-gray-800">I tuoi strumenti</h2>
+      {portfolio === null && <p className="py-10 text-center text-sm text-muted">Calcolo previsioni...</p>}
+      {portfolio !== null && portfolio.length === 0 && (
+        <p className="py-6 text-center text-sm text-muted">Aggiungi uno strumento in Investimenti per vedere qui la sua previsione.</p>
       )}
-
-      {forecasts && forecasts.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {forecasts.map((f) => <ForecastCard key={f.instrument_id} item={f} />)}
+      {portfolio && portfolio.length > 0 && (
+        <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {portfolio.map((f) => <ForecastCard key={f.instrument_id} item={f} />)}
         </div>
       )}
+
+      <h2 className="mb-1 text-sm font-bold text-gray-800">Classifiche</h2>
+      <p className="mb-4 text-xs text-muted">
+        Tra tutti gli strumenti tracciati dagli utenti Reflexi (non solo il tuo portafoglio) — "andamento storico" è
+        il trend reale già registrato (CAGR sui migliori 3 anni disponibili), "previsione" è la stima a 12 mesi dello
+        stesso modello di cui sopra.
+      </p>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <RankingList title="Migliori — andamento storico" items={rankings?.best_current ?? null} />
+        <RankingList title="Migliori — previsione 12 mesi" items={rankings?.best_forecast ?? null} />
+        <RankingList title="Peggiori — andamento storico" items={rankings?.worst_current ?? null} />
+        <RankingList title="Peggiori — previsione 12 mesi" items={rankings?.worst_forecast ?? null} />
+      </div>
 
       <div className="mt-8 flex items-start gap-2 rounded-xl border border-border bg-white p-4 text-xs text-muted">
         <Info size={14} className="mt-0.5 flex-shrink-0 text-accent" />

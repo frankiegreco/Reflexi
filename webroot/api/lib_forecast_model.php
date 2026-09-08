@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/lib_instrument_metrics.php';   // historical_volatility_pct(), historical_max_drawdown(), closest_row_to()
 require_once __DIR__ . '/lib_instrument_forecast.php';  // forecast_trend_component(), forecast_momentum_component()
+require_once __DIR__ . '/price_fetch.php';              // fetch_analyst_data_cached(), usata da compute_forecast_for_ticker()
 
 /**
  * Modello di previsione vero e proprio: una regressione lineare (OLS) i cui
@@ -289,6 +290,40 @@ function apply_forecast_model(array $model, array $features): float
         + (float)$model['coef_momentum'] * $features['momentum']
         + (float)$model['coef_volatility'] * $features['volatility']
         + (float)$model['coef_drawdown'] * $features['drawdown'];
+}
+
+/**
+ * Calcola tutto quello che serve per UN ticker (storico, prezzo attuale,
+ * dato analisti, previsione) — usata sia per il portafoglio dell'utente sia
+ * per le classifiche globali "migliori/peggiori" in forecasts.php, così il
+ * calcolo per ticker non viene duplicato tra le due liste. `trend` è
+ * esposto anche fuori da `forecast_available`: serve solo 30 giorni di
+ * storico (a differenza della previsione completa, che ne serve 90 per il
+ * momentum), quindi un ticker può avere un "andamento attuale" anche senza
+ * avere ancora una previsione completa.
+ */
+function compute_forecast_for_ticker(PDO $db, string $ticker, ?array $model): array
+{
+    $histStmt = $db->prepare("SELECT date, price FROM price_history WHERE ticker = :ticker ORDER BY date");
+    $histStmt->execute(['ticker' => $ticker]);
+    $rows = $histStmt->fetchAll();
+
+    $priceStmt = $db->prepare("SELECT price, currency FROM price_cache WHERE ticker = :ticker");
+    $priceStmt->execute(['ticker' => $ticker]);
+    $cached = $priceStmt->fetch();
+
+    $currentPrice = $cached ? (float)$cached['price'] : ($rows ? (float)end($rows)['price'] : 0.0);
+    $currency = $cached['currency'] ?? null;
+
+    $analyst = fetch_analyst_data_cached($ticker);
+    $forecast = compute_instrument_forecast($rows, $analyst, $currentPrice, $model);
+
+    return array_merge([
+        'ticker' => $ticker,
+        'currency' => $currency,
+        'current_price' => $currentPrice,
+        'trend' => $rows ? forecast_trend_component($rows) : null,
+    ], $forecast);
 }
 
 /**
