@@ -13,7 +13,7 @@ $count = isset($_GET['count']) ? (int)$_GET['count'] : INVEST_ADVISOR_DEFAULT_CO
 $riskProfile = $_GET['risk'] ?? INVEST_ADVISOR_DEFAULT_RISK_PROFILE;
 
 if ($amount <= 0) respond_error('Importo non valido');
-if ($months <= 0) respond_error('Orizzonte (mesi) non valido');
+if ($months <= 0 || $months > INVEST_ADVISOR_MAX_MONTHS) respond_error('Orizzonte (mesi) non valido (1-' . INVEST_ADVISOR_MAX_MONTHS . ')');
 if ($count <= 0 || $count > INVEST_ADVISOR_MAX_COUNT) respond_error('Numero di strumenti non valido (1-' . INVEST_ADVISOR_MAX_COUNT . ')');
 if (!isset(INVEST_ADVISOR_RISK_PROFILES[$riskProfile])) respond_error('Livello di rischio non valido');
 
