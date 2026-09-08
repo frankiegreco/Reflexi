@@ -65,26 +65,12 @@ function compute_instrument_metrics(array $rows, float $riskFreeRatePct = 2.0): 
         ];
     }
 
-    // 2. Volatilità annualizzata: deviazione standard dei rendimenti
-    // giornalieri sulla finestra più recente disponibile (fino a 1 anno),
-    // annualizzata con la formula standard (radice di 252 giorni di borsa).
-    $windowDays = min($spanDays, 365);
-    $windowStartTs = strtotime($lastDate) - $windowDays * 86400;
-    $windowRows = array_values(array_filter($rows, fn($r) => strtotime($r['date']) >= $windowStartTs));
-
-    $dailyReturns = [];
-    for ($i = 1; $i < count($windowRows); $i++) {
-        $p0 = (float)$windowRows[$i - 1]['price'];
-        $p1 = (float)$windowRows[$i]['price'];
-        if ($p0 > 0) $dailyReturns[] = ($p1 / $p0) - 1;
-    }
-
-    $volatilityPct = null;
-    if (count($dailyReturns) >= 2) {
-        $mean = array_sum($dailyReturns) / count($dailyReturns);
-        $variance = array_sum(array_map(fn($r) => ($r - $mean) ** 2, $dailyReturns)) / (count($dailyReturns) - 1);
-        $volatilityPct = round(sqrt($variance) * sqrt(252) * 100, 2);
-    }
+    // 2. Volatilità annualizzata (vedi historical_volatility_pct) sulla
+    // finestra più recente disponibile, fino a 1 anno.
+    $vol = historical_volatility_pct($rows, 365);
+    $volatilityPct = $vol['annualized_pct'] ?? null;
+    $windowDays = $vol['window_days'] ?? min($spanDays, 365);
+    $windowRows = $vol['window_rows'];
 
     // Rendimento annualizzato sulla stessa finestra della volatilità, per
     // avere due grandezze comparabili nel calcolo dello Sharpe più sotto.
@@ -95,23 +81,10 @@ function compute_instrument_metrics(array $rows, float $riskFreeRatePct = 2.0): 
         $windowAnnualizedReturnPct = ((($lastPrice / $windowFirstPrice) ** (365 / $windowActualDays)) - 1) * 100;
     }
 
-    // 3. Max drawdown: il calo più grande dal punto più alto raggiunto al
-    // punto più basso successivo, su tutto lo storico disponibile.
-    $peak = (float)$rows[0]['price'];
-    $peakDate = $rows[0]['date'];
-    $maxDrawdownPct = 0.0;
-    $ddPeakDate = $peakDate;
-    $ddTroughDate = $peakDate;
-    foreach ($rows as $r) {
-        $p = (float)$r['price'];
-        if ($p > $peak) { $peak = $p; $peakDate = $r['date']; }
-        $drawdown = ($p / $peak - 1) * 100;
-        if ($drawdown < $maxDrawdownPct) {
-            $maxDrawdownPct = $drawdown;
-            $ddPeakDate = $peakDate;
-            $ddTroughDate = $r['date'];
-        }
-    }
+    // 3. Max drawdown (vedi historical_max_drawdown): il calo più grande dal
+    // punto più alto raggiunto al punto più basso successivo, su tutto lo
+    // storico disponibile.
+    $dd = historical_max_drawdown($rows);
 
     // 4. Sharpe ratio approssimato: (rendimento annualizzato - tasso privo
     // di rischio ipotizzato) / volatilità annualizzata, sulla stessa finestra.
@@ -133,9 +106,9 @@ function compute_instrument_metrics(array $rows, float $riskFreeRatePct = 2.0): 
             'data_points' => count($windowRows),
         ],
         'max_drawdown' => [
-            'pct' => round($maxDrawdownPct, 2),
-            'peak_date' => $ddPeakDate,
-            'trough_date' => $ddTroughDate,
+            'pct' => $dd['pct'],
+            'peak_date' => $dd['peak_date'],
+            'trough_date' => $dd['trough_date'],
         ],
         'sharpe_ratio' => $sharpe === null ? null : [
             'value' => $sharpe,
@@ -144,6 +117,69 @@ function compute_instrument_metrics(array $rows, float $riskFreeRatePct = 2.0): 
             'window_days' => $windowDays,
         ],
     ];
+}
+
+/**
+ * Volatilità annualizzata: deviazione standard dei rendimenti giornalieri
+ * sulla finestra più recente disponibile (fino a $maxWindowDays giorni),
+ * annualizzata con la formula standard (radice di 252 giorni di borsa).
+ * Estratta da compute_instrument_metrics() perché riusata anche dal
+ * training del modello di previsione (lib_forecast_model.php), che ne ha
+ * bisogno come feature calcolata "a una data storica" per ogni campione.
+ */
+function historical_volatility_pct(array $rows, int $maxWindowDays = 365): array
+{
+    $n = count($rows);
+    if ($n < 2) return ['annualized_pct' => null, 'window_days' => 0, 'window_rows' => $rows];
+
+    $lastDate = $rows[$n - 1]['date'];
+    $spanDays = (int)((strtotime($lastDate) - strtotime($rows[0]['date'])) / 86400);
+    $windowDays = min($spanDays, $maxWindowDays);
+    $windowStartTs = strtotime($lastDate) - $windowDays * 86400;
+    $windowRows = array_values(array_filter($rows, fn($r) => strtotime($r['date']) >= $windowStartTs));
+
+    $dailyReturns = [];
+    for ($i = 1; $i < count($windowRows); $i++) {
+        $p0 = (float)$windowRows[$i - 1]['price'];
+        $p1 = (float)$windowRows[$i]['price'];
+        if ($p0 > 0) $dailyReturns[] = ($p1 / $p0) - 1;
+    }
+
+    if (count($dailyReturns) < 2) return ['annualized_pct' => null, 'window_days' => $windowDays, 'window_rows' => $windowRows];
+
+    $mean = array_sum($dailyReturns) / count($dailyReturns);
+    $variance = array_sum(array_map(fn($r) => ($r - $mean) ** 2, $dailyReturns)) / (count($dailyReturns) - 1);
+
+    return [
+        'annualized_pct' => round(sqrt($variance) * sqrt(252) * 100, 2),
+        'window_days' => $windowDays,
+        'window_rows' => $windowRows,
+    ];
+}
+
+/**
+ * Max drawdown: il calo percentuale più grande dal punto più alto
+ * raggiunto al punto più basso successivo, su tutto lo storico passato.
+ * Estratta per lo stesso motivo di historical_volatility_pct() sopra.
+ */
+function historical_max_drawdown(array $rows): array
+{
+    $peak = (float)$rows[0]['price'];
+    $peakDate = $rows[0]['date'];
+    $maxDrawdownPct = 0.0;
+    $ddPeakDate = $peakDate;
+    $ddTroughDate = $peakDate;
+    foreach ($rows as $r) {
+        $p = (float)$r['price'];
+        if ($p > $peak) { $peak = $p; $peakDate = $r['date']; }
+        $drawdown = ($p / $peak - 1) * 100;
+        if ($drawdown < $maxDrawdownPct) {
+            $maxDrawdownPct = $drawdown;
+            $ddPeakDate = $peakDate;
+            $ddTroughDate = $r['date'];
+        }
+    }
+    return ['pct' => round($maxDrawdownPct, 2), 'peak_date' => $ddPeakDate, 'trough_date' => $ddTroughDate];
 }
 
 /** Riga con la data più vicina a un timestamp target, in un array ordinato per data crescente. */

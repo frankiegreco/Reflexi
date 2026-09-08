@@ -1,0 +1,346 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/lib_instrument_metrics.php';   // historical_volatility_pct(), historical_max_drawdown(), closest_row_to()
+require_once __DIR__ . '/lib_instrument_forecast.php';  // forecast_trend_component(), forecast_momentum_component()
+
+/**
+ * Modello di previsione vero e proprio: una regressione lineare (OLS) i cui
+ * coefficienti sono APPRESI da un backtest sui dati storici reali presenti
+ * in `price_history` (globale, tutti i ticker mai tracciati da Reflexi, non
+ * solo quelli dell'utente), non decisi a mano. Sostituisce la versione
+ * precedente di questa sezione, che usava pesi fissi (40/40/20) — quella
+ * non era davvero "intelligenza artificiale", solo una media pesata; questa
+ * lo è nel senso tecnico minimo del termine: un modello statistico
+ * addestrato su dati, non impostato da chi scrive il codice.
+ *
+ * Feature scelte (tutte calcolabili "a una data storica" solo dai prezzi,
+ * quindi ricostruibili per ogni punto passato — necessario per generare
+ * esempi di training): trend storico (CAGR), momentum 90gg, volatilità
+ * annualizzata, max drawdown. L'upside da target price analisti NON è una
+ * feature del modello: Reflexi non ha mai salvato uno storico delle
+ * opinioni di analisti nel tempo (solo l'ultimo valore in analyst_cache),
+ * quindi non esiste un dato storico per addestrarci sopra onestamente —
+ * resta visibile in Previsioni come dato di terzo separato, non fuso nel
+ * numero prodotto dal modello.
+ *
+ * Label del training: rendimento reale effettivamente realizzato nei 365
+ * giorni successivi alla data del campione — un fatto storico verificabile,
+ * non un'opinione. Il modello imparato viene poi applicato ai dati PIU'
+ * RECENTI di ogni strumento per produrre la stima futura: questa è la sola
+ * parte genuinamente predittiva (proietta pesi appresi dal passato su dati
+ * che non hanno ancora un esito conosciuto).
+ */
+const FORECAST_MODEL_FEATURES = ['trend', 'momentum', 'volatility', 'drawdown'];
+const FORECAST_MODEL_MIN_TICKER_SPAN_DAYS = 395; // 30gg di storico minimo + 365gg per l'etichetta forward
+const FORECAST_MODEL_SAMPLE_STEP_DAYS = 21;
+const FORECAST_MODEL_LABEL_HORIZON_DAYS = 365;
+const FORECAST_MODEL_LABEL_TOLERANCE_DAYS = 20;
+
+/**
+ * Estrae le 4 feature calcolabili da un prefisso di storico (come se "oggi"
+ * fosse l'ultima riga di $prefixRows) — usata sia in training (su prefissi
+ * storici) sia in inferenza (sull'intero storico disponibile oggi).
+ * Torna null se anche una sola feature non è calcolabile.
+ */
+function forecast_model_features(array $prefixRows): ?array
+{
+    $trend = forecast_trend_component($prefixRows);
+    $momentum = forecast_momentum_component($prefixRows, 90);
+    $vol = historical_volatility_pct($prefixRows, 365)['annualized_pct'] ?? null;
+    $dd = historical_max_drawdown($prefixRows)['pct'] ?? null;
+
+    if ($trend === null || $momentum === null || $vol === null || $dd === null) return null;
+
+    return [
+        'trend' => $trend['value_pct'],
+        'momentum' => $momentum['value_pct'],
+        'volatility' => $vol,
+        'drawdown' => $dd,
+    ];
+}
+
+/**
+ * Genera esempi di training per UN ticker, campionando ogni
+ * FORECAST_MODEL_SAMPLE_STEP_DAYS giorni lungo tutto lo storico disponibile.
+ * Ogni esempio è (feature calcolate a quella data, rendimento realmente
+ * realizzato nei 365 giorni successivi). Torna [] se lo storico del ticker
+ * è troppo corto per generare anche un solo esempio completo.
+ *
+ * Nota onestà: i campioni di uno stesso ticker si sovrappongono molto (le
+ * finestre trailing di due date a 21 giorni di distanza condividono quasi
+ * tutto lo storico) — non sono indipendenti in senso statistico stretto.
+ * È un limite noto e accettato di questo tipo di backtest con storico
+ * limitato, non un bug: va riportato nella scheda del modello, non nascosto.
+ */
+function forecast_model_samples_for_ticker(array $fullRows): array
+{
+    $n = count($fullRows);
+    if ($n < 2) return [];
+
+    $firstTs = strtotime($fullRows[0]['date']);
+    $lastTs = strtotime($fullRows[$n - 1]['date']);
+    $spanDays = (int)(($lastTs - $firstTs) / 86400);
+    if ($spanDays < FORECAST_MODEL_MIN_TICKER_SPAN_DAYS) return [];
+
+    $samples = [];
+    $cutoffTs = $firstTs + 30 * 86400;
+    $lastCutoffTs = $lastTs - FORECAST_MODEL_LABEL_HORIZON_DAYS * 86400;
+
+    // $asOfIndex avanza in modo monotono con $cutoffTs (entrambi crescenti):
+    // resta sempre l'ultima riga con data <= cutoff, senza dover
+    // riscandire l'array intero a ogni passo di campionamento.
+    $asOfIndex = 0;
+    while ($cutoffTs <= $lastCutoffTs) {
+        while ($asOfIndex + 1 < $n && strtotime($fullRows[$asOfIndex + 1]['date']) <= $cutoffTs) $asOfIndex++;
+
+        if (strtotime($fullRows[$asOfIndex]['date']) <= $cutoffTs && $asOfIndex >= 1) {
+            $prefixRows = array_slice($fullRows, 0, $asOfIndex + 1);
+            $features = forecast_model_features($prefixRows);
+
+            if ($features !== null) {
+                $asOfTs = strtotime($fullRows[$asOfIndex]['date']);
+                $targetTs = $asOfTs + FORECAST_MODEL_LABEL_HORIZON_DAYS * 86400;
+                $forwardRow = closest_row_to($fullRows, $targetTs);
+                $forwardDiffDays = abs((strtotime($forwardRow['date']) - $targetTs) / 86400);
+
+                if ($forwardDiffDays <= FORECAST_MODEL_LABEL_TOLERANCE_DAYS && strtotime($forwardRow['date']) > $asOfTs) {
+                    $asOfPrice = (float)$fullRows[$asOfIndex]['price'];
+                    $forwardPrice = (float)$forwardRow['price'];
+                    if ($asOfPrice > 0) {
+                        $samples[] = [
+                            'features' => $features,
+                            'label_pct' => ($forwardPrice / $asOfPrice - 1) * 100,
+                        ];
+                    }
+                }
+            }
+        }
+
+        $cutoffTs += FORECAST_MODEL_SAMPLE_STEP_DAYS * 86400;
+    }
+
+    return $samples;
+}
+
+/** Ordinary least squares via equazioni normali: beta = (XtX)^-1 Xt y. */
+function ols_fit(array $X, array $y): ?array
+{
+    $n = count($X);
+    if ($n === 0) return null;
+    $p = count($X[0]);
+
+    // Xt*X (p x p) e Xt*y (p)
+    $XtX = array_fill(0, $p, array_fill(0, $p, 0.0));
+    $Xty = array_fill(0, $p, 0.0);
+    for ($i = 0; $i < $n; $i++) {
+        for ($a = 0; $a < $p; $a++) {
+            $Xty[$a] += $X[$i][$a] * $y[$i];
+            for ($b = 0; $b < $p; $b++) {
+                $XtX[$a][$b] += $X[$i][$a] * $X[$i][$b];
+            }
+        }
+    }
+
+    $inv = matrix_inverse($XtX);
+    if ($inv === null) return null;
+
+    $beta = array_fill(0, $p, 0.0);
+    for ($a = 0; $a < $p; $a++) {
+        for ($b = 0; $b < $p; $b++) {
+            $beta[$a] += $inv[$a][$b] * $Xty[$b];
+        }
+    }
+
+    // R^2 sullo stesso set di training (non è una validazione out-of-sample:
+    // vedi disclaimer nella scheda del modello).
+    $yMean = array_sum($y) / $n;
+    $ssTot = 0.0;
+    $ssRes = 0.0;
+    for ($i = 0; $i < $n; $i++) {
+        $pred = 0.0;
+        for ($a = 0; $a < $p; $a++) $pred += $beta[$a] * $X[$i][$a];
+        $ssRes += ($y[$i] - $pred) ** 2;
+        $ssTot += ($y[$i] - $yMean) ** 2;
+    }
+    $rSquared = $ssTot > 0 ? 1 - ($ssRes / $ssTot) : 0.0;
+
+    return ['beta' => $beta, 'r_squared' => $rSquared];
+}
+
+/** Inversione di una matrice quadrata via Gauss-Jordan con pivot parziale. Torna null se singolare. */
+function matrix_inverse(array $m): ?array
+{
+    $n = count($m);
+    $aug = [];
+    for ($i = 0; $i < $n; $i++) {
+        $aug[$i] = array_merge($m[$i], array_fill(0, $n, 0.0));
+        $aug[$i][$n + $i] = 1.0;
+    }
+
+    for ($col = 0; $col < $n; $col++) {
+        $pivotRow = $col;
+        $maxVal = abs($aug[$col][$col]);
+        for ($r = $col + 1; $r < $n; $r++) {
+            if (abs($aug[$r][$col]) > $maxVal) { $maxVal = abs($aug[$r][$col]); $pivotRow = $r; }
+        }
+        if ($maxVal < 1e-10) return null; // singolare o quasi
+
+        if ($pivotRow !== $col) { $tmp = $aug[$col]; $aug[$col] = $aug[$pivotRow]; $aug[$pivotRow] = $tmp; }
+
+        $pivot = $aug[$col][$col];
+        for ($k = 0; $k < 2 * $n; $k++) $aug[$col][$k] /= $pivot;
+
+        for ($r = 0; $r < $n; $r++) {
+            if ($r === $col) continue;
+            $factor = $aug[$r][$col];
+            if ($factor === 0.0) continue;
+            for ($k = 0; $k < 2 * $n; $k++) $aug[$r][$k] -= $factor * $aug[$col][$k];
+        }
+    }
+
+    $inv = [];
+    for ($i = 0; $i < $n; $i++) $inv[$i] = array_slice($aug[$i], $n, $n);
+    return $inv;
+}
+
+/**
+ * Addestra il modello su TUTTO price_history (ogni ticker mai tracciato,
+ * non solo quelli dell'utente che lancia il training) e salva i
+ * coefficienti in `forecast_model`. Pensato per essere lanciato da
+ * cron/retrain_forecast_model.php, non ad ogni richiesta HTTP: il backtest
+ * su tutto lo storico è un lavoro da batch, non da request.
+ */
+function train_forecast_model(PDO $db): array
+{
+    $tickers = $db->query("SELECT DISTINCT ticker FROM price_history")->fetchAll(PDO::FETCH_COLUMN);
+
+    $allSamples = [];
+    $tickersUsed = [];
+    foreach ($tickers as $ticker) {
+        $stmt = $db->prepare("SELECT date, price FROM price_history WHERE ticker = :t ORDER BY date");
+        $stmt->execute(['t' => $ticker]);
+        $rows = $stmt->fetchAll();
+
+        $samples = forecast_model_samples_for_ticker($rows);
+        if ($samples) {
+            $tickersUsed[] = $ticker;
+            foreach ($samples as $s) $allSamples[] = $s;
+        }
+    }
+
+    if (count($allSamples) < 20) {
+        return ['ok' => false, 'message' => 'Troppi pochi campioni disponibili per addestrare il modello (min. 20), servono più ticker con più storico.'];
+    }
+
+    $X = [];
+    $y = [];
+    foreach ($allSamples as $s) {
+        $X[] = [1.0, $s['features']['trend'], $s['features']['momentum'], $s['features']['volatility'], $s['features']['drawdown']];
+        $y[] = $s['label_pct'];
+    }
+
+    $fit = ols_fit($X, $y);
+    if ($fit === null) {
+        return ['ok' => false, 'message' => 'Fit del modello fallito (matrice singolare) — servono più dati o feature meno correlate.'];
+    }
+
+    $stmt = $db->prepare("INSERT INTO forecast_model
+        (n_samples, n_tickers, r_squared, intercept, coef_trend, coef_momentum, coef_volatility, coef_drawdown)
+        VALUES (:n_samples, :n_tickers, :r_squared, :intercept, :coef_trend, :coef_momentum, :coef_volatility, :coef_drawdown)");
+    $stmt->execute([
+        'n_samples' => count($allSamples),
+        'n_tickers' => count($tickersUsed),
+        'r_squared' => $fit['r_squared'],
+        'intercept' => $fit['beta'][0],
+        'coef_trend' => $fit['beta'][1],
+        'coef_momentum' => $fit['beta'][2],
+        'coef_volatility' => $fit['beta'][3],
+        'coef_drawdown' => $fit['beta'][4],
+    ]);
+
+    return [
+        'ok' => true,
+        'n_samples' => count($allSamples),
+        'n_tickers' => count($tickersUsed),
+        'tickers_used' => $tickersUsed,
+        'r_squared' => round($fit['r_squared'], 4),
+        'coefficients' => [
+            'intercept' => $fit['beta'][0],
+            'trend' => $fit['beta'][1],
+            'momentum' => $fit['beta'][2],
+            'volatility' => $fit['beta'][3],
+            'drawdown' => $fit['beta'][4],
+        ],
+    ];
+}
+
+/** Ultimo modello addestrato salvato in DB, o null se non è mai stato lanciato un training. */
+function latest_forecast_model(PDO $db): ?array
+{
+    $row = $db->query("SELECT * FROM forecast_model ORDER BY trained_at DESC LIMIT 1")->fetch();
+    return $row ?: null;
+}
+
+/** Applica i coefficienti di un modello addestrato alle feature attuali di uno strumento. */
+function apply_forecast_model(array $model, array $features): float
+{
+    return (float)$model['intercept']
+        + (float)$model['coef_trend'] * $features['trend']
+        + (float)$model['coef_momentum'] * $features['momentum']
+        + (float)$model['coef_volatility'] * $features['volatility']
+        + (float)$model['coef_drawdown'] * $features['drawdown'];
+}
+
+/**
+ * Orchestratore usato da forecasts.php: applica il modello addestrato alle
+ * feature attuali di uno strumento per produrre la stima a 12 mesi. Il
+ * target price analisti (forecast_analyst_component, in
+ * lib_instrument_forecast.php) viene comunque calcolato e restituito, ma
+ * SEPARATO dalla stima — è un riferimento di terzi, non un ingrediente
+ * del modello (vedi il perché nel docblock in cima a questo file).
+ */
+function compute_instrument_forecast(array $rows, ?array $analyst, float $currentPrice, ?array $model): array
+{
+    $analystComp = forecast_analyst_component($analyst, $currentPrice);
+    $analystReference = $analystComp === null ? null : [
+        'value_pct' => $analystComp['value_pct'],
+        'target_mean_price' => $analystComp['target_mean_price'],
+        'number_of_analysts' => $analystComp['number_of_analysts'],
+    ];
+
+    if ($model === null) {
+        return [
+            'forecast_available' => false,
+            'message' => 'Il modello di previsione non è ancora stato addestrato su questa installazione (serve lanciare cron/retrain_forecast_model.php almeno una volta).',
+            'analyst_reference' => $analystReference,
+        ];
+    }
+
+    $features = forecast_model_features($rows);
+    if ($features === null) {
+        return [
+            'forecast_available' => false,
+            'message' => 'Storico prezzi troppo corto per calcolare le feature del modello (serve almeno 90 giorni continui).',
+            'analyst_reference' => $analystReference,
+        ];
+    }
+
+    return [
+        'forecast_available' => true,
+        'forecast_pct' => round(apply_forecast_model($model, $features), 2),
+        'horizon' => '12 mesi',
+        'model' => [
+            'trained_at' => $model['trained_at'],
+            'n_samples' => (int)$model['n_samples'],
+            'n_tickers' => (int)$model['n_tickers'],
+            'r_squared' => (float)$model['r_squared'],
+        ],
+        'features' => [
+            'trend' => ['value_pct' => $features['trend']],
+            'momentum' => ['value_pct' => $features['momentum'], 'window_days' => 90],
+            'volatility' => ['annualized_pct' => $features['volatility']],
+            'drawdown' => ['pct' => $features['drawdown']],
+        ],
+        'analyst_reference' => $analystReference,
+    ];
+}

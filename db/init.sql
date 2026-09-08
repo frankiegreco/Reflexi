@@ -185,6 +185,22 @@ CREATE TABLE IF NOT EXISTS analyst_cache (
     fetched_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Modello di previsione appreso (regressione OLS), append-only: ogni riga
+-- e' una versione addestrata, si usa sempre l'ultima (vedi migrazione 035).
+CREATE TABLE IF NOT EXISTS forecast_model (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    trained_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    n_samples INT NOT NULL,
+    n_tickers INT NOT NULL,
+    r_squared DECIMAL(6,4) NOT NULL,
+    intercept DECIMAL(14,8) NOT NULL,
+    coef_trend DECIMAL(14,8) NOT NULL,
+    coef_momentum DECIMAL(14,8) NOT NULL,
+    coef_volatility DECIMAL(14,8) NOT NULL,
+    coef_drawdown DECIMAL(14,8) NOT NULL,
+    INDEX idx_trained_at (trained_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS budgets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,

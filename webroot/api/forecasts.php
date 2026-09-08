@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/db.php';
 require __DIR__ . '/price_fetch.php';
-require __DIR__ . '/lib_instrument_forecast.php';
+require __DIR__ . '/lib_forecast_model.php';
 
 $uid = require_auth();
 
@@ -14,6 +14,10 @@ $instruments = $stmt->fetchAll();
 
 $histStmt = db()->prepare("SELECT date, price FROM price_history WHERE ticker = :ticker ORDER BY date");
 $priceStmt = db()->prepare("SELECT price FROM price_cache WHERE ticker = :ticker");
+
+// Caricato una volta sola per la richiesta, non per ogni strumento: è lo
+// stesso modello per tutti gli strumenti dell'utente.
+$model = latest_forecast_model(db());
 
 $out = [];
 foreach ($instruments as $inst) {
@@ -28,7 +32,7 @@ foreach ($instruments as $inst) {
 
     $analyst = fetch_analyst_data_cached($ticker);
 
-    $forecast = compute_instrument_forecast($rows, $analyst, $currentPrice);
+    $forecast = compute_instrument_forecast($rows, $analyst, $currentPrice, $model);
 
     $out[] = array_merge([
         'instrument_id' => (int)$inst['id'],
