@@ -221,6 +221,36 @@ CREATE TABLE IF NOT EXISTS forecast_model (
     INDEX idx_asset_class_trained_at (asset_class, trained_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Trading simulato (paper trading), zero impatto sulle finanze reali —
+-- tabelle separate da accounts/instruments/investment_transactions apposta
+-- (vedi migrazione 039). Il saldo di cassa non e' persistito, si calcola
+-- sempre come starting_balance + SUM(cash_impact_eur) delle transazioni
+-- (stessa convenzione dei saldi conto reali).
+CREATE TABLE IF NOT EXISTS paper_trading_accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    starting_balance DECIMAL(14,2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS paper_trading_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_id INT NOT NULL,
+    ticker VARCHAR(20) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    type ENUM('acquisto','vendita') NOT NULL,
+    quantity DECIMAL(18,6) NOT NULL,
+    price_per_unit DECIMAL(14,4) NOT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+    fx_rate_to_eur DECIMAL(14,6) NOT NULL DEFAULT 1,
+    cash_impact_eur DECIMAL(14,2) NOT NULL,
+    executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (account_id) REFERENCES paper_trading_accounts(id) ON DELETE CASCADE,
+    INDEX idx_account_executed (account_id, executed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS budgets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,

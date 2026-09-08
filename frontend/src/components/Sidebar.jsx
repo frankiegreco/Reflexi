@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ListOrdered, Wallet, Landmark, LineChart, Compass, TrendingUp, Scale, Flame, PiggyBank,
-  Tags, Repeat, Layers, Target, BarChart3, FileText, Receipt, Plus, LogOut, UserCircle2, X,
+  Tags, Repeat, Layers, Target, BarChart3, FileText, Receipt, Plus, LogOut, UserCircle2, X, FlaskConical,
 } from 'lucide-react';
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
   { key: 'investments', label: 'Investimenti', icon: LineChart },
   { key: 'forecasts', label: 'Previsioni', icon: Compass },
   { key: 'markets', label: 'Mercati', icon: TrendingUp },
+  { key: 'papertrading', label: 'Simulazione trading', icon: FlaskConical },
   { key: 'comparator', label: 'Comparatore', icon: Scale },
   { key: 'fire', label: 'FIRE', icon: Flame },
   { key: 'pensionfund', label: 'Fondo pensione', icon: PiggyBank },
