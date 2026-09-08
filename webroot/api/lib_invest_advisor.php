@@ -8,6 +8,7 @@ const INVEST_ADVISOR_MIN_COUNT = 1;
 const INVEST_ADVISOR_MAX_COUNT = 15;
 const INVEST_ADVISOR_DEFAULT_COUNT = 9;
 const INVEST_ADVISOR_DEFAULT_RISK_PROFILE = 'bilanciato';
+const INVEST_ADVISOR_FEE_PER_TRADE = 1.0; // € fissi per acquisto, addebitati dal broker indipendentemente dall'importo
 
 /**
  * Livello di rischio scelto dall'utente, tradotto in due leve concrete sul
@@ -136,12 +137,36 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
     usort($candidates, fn($a, $b) => $b['score'] <=> $a['score']);
     $candidates = array_slice($candidates, 0, $count); // rispetta esattamente il numero richiesto (o meno, se non ce ne sono abbastanza)
 
+    // Ogni acquisto è una transazione con commissione fissa (uguale per
+    // qualunque strumento): non cambia MAI la classifica di chi è "migliore"
+    // (la commissione non favorisce un titolo sull'altro), ma riduce il
+    // capitale che va davvero investito quando lo si spalma su più
+    // strumenti — con un importo piccolo e tanti strumenti richiesti può
+    // arrivare a mangiarsi una fetta rilevante, o perfino superare
+    // l'importo stesso. Sottratta una sola volta dal capitale prima di
+    // pesare (non per singolo strumento dentro al ciclo), e il guadagno %
+    // finale resta calcolato sull'importo lordo originale così l'effetto
+    // si vede nel risultato invece di sparire silenziosamente.
+    $totalFees = count($candidates) * INVEST_ADVISOR_FEE_PER_TRADE;
+    $netAmount = $amount - $totalFees;
+    if ($netAmount <= 0) {
+        return [
+            'allocation_available' => false,
+            'message' => sprintf(
+                'Con %d strumenti le commissioni di acquisto (%s€, %s€ ciascuna) superano o esauriscono l\'importo disponibile. Riduci il numero di strumenti o aumenta l\'importo.',
+                count($candidates), number_format($totalFees, 2, ',', '.'), number_format(INVEST_ADVISOR_FEE_PER_TRADE, 2, ',', '.')
+            ),
+            'months' => $months,
+            'risk_profile' => $riskProfile,
+        ];
+    }
+
     $weights = cap_and_redistribute_weights(array_column($candidates, 'score'), $profile['max_weight_pct']);
 
     $rows = [];
     $totalProjectedValue = 0.0;
     foreach ($candidates as $i => $c) {
-        $allocatedAmount = $amount * $weights[$i];
+        $allocatedAmount = $netAmount * $weights[$i];
         $projectedValue = $allocatedAmount * (1 + $c['horizon_return_pct'] / 100);
         $totalProjectedValue += $projectedValue;
 
@@ -156,6 +181,9 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         'allocation_available' => true,
         'months' => $months,
         'amount' => $amount,
+        'fee_per_trade' => INVEST_ADVISOR_FEE_PER_TRADE,
+        'total_fees' => round($totalFees, 2),
+        'net_amount' => round($netAmount, 2),
         'requested_count' => $count,
         'risk_profile' => $riskProfile,
         'max_weight_pct' => $profile['max_weight_pct'],

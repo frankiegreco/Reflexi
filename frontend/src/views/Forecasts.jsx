@@ -182,7 +182,7 @@ function InvestAdvisor() {
 
       {result?.allocation_available && (
         <>
-          <div className="mb-3 flex items-baseline gap-2">
+          <div className="mb-1 flex items-baseline gap-2">
             <span className={`font-mono text-2xl font-bold ${result.total_projected_gain_pct >= 0 ? 'text-income' : 'text-expense'}`}>
               {fmtPrice(result.total_projected_value, 'EUR')}
             </span>
@@ -190,6 +190,10 @@ function InvestAdvisor() {
               stimato dopo {result.months} {result.months === 1 ? 'mese' : 'mesi'} ({pct(result.total_projected_gain_pct)})
             </span>
           </div>
+          <p className="mb-3 text-xs text-muted">
+            Commissioni stimate {fmtPrice(result.total_fees, 'EUR')} ({result.allocations.length} {result.allocations.length === 1 ? 'acquisto' : 'acquisti'} × {fmtPrice(result.fee_per_trade, 'EUR')}) —
+            importo netto investito {fmtPrice(result.net_amount, 'EUR')}
+          </p>
 
           <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full min-w-[560px] border-collapse text-sm">
