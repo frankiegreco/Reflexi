@@ -28,9 +28,10 @@ foreach ($results as $assetClass => $result) {
         $anyFailed = true;
         continue;
     }
-    echo "  Campioni:   {$result['n_samples']} (da {$result['n_tickers']} ticker: " . implode(', ', $result['tickers_used']) . ")\n";
-    echo "  R^2 (training set, non out-of-sample): {$result['r_squared']}\n";
-    echo "  Coefficienti:\n";
+    echo "  Campioni:   {$result['n_samples']} totali — {$result['n_samples_train']} train / {$result['n_samples_test']} test (da {$result['n_tickers']} ticker: " . implode(', ', $result['tickers_used']) . ")\n";
+    echo "  R^2 in-sample (coefficienti finali su train+test, stesso set su cui è misurato): {$result['r_squared']}\n";
+    echo "  R^2 out-of-sample (coefficienti stimati solo su train, misurati sul test mai visto): " . ($result['r_squared_oos'] ?? 'n/d — test insufficiente') . "\n";
+    echo "  Coefficienti (finali, su train+test):\n";
     foreach ($result['coefficients'] as $name => $value) {
         echo "    {$name}: " . round($value, 4) . "\n";
     }

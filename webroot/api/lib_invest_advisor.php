@@ -52,12 +52,19 @@ const INVEST_ADVISOR_RISK_PROFILES = [
  * composta — corretto SE il rendimento annuo si mantenesse costante nel
  * tempo, un'assunzione reale che va dichiarata, non un dato validato per
  * quell'orizzonte specifico. Per questo il punteggio di ogni candidato
- * viene anche scalato per sqrt(R²) del modello della sua asset class: un
- * rendimento previsto da un modello con R² basso (es. crypto, 0.04) pesa
- * meno nel ranking di uno stimato da un modello più affidabile (es. bond,
- * 0.50), a parità di rendimento/volatilità grezzi — altrimenti il rumore
- * di un modello poco affidabile potrebbe dominare la raccomandazione solo
- * perché quel giorno la stima grezza è più alta.
+ * viene anche scalato per sqrt(R² out-of-sample) del modello della sua
+ * asset class — NON l'R² in-sample: quello misura solo quanto il modello
+ * si adatta ai dati che ha già visto, può essere alto anche per un modello
+ * senza vera capacità predittiva (vedi lib_forecast_model.php e migrazione
+ * 037). L'R² out-of-sample misurato la prima volta ha rivelato che il
+ * bond, con R² in-sample 0.50 (il più alto delle tre classi), ha R²
+ * out-of-sample -0.04 — nessuna vera capacità predittiva nonostante
+ * l'aspetto migliore sulla carta; il crypto è arrivato a -34. Usare
+ * l'in-sample per la confidenza avrebbe fatto fidare il tool proprio della
+ * classe meno affidabile in pratica. R² out-of-sample negativo o assente
+ * → confidenza zero per quella classe (non un valore piccolo ma diverso
+ * da zero: un modello che va peggio della semplice media non merita un
+ * peso positivo, per quanto piccolo).
  */
 function compute_investment_allocation(array $computed, array $globalMeta, float $amount, int $months, int $count = INVEST_ADVISOR_DEFAULT_COUNT, string $riskProfile = INVEST_ADVISOR_DEFAULT_RISK_PROFILE): array
 {
@@ -77,8 +84,14 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         $volatilityPct = $c['features']['volatility']['annualized_pct'];
         if ($volatilityPct <= 0) continue;
 
-        $rSquared = (float)$c['model']['r_squared'];
-        $confidence = sqrt(max(0.0, $rSquared));
+        $rSquaredOos = $c['model']['r_squared_oos']; // può essere null (test insufficiente) o negativo
+        $confidence = $rSquaredOos !== null ? sqrt(max(0.0, $rSquaredOos)) : 0.0;
+        // Confidenza zero = il modello di questa asset class non ha
+        // dimostrato nessuna vera capacità predittiva out-of-sample:
+        // escluso del tutto, non incluso con un peso che finirebbe a 0
+        // comunque (mostrare "consigliato: 0€" sarebbe solo confuso).
+        if ($confidence <= 0) continue;
+
         $rawScore = $horizonReturnPct / ($volatilityPct ** $profile['volatility_exponent']);
 
         $meta = $globalMeta[$ticker];
@@ -91,7 +104,8 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
             'currency' => $c['currency'],
             'horizon_return_pct' => round($horizonReturnPct, 2),
             'volatility_pct' => $volatilityPct,
-            'r_squared' => $rSquared,
+            'r_squared' => $c['model']['r_squared'],
+            'r_squared_oos' => $rSquaredOos,
             'score' => $rawScore * $confidence,
         ];
     }
@@ -113,7 +127,7 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
     if (!$candidates) {
         return [
             'allocation_available' => false,
-            'message' => 'Nessuno strumento tracciato ha una previsione di rendimento positiva per questo orizzonte al momento.',
+            'message' => 'Nessuno strumento tracciato ha sia una previsione di rendimento positiva per questo orizzonte sia un modello con capacità predittiva out-of-sample dimostrata al momento.',
             'months' => $months,
             'risk_profile' => $riskProfile,
         ];

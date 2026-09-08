@@ -64,7 +64,12 @@ function ForecastCard({ item }) {
           )}
           <div className="mb-2 text-[10px] text-muted">
             Modello addestrato il {formatDate(item.model.trained_at.slice(0, 10))} su {item.model.n_samples} campioni storici
-            ({item.model.n_tickers} strumenti) · R² {(item.model.r_squared * 100).toFixed(1)}%
+            ({item.model.n_tickers} strumenti) · R² in-sample {(item.model.r_squared * 100).toFixed(1)}%
+            {' · '}R² out-of-sample{' '}
+            <span className={item.model.r_squared_oos === null ? '' : item.model.r_squared_oos > 0 ? 'text-income' : 'text-expense'}>
+              {item.model.r_squared_oos === null ? 'n/d' : `${(item.model.r_squared_oos * 100).toFixed(1)}%`}
+            </span>
+            {item.model.r_squared_oos !== null && item.model.r_squared_oos <= 0 && ' (nessuna vera capacità predittiva dimostrata)'}
           </div>
 
           <div className="divide-y divide-border border-t border-border pt-1">
@@ -202,7 +207,7 @@ function InvestAdvisor() {
                   <tr key={a.ticker} className="border-b border-border last:border-0">
                     <td className="px-3 py-2">
                       <div className="font-semibold text-gray-900">{a.name}</div>
-                      <div className="text-xs text-muted">{a.ticker} · {TYPE_LABELS[a.type] || a.type} · R² modello {(a.r_squared * 100).toFixed(0)}%</div>
+                      <div className="text-xs text-muted">{a.ticker} · {TYPE_LABELS[a.type] || a.type} · R² out-of-sample {(a.r_squared_oos * 100).toFixed(0)}%</div>
                     </td>
                     <td className="px-3 py-2 text-right font-mono">{a.weight_pct}%</td>
                     <td className="px-3 py-2 text-right font-mono">{fmtPrice(a.allocated_amount, 'EUR')}</td>
@@ -220,12 +225,14 @@ function InvestAdvisor() {
               <strong>Non è consulenza finanziaria.</strong> Orizzonte di {result.months} mesi ottenuto proiettando
               matematicamente la stima a 12 mesi del modello (capitalizzazione composta) — il modello NON è validato
               su questo orizzonte specifico, solo su 12 mesi. Profilo <strong>{RISK_PROFILES.find((r) => r.key === result.risk_profile)?.label}</strong>:
-              max {result.max_weight_pct}% per strumento, diversificato tra le categorie disponibili (azioni/obbligazioni/crypto)
-              e pesato anche per quanto è affidabile il modello di quella categoria (R² più basso → peso più basso).
-              Rendimenti calcolati sulla valuta nativa di ogni strumento e applicati all'importo in euro senza
-              conversione valutaria (stessa scelta delle altre schermate di Reflexi — ignora il rischio di cambio).
-              È un calcolo automatico che può sbagliarsi anche di molto, specialmente su orizzonti brevi: non
-              seguirlo come unico riferimento per una decisione reale.
+              max {result.max_weight_pct}% per strumento. Considera solo categorie (azioni/obbligazioni/crypto) il cui
+              modello ha una capacità predittiva out-of-sample dimostrata (R² out-of-sample &gt; 0, misurato su dati
+              mai usati per stimare i coefficienti) — le altre sono escluse del tutto, non incluse con un peso
+              piccolo: un modello che va peggio della semplice media storica non merita un peso positivo, per quanto
+              piccolo. Rendimenti calcolati sulla valuta nativa di ogni strumento e applicati all'importo in euro
+              senza conversione valutaria (stessa scelta delle altre schermate di Reflexi — ignora il rischio di
+              cambio). È un calcolo automatico che può sbagliarsi anche di molto, specialmente su orizzonti brevi:
+              non seguirlo come unico riferimento per una decisione reale.
             </p>
           </div>
         </>

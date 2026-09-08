@@ -189,13 +189,21 @@ CREATE TABLE IF NOT EXISTS analyst_cache (
 -- e' una versione addestrata di UN modello per asset class (equity/bond/
 -- crypto, vedi migrazione 036 sul perche' di questa separazione), si usa
 -- sempre l'ultima per quella asset class (vedi migrazione 035).
+-- r_squared = fit in-sample sull'intera serie di ogni asset class (usato
+-- per i coefficienti applicati in produzione); r_squared_oos = fit
+-- misurato su un holdout temporale (ultimo 20% cronologico di ogni
+-- ticker, mai usato per stimare i coefficienti) — puo' essere negativo,
+-- a differenza di r_squared. Vedi migrazione 037 per il perche'.
 CREATE TABLE IF NOT EXISTS forecast_model (
     id INT AUTO_INCREMENT PRIMARY KEY,
     trained_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     asset_class VARCHAR(10) NOT NULL DEFAULT 'equity',
     n_samples INT NOT NULL,
+    n_samples_train INT NULL,
+    n_samples_test INT NULL,
     n_tickers INT NOT NULL,
     r_squared DECIMAL(6,4) NOT NULL,
+    r_squared_oos DECIMAL(7,4) NULL,
     intercept DECIMAL(14,8) NOT NULL,
     coef_trend DECIMAL(14,8) NOT NULL,
     coef_momentum DECIMAL(14,8) NOT NULL,

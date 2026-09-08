@@ -219,40 +219,80 @@ circa (decine di fetch verso Yahoo la prima volta); i caricamenti
 successivi sono rapidi grazie alle cache già esistenti (`price_cache`,
 `analyst_cache`).
 
-### Limiti onesti del modello (misurati, non ipotetici)
+### Validazione out-of-sample: l'R² in-sample non bastava
 
-Addestramento più recente su questa installazione (8 settembre 2026,
-dopo l'ampliamento dell'universo e la separazione per asset class):
+Richiesta esplicita del titolare del progetto dopo aver visto l'R²
+in-sample (misurato sullo stesso set usato per stimare i coefficienti):
+"come possiamo addestrare meglio il modello?" → "parti dalla validazione
+out-of-sample" — cioè misurare se il modello funziona davvero su dati che
+non ha mai visto, prima di toccare altro (più feature, più dati,
+regolarizzazione: nessuna di queste cose conta se non sappiamo ancora se
+il modello ha un segnale reale).
 
-| Asset class | Campioni | Ticker | R² (training set) |
+**Metodo** (`train_forecast_model()` in `lib_forecast_model.php`, vedi
+migrazione 037): per ogni ticker, l'ultimo 20% dei campioni **in ordine
+cronologico** (non casuale) va in test e non entra mai nella stima dei
+coefficienti valutati — split per ticker, non per una singola data
+globale, perché i ticker hanno storico di lunghezza molto diversa (da
+poche settimane a 8+ anni) e un taglio a calendario unico escluderebbe
+del tutto i ticker più corti da uno dei due insiemi. I coefficienti
+**salvati e usati in produzione** sono poi rifittati su train+test
+insieme — lo split serve solo a misurare la capacità predittiva, non a
+scartare per sempre il 20% di dati più recenti dal modello reale.
+
+**Risultato (8 settembre 2026, con l'universo ampliato)** — la riga che
+conta è la seconda, non la prima:
+
+| Asset class | R² in-sample | R² out-of-sample | Campioni train/test |
 |---|---|---|---|
-| equity | 1953 | 32 | 0.24 |
-| bond | 300 | 6 | 0.50 |
-| crypto | 654 | 9 | 0.04 |
+| equity | 0.24 | **0.15** | 1615 / 405 |
+| bond | 0.50 | **-0.04** | 240 / 60 |
+| crypto | 0.04 | **-34.01** | 524 / 130 |
 
-Numeri bassi o moderati, ed è l'esito onesto e atteso di un problema
-difficile (prevedere rendimenti a 12 mesi da 4 feature tecniche) — non un
-bug da correggere aggiungendo più feature finché il numero non sale, il
-che produrrebbe solo overfitting.
+Questo è esattamente il motivo per cui la validazione andava fatta prima
+di altro. L'R² in-sample avrebbe suggerito che bond fosse il modello più
+affidabile dei tre (0.50, il più alto) — l'out-of-sample dice l'opposto:
+**nessuna capacità predittiva reale** (peggio della semplice media
+storica). Il crypto è arrivato a -34: il modello, fuori dal periodo su
+cui si è "allenato a memoria", produce stime enormemente sbagliate.
+Solo l'equity ha un R² out-of-sample positivo (0.15) — basso, ma un
+segnale reale, non solo rumore adattato.
+
+**Conseguenza applicata, non solo misurata**: l'allocatore ipotetico
+(Parte 3) usava `sqrt(R² in-sample)` come fattore di affidabilità nel suo
+punteggio — con questi risultati, avrebbe continuato a fidarsi di più del
+bond (R² in-sample più alto) proprio nella classe con zero capacità
+predittiva reale. Corretto per usare `sqrt(max(0, R² out-of-sample))`:
+un'asset class con R² out-of-sample ≤ 0 viene ora **esclusa del tutto**
+dall'allocatore (non inclusa con un peso piccolo — un modello che va
+peggio della media non merita un peso positivo, per quanto piccolo).
+Verificato live: con i numeri attuali, l'allocatore raccomanda solo
+strumenti equity, qualunque sia il profilo di rischio o l'importo
+richiesto, finché bond e crypto non avranno un R² out-of-sample positivo
+in un training futuro.
+
+Le card di Previsioni mostrano ora entrambi gli R² (in-sample e
+out-of-sample), non solo il primo — così chi guarda vede la differenza
+invece di fidarsi del numero più favorevole.
 
 Altri limiti da conoscere prima di modificare questo modulo:
 
-- **R² calcolato sul training set, non out-of-sample**: nessun
-  train/test split per ora. Se in futuro si aggiunge una validazione
-  out-of-sample, i numeri mostrati in UI andranno aggiornati di
-  conseguenza (probabilmente più bassi, o negativi).
 - **Campioni sovrapposti**: due date di campionamento a 21 giorni di
   distanza condividono quasi tutta la finestra storica trailing — non sono
-  indipendenti in senso statistico stretto. Limite noto e accettato di un
-  backtest con storico limitato, non nascosto: va riportato ogni volta che
-  si comunica l'R² a un utente o si discute la qualità del modello.
+  indipendenti in senso statistico stretto, nemmeno all'interno dello
+  stesso insieme (train o test). Limite noto e accettato di un backtest
+  con storico limitato, non nascosto: va riportato ogni volta che si
+  comunica un R² a un utente o si discute la qualità del modello.
 - **Bond ha solo 6 ticker**: tutti ETF USA (AGG, BND, TLT, IEF, LQD, HYG),
-  nessuna diversificazione geografica/valutaria — il modello bond
-  generalizza su una base ancora piccola e USA-centrica.
-- **Crypto resta difficile**: R² = 0.04 anche isolato dalle altre classi —
-  la volatilità e i cicli di mercato crypto non sono ben spiegati da
-  trend/momentum/volatilità/drawdown trailing. Previsioni per questa
-  classe vanno trattate con ancora più scetticismo delle altre due.
+  nessuna diversificazione geografica/valutaria — anche con più storico,
+  il modello bond generalizza su una base ancora piccola e USA-centrica.
+- **Split al 20% per ticker, non un vero walk-forward**: un'unica
+  divisione train/test, non una validazione a finestre scorrevoli
+  multiple (che darebbe una stima più stabile dell'R² out-of-sample, a
+  costo di molto più calcolo). Un solo numero misurato una volta, non
+  una media robusta — coerente con lo stile del resto del progetto
+  ("misurato, non ipotetico"), ma un singolo split può essere fortunato o
+  sfortunato per caso.
 
 ### Dove vive nell'interfaccia
 
@@ -349,13 +389,17 @@ esplicite, pensato per essere spiegabile riga per riga:
    (vedi sotto) diviso la volatilità storica dello strumento **elevata
    all'esponente del profilo di rischio** (rendimento per unità di
    rischio, come uno Sharpe senza tasso privo di rischio — esponente 1 =
-   Sharpe standard), moltiplicato per `sqrt(R²)` del modello della sua
-   asset class. Il termine R² scala il punteggio in base a quanto ci si
-   può fidare del modello che ha prodotto quella stima — uno strumento
-   crypto (R² = 0.04) pesa molto meno di un bond (R² = 0.50) a parità di
-   rendimento/rischio grezzo, altrimenti il rumore di un modello poco
-   affidabile potrebbe dominare la raccomandazione solo perché quel giorno
-   la sua stima grezza è più alta.
+   Sharpe standard), moltiplicato per `sqrt(max(0, R² out-of-sample))` del
+   modello della sua asset class — **non l'R² in-sample** (vedi la
+   sezione "Validazione out-of-sample" nella Parte 2 per il perché quello
+   sarebbe stato ingannevole: avrebbe fatto fidare l'allocatore proprio
+   del bond, che ha l'R² in-sample più alto ma zero capacità predittiva
+   reale). Un'asset class con R² out-of-sample ≤ 0 (o non ancora misurato)
+   viene **esclusa del tutto** dal punteggio, non inclusa con un peso
+   piccolo. Con i numeri misurati l'8 settembre 2026, questo significa che
+   l'allocatore raccomanda solo strumenti equity (unica classe con R²
+   out-of-sample positivo, 0.15) finché bond e crypto non miglioreranno in
+   un training futuro.
 
    **Profilo di rischio** (richiesto dall'utente dopo aver visto che il
    tool teneva conto solo della volatilità storica in un unico modo fisso

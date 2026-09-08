@@ -43,6 +43,14 @@ const FORECAST_MODEL_MIN_TICKER_SPAN_DAYS = 395; // 30gg di storico minimo + 365
 const FORECAST_MODEL_SAMPLE_STEP_DAYS = 21;
 const FORECAST_MODEL_LABEL_HORIZON_DAYS = 365;
 const FORECAST_MODEL_LABEL_TOLERANCE_DAYS = 20;
+// Validazione out-of-sample (vedi migrazione 037): ultimo 20% cronologico
+// dei campioni di OGNI ticker va in test, mai usato per stimare i
+// coefficienti valutati. Split per ticker, non per data globale: i ticker
+// hanno storico di lunghezza molto diversa (da poche settimane a 8+ anni),
+// un unico taglio a calendario escluderebbe del tutto i ticker più corti
+// da uno dei due insiemi.
+const FORECAST_MODEL_TEST_FRACTION = 0.2;
+const FORECAST_MODEL_MIN_OOS_TEST_SAMPLES = 5;
 
 /**
  * Estrae le 4 feature calcolabili da un prefisso di storico (come se "oggi"
@@ -175,6 +183,25 @@ function ols_fit(array $X, array $y): ?array
     return ['beta' => $beta, 'r_squared' => $rSquared];
 }
 
+/** R^2 di coefficienti già stimati su un set (X, y) diverso da quello di fit — usata per la valutazione out-of-sample. */
+function evaluate_r_squared(array $beta, array $X, array $y): float
+{
+    $n = count($y);
+    if ($n === 0) return 0.0;
+    $p = count($beta);
+
+    $yMean = array_sum($y) / $n;
+    $ssTot = 0.0;
+    $ssRes = 0.0;
+    for ($i = 0; $i < $n; $i++) {
+        $pred = 0.0;
+        for ($a = 0; $a < $p; $a++) $pred += $beta[$a] * $X[$i][$a];
+        $ssRes += ($y[$i] - $pred) ** 2;
+        $ssTot += ($y[$i] - $yMean) ** 2;
+    }
+    return $ssTot > 0 ? 1 - ($ssRes / $ssTot) : 0.0;
+}
+
 /** Inversione di una matrice quadrata via Gauss-Jordan con pivot parziale. Torna null se singolare. */
 function matrix_inverse(array $m): ?array
 {
@@ -242,6 +269,18 @@ function forecast_ticker_type_map(PDO $db): array
     return $map;
 }
 
+/** Converte un array di campioni {features, label_pct} nelle matrici (X con colonna intercetta, y) attese da ols_fit()/evaluate_r_squared(). */
+function forecast_samples_to_xy(array $samples): array
+{
+    $X = [];
+    $y = [];
+    foreach ($samples as $s) {
+        $X[] = [1.0, $s['features']['trend'], $s['features']['momentum'], $s['features']['volatility'], $s['features']['drawdown']];
+        $y[] = $s['label_pct'];
+    }
+    return [$X, $y];
+}
+
 /**
  * Addestra UN modello per ciascuna asset class (equity/bond/crypto) su
  * TUTTO price_history (ogni ticker mai tracciato, non solo quelli
@@ -249,13 +288,26 @@ function forecast_ticker_type_map(PDO $db): array
  * `forecast_model`. Pensato per essere lanciato da
  * cron/retrain_forecast_model.php, non ad ogni richiesta HTTP: il backtest
  * su tutto lo storico è un lavoro da batch, non da request.
+ *
+ * Per ogni ticker, i campioni (già in ordine cronologico, vedi
+ * forecast_model_samples_for_ticker) si dividono in train/test: l'ultimo
+ * FORECAST_MODEL_TEST_FRACTION per data non entra mai nella stima dei
+ * coefficienti valutati (`$fitTrain`), solo nella loro verifica
+ * (`r_squared_oos`). Split per ticker e non per una singola data globale:
+ * vedi la costante per il perché. I coefficienti SALVATI e usati per le
+ * previsioni reali sono invece rifittati su train+test insieme
+ * (`$fitFinal`): lo split serve a misurare la capacità predittiva, non a
+ * scartare per sempre il 20% di dati più recenti dal modello in
+ * produzione — usare tutti i dati disponibili per la stima finale è la
+ * pratica standard una volta che la valutazione è fatta.
  */
 function train_forecast_model(PDO $db): array
 {
     $typeMap = forecast_ticker_type_map($db);
     $tickers = $db->query("SELECT DISTINCT ticker FROM price_history")->fetchAll(PDO::FETCH_COLUMN);
 
-    $samplesByClass = array_fill_keys(FORECAST_ASSET_CLASSES, []);
+    $trainByClass = array_fill_keys(FORECAST_ASSET_CLASSES, []);
+    $testByClass = array_fill_keys(FORECAST_ASSET_CLASSES, []);
     $tickersByClass = array_fill_keys(FORECAST_ASSET_CLASSES, []);
 
     foreach ($tickers as $ticker) {
@@ -270,62 +322,91 @@ function train_forecast_model(PDO $db): array
         $rows = $stmt->fetchAll();
 
         $samples = forecast_model_samples_for_ticker($rows);
-        if ($samples) {
-            $tickersByClass[$assetClass][] = $ticker;
-            foreach ($samples as $s) $samplesByClass[$assetClass][] = $s;
+        if (!$samples) continue;
+
+        $tickersByClass[$assetClass][] = $ticker;
+
+        $n = count($samples);
+        $nTest = (int)round($n * FORECAST_MODEL_TEST_FRACTION);
+        if ($nTest > 0 && ($n - $nTest) > 0) {
+            $trainPart = array_slice($samples, 0, $n - $nTest);
+            $testPart = array_slice($samples, $n - $nTest);
+        } else {
+            // Troppo pochi campioni per questo ticker per splittare in modo
+            // sensato: vanno tutti in train, nessun contributo al test.
+            $trainPart = $samples;
+            $testPart = [];
         }
+
+        foreach ($trainPart as $s) $trainByClass[$assetClass][] = $s;
+        foreach ($testPart as $s) $testByClass[$assetClass][] = $s;
     }
 
     $results = [];
     foreach (FORECAST_ASSET_CLASSES as $assetClass) {
-        $allSamples = $samplesByClass[$assetClass];
+        $trainSamples = $trainByClass[$assetClass];
+        $testSamples = $testByClass[$assetClass];
         $tickersUsed = $tickersByClass[$assetClass];
 
-        if (count($allSamples) < 20) {
-            $results[$assetClass] = ['ok' => false, 'message' => "Troppi pochi campioni per '{$assetClass}' (min. 20, disponibili " . count($allSamples) . ") — servono più ticker di questa classe con più storico."];
+        if (count($trainSamples) < 20) {
+            $results[$assetClass] = ['ok' => false, 'message' => "Troppi pochi campioni di training per '{$assetClass}' (min. 20, disponibili " . count($trainSamples) . ") — servono più ticker di questa classe con più storico."];
             continue;
         }
 
-        $X = [];
-        $y = [];
-        foreach ($allSamples as $s) {
-            $X[] = [1.0, $s['features']['trend'], $s['features']['momentum'], $s['features']['volatility'], $s['features']['drawdown']];
-            $y[] = $s['label_pct'];
-        }
-
-        $fit = ols_fit($X, $y);
-        if ($fit === null) {
+        [$XTrain, $yTrain] = forecast_samples_to_xy($trainSamples);
+        $fitTrain = ols_fit($XTrain, $yTrain);
+        if ($fitTrain === null) {
             $results[$assetClass] = ['ok' => false, 'message' => "Fit fallito per '{$assetClass}' (matrice singolare)."];
             continue;
         }
 
+        $rSquaredOos = null;
+        if (count($testSamples) >= FORECAST_MODEL_MIN_OOS_TEST_SAMPLES) {
+            [$XTest, $yTest] = forecast_samples_to_xy($testSamples);
+            $rSquaredOos = evaluate_r_squared($fitTrain['beta'], $XTest, $yTest);
+        }
+
+        $allSamples = array_merge($trainSamples, $testSamples);
+        [$XAll, $yAll] = forecast_samples_to_xy($allSamples);
+        $fitFinal = ols_fit($XAll, $yAll);
+        if ($fitFinal === null) {
+            $results[$assetClass] = ['ok' => false, 'message' => "Fit finale fallito per '{$assetClass}' (matrice singolare)."];
+            continue;
+        }
+
         $stmt = $db->prepare("INSERT INTO forecast_model
-            (asset_class, n_samples, n_tickers, r_squared, intercept, coef_trend, coef_momentum, coef_volatility, coef_drawdown)
-            VALUES (:asset_class, :n_samples, :n_tickers, :r_squared, :intercept, :coef_trend, :coef_momentum, :coef_volatility, :coef_drawdown)");
+            (asset_class, n_samples, n_samples_train, n_samples_test, n_tickers, r_squared, r_squared_oos, intercept, coef_trend, coef_momentum, coef_volatility, coef_drawdown)
+            VALUES (:asset_class, :n_samples, :n_samples_train, :n_samples_test, :n_tickers, :r_squared, :r_squared_oos, :intercept, :coef_trend, :coef_momentum, :coef_volatility, :coef_drawdown)");
         $stmt->execute([
             'asset_class' => $assetClass,
             'n_samples' => count($allSamples),
+            'n_samples_train' => count($trainSamples),
+            'n_samples_test' => count($testSamples),
             'n_tickers' => count($tickersUsed),
-            'r_squared' => $fit['r_squared'],
-            'intercept' => $fit['beta'][0],
-            'coef_trend' => $fit['beta'][1],
-            'coef_momentum' => $fit['beta'][2],
-            'coef_volatility' => $fit['beta'][3],
-            'coef_drawdown' => $fit['beta'][4],
+            'r_squared' => $fitFinal['r_squared'],
+            'r_squared_oos' => $rSquaredOos,
+            'intercept' => $fitFinal['beta'][0],
+            'coef_trend' => $fitFinal['beta'][1],
+            'coef_momentum' => $fitFinal['beta'][2],
+            'coef_volatility' => $fitFinal['beta'][3],
+            'coef_drawdown' => $fitFinal['beta'][4],
         ]);
 
         $results[$assetClass] = [
             'ok' => true,
             'n_samples' => count($allSamples),
+            'n_samples_train' => count($trainSamples),
+            'n_samples_test' => count($testSamples),
             'n_tickers' => count($tickersUsed),
             'tickers_used' => $tickersUsed,
-            'r_squared' => round($fit['r_squared'], 4),
+            'r_squared' => round($fitFinal['r_squared'], 4),
+            'r_squared_oos' => $rSquaredOos !== null ? round($rSquaredOos, 4) : null,
             'coefficients' => [
-                'intercept' => $fit['beta'][0],
-                'trend' => $fit['beta'][1],
-                'momentum' => $fit['beta'][2],
-                'volatility' => $fit['beta'][3],
-                'drawdown' => $fit['beta'][4],
+                'intercept' => $fitFinal['beta'][0],
+                'trend' => $fitFinal['beta'][1],
+                'momentum' => $fitFinal['beta'][2],
+                'volatility' => $fitFinal['beta'][3],
+                'drawdown' => $fitFinal['beta'][4],
             ],
         ];
     }
@@ -441,6 +522,7 @@ function compute_instrument_forecast(array $rows, ?array $analyst, float $curren
             'n_samples' => (int)$model['n_samples'],
             'n_tickers' => (int)$model['n_tickers'],
             'r_squared' => (float)$model['r_squared'],
+            'r_squared_oos' => $model['r_squared_oos'] !== null ? (float)$model['r_squared_oos'] : null,
         ],
         'features' => [
             'trend' => ['value_pct' => $features['trend']],
