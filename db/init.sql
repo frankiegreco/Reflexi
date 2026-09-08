@@ -194,6 +194,13 @@ CREATE TABLE IF NOT EXISTS analyst_cache (
 -- misurato su un holdout temporale (ultimo 20% cronologico di ogni
 -- ticker, mai usato per stimare i coefficienti) — puo' essere negativo,
 -- a differenza di r_squared. Vedi migrazione 037 per il perche'.
+-- label_min_pct/label_max_pct = range dei rendimenti a 365gg REALMENTE
+-- realizzati nei campioni di training di quella asset class: la previsione
+-- in inferenza viene tagliata a questo intervallo, perche' la regressione
+-- OLS non ha nessun limite naturale sull'output e su feature estreme (es.
+-- volatilita' fuori norma) puo' estrapolare ben oltre qualunque rendimento
+-- mai realmente accaduto nello storico usato per allenarla. Vedi
+-- migrazione 038 per il caso concreto che l'ha fatto emergere.
 CREATE TABLE IF NOT EXISTS forecast_model (
     id INT AUTO_INCREMENT PRIMARY KEY,
     trained_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -209,6 +216,8 @@ CREATE TABLE IF NOT EXISTS forecast_model (
     coef_momentum DECIMAL(14,8) NOT NULL,
     coef_volatility DECIMAL(14,8) NOT NULL,
     coef_drawdown DECIMAL(14,8) NOT NULL,
+    label_min_pct DECIMAL(10,2) NULL,
+    label_max_pct DECIMAL(10,2) NULL,
     INDEX idx_asset_class_trained_at (asset_class, trained_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

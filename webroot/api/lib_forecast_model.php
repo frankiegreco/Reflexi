@@ -374,9 +374,18 @@ function train_forecast_model(PDO $db): array
             continue;
         }
 
+        // Range dei rendimenti a 365gg REALMENTE realizzati nel training:
+        // la previsione in inferenza viene tagliata a questo intervallo
+        // (vedi apply_forecast_model()), cosi' l'estrapolazione della
+        // regressione OLS su feature estreme non puo' mai promettere un
+        // rendimento piu' estremo di uno gia' realmente accaduto nello
+        // storico usato per allenarla.
+        $labelMin = min($yAll);
+        $labelMax = max($yAll);
+
         $stmt = $db->prepare("INSERT INTO forecast_model
-            (asset_class, n_samples, n_samples_train, n_samples_test, n_tickers, r_squared, r_squared_oos, intercept, coef_trend, coef_momentum, coef_volatility, coef_drawdown)
-            VALUES (:asset_class, :n_samples, :n_samples_train, :n_samples_test, :n_tickers, :r_squared, :r_squared_oos, :intercept, :coef_trend, :coef_momentum, :coef_volatility, :coef_drawdown)");
+            (asset_class, n_samples, n_samples_train, n_samples_test, n_tickers, r_squared, r_squared_oos, intercept, coef_trend, coef_momentum, coef_volatility, coef_drawdown, label_min_pct, label_max_pct)
+            VALUES (:asset_class, :n_samples, :n_samples_train, :n_samples_test, :n_tickers, :r_squared, :r_squared_oos, :intercept, :coef_trend, :coef_momentum, :coef_volatility, :coef_drawdown, :label_min_pct, :label_max_pct)");
         $stmt->execute([
             'asset_class' => $assetClass,
             'n_samples' => count($allSamples),
@@ -390,6 +399,8 @@ function train_forecast_model(PDO $db): array
             'coef_momentum' => $fitFinal['beta'][2],
             'coef_volatility' => $fitFinal['beta'][3],
             'coef_drawdown' => $fitFinal['beta'][4],
+            'label_min_pct' => $labelMin,
+            'label_max_pct' => $labelMax,
         ]);
 
         $results[$assetClass] = [
@@ -408,6 +419,8 @@ function train_forecast_model(PDO $db): array
                 'volatility' => $fitFinal['beta'][3],
                 'drawdown' => $fitFinal['beta'][4],
             ],
+            'label_min_pct' => round($labelMin, 2),
+            'label_max_pct' => round($labelMax, 2),
         ];
     }
 
@@ -431,14 +444,29 @@ function latest_forecast_models(PDO $db): array
     return $out;
 }
 
-/** Applica i coefficienti di un modello addestrato alle feature attuali di uno strumento. */
+/**
+ * Applica i coefficienti di un modello addestrato alle feature attuali di
+ * uno strumento. La regressione OLS non ha nessun limite naturale
+ * sull'output: se le feature di oggi cadono ben fuori dal range visto in
+ * training (es. una volatilita' annualizzata estrema su un titolo con
+ * oscillazioni fuori norma) puo' estrapolare a un rendimento mai
+ * realmente accaduto in nessun campione usato per allenarla. Per questo il
+ * risultato viene tagliato al range [label_min_pct, label_max_pct] — i
+ * rendimenti a 365gg REALMENTE realizzati nel training — quando quei due
+ * valori sono disponibili (modelli addestrati prima della migrazione 038
+ * non li hanno: in quel caso resta l'output grezzo, non tagliato).
+ */
 function apply_forecast_model(array $model, array $features): float
 {
-    return (float)$model['intercept']
+    $raw = (float)$model['intercept']
         + (float)$model['coef_trend'] * $features['trend']
         + (float)$model['coef_momentum'] * $features['momentum']
         + (float)$model['coef_volatility'] * $features['volatility']
         + (float)$model['coef_drawdown'] * $features['drawdown'];
+
+    if ($model['label_min_pct'] === null || $model['label_max_pct'] === null) return $raw;
+
+    return max((float)$model['label_min_pct'], min((float)$model['label_max_pct'], $raw));
 }
 
 /**
@@ -513,9 +541,19 @@ function compute_instrument_forecast(array $rows, ?array $analyst, float $curren
         ];
     }
 
+    $forecastPct = round(apply_forecast_model($model, $features), 2);
+    $labelRangeAvailable = $model['label_min_pct'] !== null && $model['label_max_pct'] !== null;
+
     return [
         'forecast_available' => true,
-        'forecast_pct' => round(apply_forecast_model($model, $features), 2),
+        'forecast_pct' => $forecastPct,
+        // true solo se il valore mostrato è stato tagliato al range di
+        // rendimenti a 365gg realmente osservati in training (vedi
+        // apply_forecast_model()) — la UI lo segnala perché il numero non
+        // è più il prodotto grezzo della regressione.
+        'forecast_clamped' => $labelRangeAvailable && (
+            $forecastPct <= (float)$model['label_min_pct'] || $forecastPct >= (float)$model['label_max_pct']
+        ),
         'horizon' => '12 mesi',
         'model' => [
             'trained_at' => $model['trained_at'],
@@ -523,6 +561,8 @@ function compute_instrument_forecast(array $rows, ?array $analyst, float $curren
             'n_tickers' => (int)$model['n_tickers'],
             'r_squared' => (float)$model['r_squared'],
             'r_squared_oos' => $model['r_squared_oos'] !== null ? (float)$model['r_squared_oos'] : null,
+            'label_min_pct' => $labelRangeAvailable ? (float)$model['label_min_pct'] : null,
+            'label_max_pct' => $labelRangeAvailable ? (float)$model['label_max_pct'] : null,
         ],
         'features' => [
             'trend' => ['value_pct' => $features['trend']],
