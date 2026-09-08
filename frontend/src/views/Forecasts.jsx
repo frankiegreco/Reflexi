@@ -93,10 +93,17 @@ function ForecastCard({ item }) {
   );
 }
 
+const RISK_PROFILES = [
+  { key: 'conservativo', label: 'Conservativo', hint: 'penalizza di più la volatilità, max 20% per strumento' },
+  { key: 'bilanciato', label: 'Bilanciato', hint: 'rendimento e volatilità pesano uguale, max 35% per strumento' },
+  { key: 'aggressivo', label: 'Aggressivo', hint: 'penalizza di meno la volatilità, max 50% per strumento' },
+];
+
 function InvestAdvisor() {
   const [amount, setAmount] = useState('10000');
   const [months, setMonths] = useState('4');
   const [count, setCount] = useState('9');
+  const [risk, setRisk] = useState('bilanciato');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -107,7 +114,7 @@ function InvestAdvisor() {
     if (!amt || amt <= 0 || !mo || mo <= 0 || !cnt || cnt <= 0) return;
     setLoading(true);
     try {
-      const r = await apiGet(`invest_advisor.php?amount=${amt}&months=${mo}&count=${cnt}`);
+      const r = await apiGet(`invest_advisor.php?amount=${amt}&months=${mo}&count=${cnt}&risk=${risk}`);
       setResult(r);
     } catch {
       setResult({ allocation_available: false, message: 'Errore nel calcolo.' });
@@ -120,9 +127,28 @@ function InvestAdvisor() {
     <div className="mb-10 card p-5">
       <h2 className="mb-1 text-sm font-bold text-gray-800">Voglio investire</h2>
       <p className="mb-4 text-xs text-muted">
-        Inserisci un importo ipotetico in euro, un orizzonte e su quanti strumenti diversificare: il modello alloca
-        in base a rendimento stimato, rischio storico e affidabilità del modello per quella categoria (azioni/obbligazioni/crypto).
+        Inserisci un importo ipotetico in euro, un orizzonte, su quanti strumenti diversificare e un profilo di
+        rischio: il modello alloca in base a rendimento stimato, rischio storico e affidabilità del modello per
+        quella categoria (azioni/obbligazioni/crypto).
       </p>
+
+      <div className="mb-3">
+        <label className="field-label">Profilo di rischio</label>
+        <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1" style={{ width: 'fit-content' }}>
+          {RISK_PROFILES.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              title={r.hint}
+              onClick={() => setRisk(r.key)}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${risk === r.key ? 'bg-accent text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <div>
           <label className="field-label">Importo (€)</label>
@@ -193,12 +219,13 @@ function InvestAdvisor() {
             <p>
               <strong>Non è consulenza finanziaria.</strong> Orizzonte di {result.months} mesi ottenuto proiettando
               matematicamente la stima a 12 mesi del modello (capitalizzazione composta) — il modello NON è validato
-              su questo orizzonte specifico, solo su 12 mesi. Max 35% per strumento, al più 3 strumenti per categoria
-              (azioni/obbligazioni/crypto), pesati anche per quanto è affidabile il modello di quella categoria (R²
-              più basso → peso più basso). Rendimenti calcolati sulla valuta nativa di ogni strumento e applicati
-              all'importo in euro senza conversione valutaria (stessa scelta delle altre schermate di Reflexi — ignora
-              il rischio di cambio). È un calcolo automatico che può sbagliarsi anche di molto, specialmente su
-              orizzonti brevi: non seguirlo come unico riferimento per una decisione reale.
+              su questo orizzonte specifico, solo su 12 mesi. Profilo <strong>{RISK_PROFILES.find((r) => r.key === result.risk_profile)?.label}</strong>:
+              max {result.max_weight_pct}% per strumento, diversificato tra le categorie disponibili (azioni/obbligazioni/crypto)
+              e pesato anche per quanto è affidabile il modello di quella categoria (R² più basso → peso più basso).
+              Rendimenti calcolati sulla valuta nativa di ogni strumento e applicati all'importo in euro senza
+              conversione valutaria (stessa scelta delle altre schermate di Reflexi — ignora il rischio di cambio).
+              È un calcolo automatico che può sbagliarsi anche di molto, specialmente su orizzonti brevi: non
+              seguirlo come unico riferimento per una decisione reale.
             </p>
           </div>
         </>

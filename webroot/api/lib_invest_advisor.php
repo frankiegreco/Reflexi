@@ -2,12 +2,38 @@
 declare(strict_types=1);
 require_once __DIR__ . '/lib_forecast_model.php'; // FORECAST_ASSET_CLASSES, forecast_universe_computed()
 
-const INVEST_ADVISOR_MAX_WEIGHT_PCT = 35.0;
 const INVEST_ADVISOR_MIN_MONTHS = 1;
 const INVEST_ADVISOR_MAX_MONTHS = 60;
 const INVEST_ADVISOR_MIN_COUNT = 1;
 const INVEST_ADVISOR_MAX_COUNT = 15;
 const INVEST_ADVISOR_DEFAULT_COUNT = 9;
+const INVEST_ADVISOR_DEFAULT_RISK_PROFILE = 'bilanciato';
+
+/**
+ * Livello di rischio scelto dall'utente, tradotto in due leve concrete sul
+ * ranking già esistente (non un parametro separato "quanto rischio vuoi",
+ * che non avrebbe un effetto definito senza dire COSA cambia):
+ *
+ * - `volatility_exponent`: il punteggio è rendimento / volatilità^esponente.
+ *   Con esponente 1 (bilanciato, il comportamento di prima) rendimento e
+ *   volatilità pesano allo stesso modo. Sopra 1 (conservativo) la
+ *   volatilità pesa di più nel punteggio — a parità di rendimento stimato,
+ *   uno strumento più volatile perde posizioni più velocemente. Sotto 1
+ *   (aggressivo) pesa di meno — il ranking segue più il rendimento stimato
+ *   e meno quanto oscilla il prezzo.
+ * - `max_weight_pct`: tetto massimo per singolo strumento. Più basso per
+ *   il profilo conservativo (più spalmato, meno concentrazione su un solo
+ *   strumento), più alto per l'aggressivo (permette scommesse più
+ *   concentrate sui candidati con punteggio migliore).
+ *
+ * Nessun parametro cambia i dati sottostanti (previsioni, R², volatilità
+ * storica) — solo come vengono classificati e pesati i candidati.
+ */
+const INVEST_ADVISOR_RISK_PROFILES = [
+    'conservativo' => ['volatility_exponent' => 1.6, 'max_weight_pct' => 20.0],
+    'bilanciato' => ['volatility_exponent' => 1.0, 'max_weight_pct' => 35.0],
+    'aggressivo' => ['volatility_exponent' => 0.5, 'max_weight_pct' => 50.0],
+];
 
 /**
  * Alloca un importo ipotetico su un orizzonte in mesi e un numero di
@@ -33,10 +59,12 @@ const INVEST_ADVISOR_DEFAULT_COUNT = 9;
  * di un modello poco affidabile potrebbe dominare la raccomandazione solo
  * perché quel giorno la stima grezza è più alta.
  */
-function compute_investment_allocation(array $computed, array $globalMeta, float $amount, int $months, int $count = INVEST_ADVISOR_DEFAULT_COUNT): array
+function compute_investment_allocation(array $computed, array $globalMeta, float $amount, int $months, int $count = INVEST_ADVISOR_DEFAULT_COUNT, string $riskProfile = INVEST_ADVISOR_DEFAULT_RISK_PROFILE): array
 {
     $months = max(INVEST_ADVISOR_MIN_MONTHS, min(INVEST_ADVISOR_MAX_MONTHS, $months));
     $count = max(INVEST_ADVISOR_MIN_COUNT, min(INVEST_ADVISOR_MAX_COUNT, $count));
+    if (!isset(INVEST_ADVISOR_RISK_PROFILES[$riskProfile])) $riskProfile = INVEST_ADVISOR_DEFAULT_RISK_PROFILE;
+    $profile = INVEST_ADVISOR_RISK_PROFILES[$riskProfile];
 
     $byClass = array_fill_keys(FORECAST_ASSET_CLASSES, []);
     foreach ($computed as $ticker => $c) {
@@ -51,7 +79,7 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
 
         $rSquared = (float)$c['model']['r_squared'];
         $confidence = sqrt(max(0.0, $rSquared));
-        $rawScore = $horizonReturnPct / $volatilityPct;
+        $rawScore = $horizonReturnPct / ($volatilityPct ** $profile['volatility_exponent']);
 
         $meta = $globalMeta[$ticker];
         $byClass[$c['asset_class']][] = [
@@ -87,13 +115,14 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
             'allocation_available' => false,
             'message' => 'Nessuno strumento tracciato ha una previsione di rendimento positiva per questo orizzonte al momento.',
             'months' => $months,
+            'risk_profile' => $riskProfile,
         ];
     }
 
     usort($candidates, fn($a, $b) => $b['score'] <=> $a['score']);
     $candidates = array_slice($candidates, 0, $count); // rispetta esattamente il numero richiesto (o meno, se non ce ne sono abbastanza)
 
-    $weights = cap_and_redistribute_weights(array_column($candidates, 'score'), INVEST_ADVISOR_MAX_WEIGHT_PCT);
+    $weights = cap_and_redistribute_weights(array_column($candidates, 'score'), $profile['max_weight_pct']);
 
     $rows = [];
     $totalProjectedValue = 0.0;
@@ -114,6 +143,8 @@ function compute_investment_allocation(array $computed, array $globalMeta, float
         'months' => $months,
         'amount' => $amount,
         'requested_count' => $count,
+        'risk_profile' => $riskProfile,
+        'max_weight_pct' => $profile['max_weight_pct'],
         'allocations' => $rows,
         'total_projected_value' => round($totalProjectedValue, 2),
         'total_projected_gain_pct' => round(($totalProjectedValue / $amount - 1) * 100, 2),

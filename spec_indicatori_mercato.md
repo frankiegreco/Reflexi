@@ -346,14 +346,36 @@ stesse). È un ranking rendimento/rischio con due regole di diversificazione
 esplicite, pensato per essere spiegabile riga per riga:
 
 1. **Punteggio per candidato**: rendimento stimato sull'orizzonte richiesto
-   (vedi sotto) diviso la volatilità storica dello strumento (rendimento
-   per unità di rischio, come uno Sharpe senza tasso privo di rischio),
-   moltiplicato per `sqrt(R²)` del modello della sua asset class. Questo
-   scala il punteggio in base a quanto ci si può fidare del modello che ha
-   prodotto quella stima — uno strumento crypto (R² = 0.04) pesa molto meno
-   di un bond (R² = 0.50) a parità di rendimento/rischio grezzo, altrimenti
-   il rumore di un modello poco affidabile potrebbe dominare la
-   raccomandazione solo perché quel giorno la sua stima grezza è più alta.
+   (vedi sotto) diviso la volatilità storica dello strumento **elevata
+   all'esponente del profilo di rischio** (rendimento per unità di
+   rischio, come uno Sharpe senza tasso privo di rischio — esponente 1 =
+   Sharpe standard), moltiplicato per `sqrt(R²)` del modello della sua
+   asset class. Il termine R² scala il punteggio in base a quanto ci si
+   può fidare del modello che ha prodotto quella stima — uno strumento
+   crypto (R² = 0.04) pesa molto meno di un bond (R² = 0.50) a parità di
+   rendimento/rischio grezzo, altrimenti il rumore di un modello poco
+   affidabile potrebbe dominare la raccomandazione solo perché quel giorno
+   la sua stima grezza è più alta.
+
+   **Profilo di rischio** (richiesto dall'utente dopo aver visto che il
+   tool teneva conto solo della volatilità storica in un unico modo fisso
+   per tutti — vedi `INVEST_ADVISOR_RISK_PROFILES` in
+   `lib_invest_advisor.php`): tre preset, non uno slider continuo (più
+   spiegabile, coerente col resto del tool):
+
+   | Profilo | Esponente volatilità | Tetto per strumento |
+   |---|---|---|
+   | Conservativo | 1.6 | 20% |
+   | Bilanciato (default, comportamento originale) | 1.0 | 35% |
+   | Aggressivo | 0.5 | 50% |
+
+   Un esponente più alto penalizza la volatilità più duramente nel
+   punteggio — cambia non solo i pesi finali ma **quali strumenti entrano
+   in classifica**, perché il punteggio si calcola prima della selezione
+   per classe. Verificato live: con "conservativo" gli slot azionari
+   scelgono AAPL (vol. 25%) invece di TSLA (vol. 47%) che vince con
+   "aggressivo" — non è solo una riallocazione dei pesi sullo stesso
+   paniere, è un paniere diverso a seconda del profilo.
 2. **Selezione**: l'utente scelge anche il numero totale di strumenti
    (1-15, default 9, oltre a importo e orizzonte). Per classe si pescano
    al più `ceil(numero_richiesto / classi_con_candidati)` candidati (con 3
@@ -368,9 +390,10 @@ esplicite, pensato per essere spiegabile riga per riga:
    punteggi alti. Se gli strumenti con previsione positiva disponibili sono
    meno del numero richiesto, l'allocazione usa quelli che ci sono e lo
    dichiara (`allocations.length < requested_count` in UI), non ne inventa.
-3. **Pesi**: proporzionali al punteggio, con un tetto del 35% per singolo
-   strumento — l'eccesso oltre il tetto si ridistribuisce sugli altri
-   candidati in proporzione (`cap_and_redistribute_weights()` in
+3. **Pesi**: proporzionali al punteggio, con un tetto per singolo
+   strumento che dipende dal profilo di rischio (tabella sopra) —
+   l'eccesso oltre il tetto si ridistribuisce sugli altri candidati in
+   proporzione (`cap_and_redistribute_weights()` in
    `lib_invest_advisor.php`). Se il tetto è matematicamente irraggiungibile
    (es. solo 2 candidati disponibili quel giorno), viene ignorato invece di
    produrre pesi che non sommano al 100%.
