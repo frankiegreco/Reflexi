@@ -171,6 +171,20 @@ CREATE TABLE IF NOT EXISTS price_cache (
     source VARCHAR(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Cache delle opinioni di analisti esterni (Yahoo Finance), globale per
+-- ticker come price_cache ma con ttl piu' lungo (vedi migrazione 034).
+CREATE TABLE IF NOT EXISTS analyst_cache (
+    ticker VARCHAR(20) NOT NULL PRIMARY KEY,
+    target_mean_price DECIMAL(14,4) DEFAULT NULL,
+    target_high_price DECIMAL(14,4) DEFAULT NULL,
+    target_low_price DECIMAL(14,4) DEFAULT NULL,
+    recommendation_mean DECIMAL(4,2) DEFAULT NULL,
+    number_of_analysts INT DEFAULT NULL,
+    currency VARCHAR(3) DEFAULT NULL,
+    available TINYINT(1) NOT NULL DEFAULT 0,
+    fetched_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS budgets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,

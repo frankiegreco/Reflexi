@@ -16,6 +16,6 @@ $stmt->execute(['id' => $instrumentId, 'uid' => $uid]);
 $ticker = $stmt->fetchColumn();
 if (!$ticker) respond_error('Strumento non trovato', 404);
 
-$analyst = fetch_analyst_data($ticker);
+$analyst = fetch_analyst_data_cached($ticker);
 
 respond(['available' => $analyst !== null, 'data' => $analyst]);

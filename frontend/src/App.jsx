@@ -13,6 +13,7 @@ import Transactions from './views/Transactions';
 import Accounts from './views/Accounts';
 import Loans from './views/Loans';
 import Investments from './views/Investments';
+import Forecasts from './views/Forecasts';
 import Markets from './views/Markets';
 import Comparator from './views/Comparator';
 import Fire from './views/Fire';
@@ -33,6 +34,7 @@ const VIEWS = {
   accounts: Accounts,
   loans: Loans,
   investments: Investments,
+  forecasts: Forecasts,
   markets: Markets,
   comparator: Comparator,
   fire: Fire,

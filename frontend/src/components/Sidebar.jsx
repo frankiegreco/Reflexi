@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, ListOrdered, Wallet, Landmark, LineChart, TrendingUp, Scale, Flame, PiggyBank,
+  LayoutDashboard, ListOrdered, Wallet, Landmark, LineChart, Compass, TrendingUp, Scale, Flame, PiggyBank,
   Tags, Repeat, Layers, Target, BarChart3, FileText, Receipt, Plus, LogOut, UserCircle2, X,
 } from 'lucide-react';
 
@@ -9,6 +9,7 @@ const NAV = [
   { key: 'accounts', label: 'Conti', icon: Wallet },
   { key: 'loans', label: 'Mutui', icon: Landmark },
   { key: 'investments', label: 'Investimenti', icon: LineChart },
+  { key: 'forecasts', label: 'Previsioni', icon: Compass },
   { key: 'markets', label: 'Mercati', icon: TrendingUp },
   { key: 'comparator', label: 'Comparatore', icon: Scale },
   { key: 'fire', label: 'FIRE', icon: Flame },

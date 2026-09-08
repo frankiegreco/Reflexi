@@ -307,6 +307,63 @@ function fetch_analyst_data(string $ticker): ?array
 }
 
 /**
+ * Come fetch_analyst_data(), ma con cache persistente in `analyst_cache`
+ * (globale per ticker, ttl 12h di default): i target price degli analisti
+ * non cambiano intraday, e a differenza della quotazione semplice la fetch
+ * richiede un handshake cookie+crumb in più (vedi fetch_yahoo_crumb) — vale
+ * la pena risparmiarla, specialmente per la sezione Previsioni che la
+ * interroga per ogni strumento in portafoglio a ogni apertura pagina.
+ * Cachea anche l'esito negativo (`available = 0`, tipico per ETF/crypto),
+ * altrimenti ogni apertura pagina ritenterebbe Yahoo per gli stessi
+ * strumenti senza copertura analisti.
+ */
+function fetch_analyst_data_cached(string $ticker, int $maxAgeSeconds = 43200): ?array
+{
+    $stmt = db()->prepare("SELECT * FROM analyst_cache WHERE ticker = :ticker");
+    $stmt->execute(['ticker' => $ticker]);
+    $cached = $stmt->fetch();
+
+    if ($cached && (time() - strtotime($cached['fetched_at'])) < $maxAgeSeconds) {
+        return analyst_cache_row_to_array($cached);
+    }
+
+    $fresh = fetch_analyst_data($ticker);
+
+    $upsert = db()->prepare("INSERT INTO analyst_cache
+            (ticker, target_mean_price, target_high_price, target_low_price, recommendation_mean, number_of_analysts, currency, available, fetched_at)
+        VALUES (:ticker, :tmp, :thp, :tlp, :rm, :na, :cur, :avail, NOW())
+        ON DUPLICATE KEY UPDATE
+            target_mean_price = :tmp2, target_high_price = :thp2, target_low_price = :tlp2,
+            recommendation_mean = :rm2, number_of_analysts = :na2, currency = :cur2,
+            available = :avail2, fetched_at = NOW()");
+    $upsert->execute([
+        'ticker' => $ticker,
+        'tmp' => $fresh['target_mean_price'] ?? null, 'tmp2' => $fresh['target_mean_price'] ?? null,
+        'thp' => $fresh['target_high_price'] ?? null, 'thp2' => $fresh['target_high_price'] ?? null,
+        'tlp' => $fresh['target_low_price'] ?? null, 'tlp2' => $fresh['target_low_price'] ?? null,
+        'rm' => $fresh['recommendation_mean'] ?? null, 'rm2' => $fresh['recommendation_mean'] ?? null,
+        'na' => $fresh['number_of_analysts'] ?? null, 'na2' => $fresh['number_of_analysts'] ?? null,
+        'cur' => $fresh['currency'] ?? null, 'cur2' => $fresh['currency'] ?? null,
+        'avail' => $fresh !== null ? 1 : 0, 'avail2' => $fresh !== null ? 1 : 0,
+    ]);
+
+    return $fresh;
+}
+
+function analyst_cache_row_to_array(array $row): ?array
+{
+    if (!$row['available']) return null;
+    return [
+        'target_mean_price' => $row['target_mean_price'] !== null ? (float)$row['target_mean_price'] : null,
+        'target_high_price' => $row['target_high_price'] !== null ? (float)$row['target_high_price'] : null,
+        'target_low_price' => $row['target_low_price'] !== null ? (float)$row['target_low_price'] : null,
+        'recommendation_mean' => $row['recommendation_mean'] !== null ? (float)$row['recommendation_mean'] : null,
+        'number_of_analysts' => $row['number_of_analysts'] !== null ? (int)$row['number_of_analysts'] : null,
+        'currency' => $row['currency'],
+    ];
+}
+
+/**
  * cURL forzato su IPv4: su Windows, in reti aziendali con DNS Active Directory
  * che restituiscono anche record IPv6, la risoluzione dual-stack di getaddrinfo
  * (usata da file_get_contents) può fallire con "no data of requested type"
