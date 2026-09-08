@@ -18,17 +18,22 @@ if (php_sapi_name() !== 'cli') {
 require __DIR__ . '/../api/db.php';
 require __DIR__ . '/../api/lib_forecast_model.php';
 
-$result = train_forecast_model(db());
+$results = train_forecast_model(db());
 
-if (!$result['ok']) {
-    fwrite(STDERR, "Training fallito: {$result['message']}\n");
-    exit(1);
+$anyFailed = false;
+foreach ($results as $assetClass => $result) {
+    echo "=== {$assetClass} ===\n";
+    if (!$result['ok']) {
+        echo "  Training fallito: {$result['message']}\n";
+        $anyFailed = true;
+        continue;
+    }
+    echo "  Campioni:   {$result['n_samples']} (da {$result['n_tickers']} ticker: " . implode(', ', $result['tickers_used']) . ")\n";
+    echo "  R^2 (training set, non out-of-sample): {$result['r_squared']}\n";
+    echo "  Coefficienti:\n";
+    foreach ($result['coefficients'] as $name => $value) {
+        echo "    {$name}: " . round($value, 4) . "\n";
+    }
 }
 
-echo "Modello addestrato:\n";
-echo "  Campioni:   {$result['n_samples']} (da {$result['n_tickers']} ticker: " . implode(', ', $result['tickers_used']) . ")\n";
-echo "  R^2 (training set, non out-of-sample): {$result['r_squared']}\n";
-echo "  Coefficienti:\n";
-foreach ($result['coefficients'] as $name => $value) {
-    echo "    {$name}: " . round($value, 4) . "\n";
-}
+exit($anyFailed ? 1 : 0);

@@ -3,6 +3,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/lib_instrument_metrics.php';   // historical_volatility_pct(), historical_max_drawdown(), closest_row_to()
 require_once __DIR__ . '/lib_instrument_forecast.php';  // forecast_trend_component(), forecast_momentum_component()
 require_once __DIR__ . '/price_fetch.php';              // fetch_analyst_data_cached(), usata da compute_forecast_for_ticker()
+require_once __DIR__ . '/lib_forecast_universe.php';    // FORECAST_BOND_TICKERS
+
+const FORECAST_ASSET_CLASSES = ['equity', 'bond', 'crypto'];
 
 /**
  * Modello di previsione vero e proprio: una regressione lineare (OLS) i cui
@@ -205,81 +208,142 @@ function matrix_inverse(array $m): ?array
 }
 
 /**
- * Addestra il modello su TUTTO price_history (ogni ticker mai tracciato,
- * non solo quelli dell'utente che lancia il training) e salva i
- * coefficienti in `forecast_model`. Pensato per essere lanciato da
+ * Classe di asset usata dal modello di previsione — NON lo stesso campo di
+ * `instruments.type` mostrato in UI (un ETF obbligazionario resta 'etf' in
+ * UI, è corretto). Serve solo ad allenare/applicare modelli separati:
+ * volatilità e drawdown di un bond ETF sono di un ordine di grandezza
+ * diverso da quelli di un ETF azionario, un solo modello pooled su
+ * entrambi estrapola malissimo per l'uno o l'altro gruppo (vedi migrazione
+ * 036 per i numeri concreti che l'hanno dimostrato).
+ */
+function forecast_asset_class(string $ticker, string $displayType): string
+{
+    if ($displayType === 'crypto') return 'crypto';
+    if (in_array($ticker, FORECAST_BOND_TICKERS, true)) return 'bond';
+    return 'equity';
+}
+
+/**
+ * Mappa ticker -> tipo mostrato in UI, per classificare i campioni di
+ * training: aggrega `instruments` (tutti gli utenti, come altrove) e la
+ * sovrappone con FORECAST_UNIVERSE (nomi/tipi curati, prevalgono).
+ */
+function forecast_ticker_type_map(PDO $db): array
+{
+    $map = [];
+    foreach ($db->query("SELECT ticker, MIN(type) AS type FROM instruments GROUP BY ticker") as $r) {
+        $map[$r['ticker']] = $r['type'];
+    }
+    foreach (FORECAST_UNIVERSE as $item) $map[$item['ticker']] = $item['type'];
+    return $map;
+}
+
+/**
+ * Addestra UN modello per ciascuna asset class (equity/bond/crypto) su
+ * TUTTO price_history (ogni ticker mai tracciato, non solo quelli
+ * dell'utente che lancia il training) e salva i coefficienti in
+ * `forecast_model`. Pensato per essere lanciato da
  * cron/retrain_forecast_model.php, non ad ogni richiesta HTTP: il backtest
  * su tutto lo storico è un lavoro da batch, non da request.
  */
 function train_forecast_model(PDO $db): array
 {
+    $typeMap = forecast_ticker_type_map($db);
     $tickers = $db->query("SELECT DISTINCT ticker FROM price_history")->fetchAll(PDO::FETCH_COLUMN);
 
-    $allSamples = [];
-    $tickersUsed = [];
+    $samplesByClass = array_fill_keys(FORECAST_ASSET_CLASSES, []);
+    $tickersByClass = array_fill_keys(FORECAST_ASSET_CLASSES, []);
+
     foreach ($tickers as $ticker) {
+        // Un ticker senza un `type` noto (né in instruments né nella lista
+        // curata) non ha un'asset class affidabile: escluso dal training
+        // invece di indovinare 'equity' di default.
+        if (!isset($typeMap[$ticker])) continue;
+        $assetClass = forecast_asset_class($ticker, $typeMap[$ticker]);
+
         $stmt = $db->prepare("SELECT date, price FROM price_history WHERE ticker = :t ORDER BY date");
         $stmt->execute(['t' => $ticker]);
         $rows = $stmt->fetchAll();
 
         $samples = forecast_model_samples_for_ticker($rows);
         if ($samples) {
-            $tickersUsed[] = $ticker;
-            foreach ($samples as $s) $allSamples[] = $s;
+            $tickersByClass[$assetClass][] = $ticker;
+            foreach ($samples as $s) $samplesByClass[$assetClass][] = $s;
         }
     }
 
-    if (count($allSamples) < 20) {
-        return ['ok' => false, 'message' => 'Troppi pochi campioni disponibili per addestrare il modello (min. 20), servono più ticker con più storico.'];
-    }
+    $results = [];
+    foreach (FORECAST_ASSET_CLASSES as $assetClass) {
+        $allSamples = $samplesByClass[$assetClass];
+        $tickersUsed = $tickersByClass[$assetClass];
 
-    $X = [];
-    $y = [];
-    foreach ($allSamples as $s) {
-        $X[] = [1.0, $s['features']['trend'], $s['features']['momentum'], $s['features']['volatility'], $s['features']['drawdown']];
-        $y[] = $s['label_pct'];
-    }
+        if (count($allSamples) < 20) {
+            $results[$assetClass] = ['ok' => false, 'message' => "Troppi pochi campioni per '{$assetClass}' (min. 20, disponibili " . count($allSamples) . ") — servono più ticker di questa classe con più storico."];
+            continue;
+        }
 
-    $fit = ols_fit($X, $y);
-    if ($fit === null) {
-        return ['ok' => false, 'message' => 'Fit del modello fallito (matrice singolare) — servono più dati o feature meno correlate.'];
-    }
+        $X = [];
+        $y = [];
+        foreach ($allSamples as $s) {
+            $X[] = [1.0, $s['features']['trend'], $s['features']['momentum'], $s['features']['volatility'], $s['features']['drawdown']];
+            $y[] = $s['label_pct'];
+        }
 
-    $stmt = $db->prepare("INSERT INTO forecast_model
-        (n_samples, n_tickers, r_squared, intercept, coef_trend, coef_momentum, coef_volatility, coef_drawdown)
-        VALUES (:n_samples, :n_tickers, :r_squared, :intercept, :coef_trend, :coef_momentum, :coef_volatility, :coef_drawdown)");
-    $stmt->execute([
-        'n_samples' => count($allSamples),
-        'n_tickers' => count($tickersUsed),
-        'r_squared' => $fit['r_squared'],
-        'intercept' => $fit['beta'][0],
-        'coef_trend' => $fit['beta'][1],
-        'coef_momentum' => $fit['beta'][2],
-        'coef_volatility' => $fit['beta'][3],
-        'coef_drawdown' => $fit['beta'][4],
-    ]);
+        $fit = ols_fit($X, $y);
+        if ($fit === null) {
+            $results[$assetClass] = ['ok' => false, 'message' => "Fit fallito per '{$assetClass}' (matrice singolare)."];
+            continue;
+        }
 
-    return [
-        'ok' => true,
-        'n_samples' => count($allSamples),
-        'n_tickers' => count($tickersUsed),
-        'tickers_used' => $tickersUsed,
-        'r_squared' => round($fit['r_squared'], 4),
-        'coefficients' => [
+        $stmt = $db->prepare("INSERT INTO forecast_model
+            (asset_class, n_samples, n_tickers, r_squared, intercept, coef_trend, coef_momentum, coef_volatility, coef_drawdown)
+            VALUES (:asset_class, :n_samples, :n_tickers, :r_squared, :intercept, :coef_trend, :coef_momentum, :coef_volatility, :coef_drawdown)");
+        $stmt->execute([
+            'asset_class' => $assetClass,
+            'n_samples' => count($allSamples),
+            'n_tickers' => count($tickersUsed),
+            'r_squared' => $fit['r_squared'],
             'intercept' => $fit['beta'][0],
-            'trend' => $fit['beta'][1],
-            'momentum' => $fit['beta'][2],
-            'volatility' => $fit['beta'][3],
-            'drawdown' => $fit['beta'][4],
-        ],
-    ];
+            'coef_trend' => $fit['beta'][1],
+            'coef_momentum' => $fit['beta'][2],
+            'coef_volatility' => $fit['beta'][3],
+            'coef_drawdown' => $fit['beta'][4],
+        ]);
+
+        $results[$assetClass] = [
+            'ok' => true,
+            'n_samples' => count($allSamples),
+            'n_tickers' => count($tickersUsed),
+            'tickers_used' => $tickersUsed,
+            'r_squared' => round($fit['r_squared'], 4),
+            'coefficients' => [
+                'intercept' => $fit['beta'][0],
+                'trend' => $fit['beta'][1],
+                'momentum' => $fit['beta'][2],
+                'volatility' => $fit['beta'][3],
+                'drawdown' => $fit['beta'][4],
+            ],
+        ];
+    }
+
+    return $results;
 }
 
-/** Ultimo modello addestrato salvato in DB, o null se non è mai stato lanciato un training. */
-function latest_forecast_model(PDO $db): ?array
+/** Ultimo modello addestrato per un'asset class, o null se non è mai stato lanciato un training per quella classe. */
+function latest_forecast_model(PDO $db, string $assetClass): ?array
 {
-    $row = $db->query("SELECT * FROM forecast_model ORDER BY trained_at DESC LIMIT 1")->fetch();
+    $stmt = $db->prepare("SELECT * FROM forecast_model WHERE asset_class = :c ORDER BY trained_at DESC LIMIT 1");
+    $stmt->execute(['c' => $assetClass]);
+    $row = $stmt->fetch();
     return $row ?: null;
+}
+
+/** Tutti i modelli più recenti, uno per asset class — comodo per non ripetere la query per ogni ticker. */
+function latest_forecast_models(PDO $db): array
+{
+    $out = [];
+    foreach (FORECAST_ASSET_CLASSES as $assetClass) $out[$assetClass] = latest_forecast_model($db, $assetClass);
+    return $out;
 }
 
 /** Applica i coefficienti di un modello addestrato alle feature attuali di uno strumento. */
@@ -302,7 +366,7 @@ function apply_forecast_model(array $model, array $features): float
  * momentum), quindi un ticker può avere un "andamento attuale" anche senza
  * avere ancora una previsione completa.
  */
-function compute_forecast_for_ticker(PDO $db, string $ticker, ?array $model): array
+function compute_forecast_for_ticker(PDO $db, string $ticker, string $displayType, array $modelsByClass): array
 {
     $histStmt = $db->prepare("SELECT date, price FROM price_history WHERE ticker = :ticker ORDER BY date");
     $histStmt->execute(['ticker' => $ticker]);
@@ -315,6 +379,9 @@ function compute_forecast_for_ticker(PDO $db, string $ticker, ?array $model): ar
     $currentPrice = $cached ? (float)$cached['price'] : ($rows ? (float)end($rows)['price'] : 0.0);
     $currency = $cached['currency'] ?? null;
 
+    $assetClass = forecast_asset_class($ticker, $displayType);
+    $model = $modelsByClass[$assetClass] ?? null;
+
     $analyst = fetch_analyst_data_cached($ticker);
     $forecast = compute_instrument_forecast($rows, $analyst, $currentPrice, $model);
 
@@ -323,6 +390,7 @@ function compute_forecast_for_ticker(PDO $db, string $ticker, ?array $model): ar
         'currency' => $currency,
         'current_price' => $currentPrice,
         'trend' => $rows ? forecast_trend_component($rows) : null,
+        'asset_class' => $assetClass,
     ], $forecast);
 }
 

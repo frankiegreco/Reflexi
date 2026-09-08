@@ -55,6 +55,13 @@ function ForecastCard({ item }) {
             <span className={`font-mono text-2xl font-bold ${cls}`}>{pct(item.forecast_pct)}</span>
             <span className="text-xs text-muted">stima {item.horizon}</span>
           </div>
+          {item.current_price > 0 && (
+            <div className="mb-2 font-mono text-xs text-gray-700">
+              {fmtPrice(item.current_price, item.currency)} <span className="text-muted">oggi</span>
+              {' → '}
+              {fmtPrice(item.current_price * (1 + item.forecast_pct / 100), item.currency)} <span className="text-muted">stimato</span>
+            </div>
+          )}
           <div className="mb-2 text-[10px] text-muted">
             Modello addestrato il {formatDate(item.model.trained_at.slice(0, 10))} su {item.model.n_samples} campioni storici
             ({item.model.n_tickers} strumenti) · R² {(item.model.r_squared * 100).toFixed(1)}%
@@ -109,7 +116,11 @@ function RankingList({ title, hint, items }) {
             </div>
             <div className="flex-shrink-0 text-right">
               <PctPill value={i.value_pct} />
-              <div className="mt-0.5 font-mono text-[10px] text-muted">{fmtPrice(i.current_price, i.currency)}</div>
+              <div className="mt-0.5 font-mono text-[10px] text-muted">
+                {i.projected_price !== undefined
+                  ? <>{fmtPrice(i.current_price, i.currency)} → {fmtPrice(i.projected_price, i.currency)}</>
+                  : fmtPrice(i.current_price, i.currency)}
+              </div>
             </div>
           </div>
         ))}
@@ -160,15 +171,16 @@ export default function Forecasts() {
 
       <h2 className="mb-1 text-sm font-bold text-gray-800">Classifiche</h2>
       <p className="mb-4 text-xs text-muted">
-        Tra tutti gli strumenti tracciati dagli utenti Reflexi (non solo il tuo portafoglio) — "andamento storico" è
-        il trend reale già registrato (CAGR sui migliori 3 anni disponibili), "previsione" è la stima a 12 mesi dello
-        stesso modello di cui sopra.
+        Tra un ampio paniere di azioni, ETF (azionari e obbligazionari) e crypto (non solo il tuo portafoglio) — "andamento
+        storico" è il trend reale già registrato (CAGR sui migliori 3 anni disponibili, non una previsione), "previsione"
+        è la stima a 12 mesi dello stesso modello di cui sopra, con il prezzo attuale e quello stimato mostrati entrambi
+        per evitare ambiguità sul dato.
       </p>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <RankingList title="Migliori — andamento storico" items={rankings?.best_current ?? null} />
-        <RankingList title="Migliori — previsione 12 mesi" items={rankings?.best_forecast ?? null} />
-        <RankingList title="Peggiori — andamento storico" items={rankings?.worst_current ?? null} />
-        <RankingList title="Peggiori — previsione 12 mesi" items={rankings?.worst_forecast ?? null} />
+        <RankingList title="Migliori — andamento storico" hint="% = rendimento già realizzato, non una previsione" items={rankings?.best_current ?? null} />
+        <RankingList title="Migliori — previsione 12 mesi" hint="% e prezzo stimato a 12 mesi dal modello" items={rankings?.best_forecast ?? null} />
+        <RankingList title="Peggiori — andamento storico" hint="% = rendimento già realizzato, non una previsione" items={rankings?.worst_current ?? null} />
+        <RankingList title="Peggiori — previsione 12 mesi" hint="% e prezzo stimato a 12 mesi dal modello" items={rankings?.worst_forecast ?? null} />
       </div>
 
       <div className="mt-8 flex items-start gap-2 rounded-xl border border-border bg-white p-4 text-xs text-muted">

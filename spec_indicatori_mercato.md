@@ -152,6 +152,29 @@ tempo (solo l'ultimo valore in cache) — non esiste un dato storico su cui
 allenarsi onestamente. Resta visibile in Previsioni come **riferimento
 separato**, mai fuso nel numero prodotto dal modello.
 
+**Un modello separato per asset class (equity / bond / crypto), non uno
+solo.** Prima versione: un'unica regressione pooled su tutti i ticker
+insieme. Bug scoperto ampliando l'universo di training (vedi sotto): il
+modello pooled prevedeva rendimenti a 12 mesi di **-60% / -74% per ETF
+obbligazionari** (TLT, IEF, AGG, BND, LQD, HYG) — assurdo per fondi a
+bassissima volatilità storica. Causa: i coefficienti erano dominati dai
+ticker azionari/crypto molto più volatili nel training set, e il modello
+estrapolava malissimo fuori da quel range per un bond ETF a bassa
+volatilità/drawdown. Non un errore di calcolo, un limite intrinseco di un
+modello lineare allenato su feature con scale molto diverse tra asset
+class diverse. Soluzione (`forecast_asset_class()` in
+`lib_forecast_model.php`, migrazione 036): tre training indipendenti,
+ognuno solo sui ticker della propria classe, salvati come righe distinte
+in `forecast_model` (colonna `asset_class`). La classificazione usa
+`instruments.type`/la lista curata per crypto, e una lista fissa di ticker
+bond ETF (`FORECAST_BOND_TICKERS` in `lib_forecast_universe.php`) per
+distinguerli dagli ETF azionari — tutto il resto è 'equity'. Risultato
+dopo la separazione: R² sale a 0.24 (equity) e 0.50 (bond) sul rispettivo
+training set, e le previsioni per i bond ETF tornano in un range
+plausibile (circa -2%/+4%, non più -74%). Il crypto resta a R² = 0.04 —
+resta un problema difficile, la separazione non lo risolve, semplicemente
+non lo aggrava più mescolandolo con altre classi.
+
 ### Come si addestra
 
 `webroot/cron/retrain_forecast_model.php`, lanciato manualmente da riga di
@@ -159,45 +182,73 @@ comando dentro il container "web" (**mai** come endpoint HTTP — scansiona
 tutto `price_history`, è un lavoro da batch). Per ogni ticker con
 storico ≥ 395 giorni, campiona ogni 21 giorni lungo tutta la serie,
 calcola le 4 feature "a quella data" e il rendimento realizzato nei 365
-giorni successivi. Pool di tutti i ticker → un'unica regressione OLS
-(equazioni normali, inversione di matrice via Gauss-Jordan in
-`lib_forecast_model.php`, nessuna libreria esterna). Ogni training salva
-una nuova riga in `forecast_model` (append-only — resta uno storico di
-come il modello è cambiato) e la previsione usa sempre l'ultima riga per
-`trained_at`.
+giorni successivi. I campioni si raggruppano per asset class (vedi sopra)
+→ una regressione OLS per classe (equazioni normali, inversione di
+matrice via Gauss-Jordan in `lib_forecast_model.php`, nessuna libreria
+esterna). Ogni training salva una nuova riga per classe in `forecast_model`
+(append-only — resta uno storico di come ogni modello è cambiato) e la
+previsione usa sempre l'ultima riga per `(asset_class, trained_at)`. Se una
+classe non raggiunge 20 campioni il training per quella classe fallisce
+esplicitamente (non inserisce una riga), e Previsioni mostra "modello non
+ancora addestrato" per gli strumenti di quella classe invece di un numero
+a caso.
 
 Non è collegato a un cron automatico: va rilanciato manualmente quando si
 accumula storico prezzi nuovo (ha senso ogni pochi mesi, non ogni giorno —
 pochi giorni di dati in più non cambiano sensibilmente i coefficienti).
 
+### Universo di training e delle classifiche
+
+"Tutto il mercato" non è raggiungibile con l'API non ufficiale di Yahoo
+usata da questo progetto — nessun elenco completo dei titoli esistenti,
+servirebbe un feed dati a pagamento. `FORECAST_UNIVERSE`
+(`lib_forecast_universe.php`) è una lista curata e verificata a mano
+(ogni ticker testato live contro Yahoo prima di essere aggiunto),
+diversificata sulle 4 asset class richieste: ~27 azioni USA/Europa, 5 ETF
+azionari, 6 ETF obbligazionari, 8 crypto. `forecasts.php` la unisce ai
+ticker che gli utenti hanno effettivamente aggiunto ai propri strumenti
+(stesso pattern di `market_trends.php::top_movers`), e per ogni ticker
+della lista curata forza un backfill storico (`ensure_price_history`,
+1500 giorni) se non già presente — quindi il primo caricamento della
+pagina dopo un deploy con ticker nuovi può richiedere fino a un minuto
+circa (decine di fetch verso Yahoo la prima volta); i caricamenti
+successivi sono rapidi grazie alle cache già esistenti (`price_cache`,
+`analyst_cache`).
+
 ### Limiti onesti del modello (misurati, non ipotetici)
 
-Primo addestramento reale su questa installazione (8 settembre 2026): 907
-campioni da 7 ticker con storico sufficiente (AAPL, ADA-USD, CSSPX.MI,
-ETH-USD, SOL-EUR, SXR8.DE, VWCE.MI) — gli altri ticker tracciati non
-avevano ancora abbastanza storico (< 395 giorni). **R² = 0.067**: il
-modello spiega circa il 6,7% della variabilità dei rendimenti nel proprio
-stesso set di training. È un numero basso, ed è l'esito onesto e atteso di
-un problema difficile (prevedere rendimenti a 12 mesi da 4 feature
-tecniche) — non un bug da correggere aggiungendo più feature finché il
-numero non sale, il che produrrebbe solo overfitting.
+Addestramento più recente su questa installazione (8 settembre 2026,
+dopo l'ampliamento dell'universo e la separazione per asset class):
+
+| Asset class | Campioni | Ticker | R² (training set) |
+|---|---|---|---|
+| equity | 1953 | 32 | 0.24 |
+| bond | 300 | 6 | 0.50 |
+| crypto | 654 | 9 | 0.04 |
+
+Numeri bassi o moderati, ed è l'esito onesto e atteso di un problema
+difficile (prevedere rendimenti a 12 mesi da 4 feature tecniche) — non un
+bug da correggere aggiungendo più feature finché il numero non sale, il
+che produrrebbe solo overfitting.
 
 Altri limiti da conoscere prima di modificare questo modulo:
 
 - **R² calcolato sul training set, non out-of-sample**: nessun
   train/test split per ora. Se in futuro si aggiunge una validazione
-  out-of-sample, il numero mostrato in UI andrà aggiornato di conseguenza
-  (probabilmente più basso, o negativo).
+  out-of-sample, i numeri mostrati in UI andranno aggiornati di
+  conseguenza (probabilmente più bassi, o negativi).
 - **Campioni sovrapposti**: due date di campionamento a 21 giorni di
   distanza condividono quasi tutta la finestra storica trailing — non sono
   indipendenti in senso statistico stretto. Limite noto e accettato di un
-  backtest con storico limitato (pochi ticker con anni di dati), non
-  nascosto: va riportato ogni volta che si comunica l'R² a un utente o si
-  discute la qualità del modello.
-- **Pochi ticker indipendenti**: 7 ticker nel primo training, di cui 2
-  fortemente correlati tra loro (ETH-USD/ADA-USD, entrambe crypto) — il
-  modello generalizza su una base ancora piccola. Cresce con l'uso reale
-  dell'app (più utenti → più ticker → più storico → training migliori).
+  backtest con storico limitato, non nascosto: va riportato ogni volta che
+  si comunica l'R² a un utente o si discute la qualità del modello.
+- **Bond ha solo 6 ticker**: tutti ETF USA (AGG, BND, TLT, IEF, LQD, HYG),
+  nessuna diversificazione geografica/valutaria — il modello bond
+  generalizza su una base ancora piccola e USA-centrica.
+- **Crypto resta difficile**: R² = 0.04 anche isolato dalle altre classi —
+  la volatilità e i cicli di mercato crypto non sono ben spiegati da
+  trend/momentum/volatilità/drawdown trailing. Previsioni per questa
+  classe vanno trattate con ancora più scetticismo delle altre due.
 
 ### Dove vive nell'interfaccia
 
@@ -223,11 +274,19 @@ Due parti sulla stessa pagina:
 Ogni card del portafoglio mostra, sempre nello stesso ordine:
 
 1. Il numero previsto, in evidenza
-2. Da quale training viene (data, numero di campioni/ticker, R²) — così chi
+2. **Prezzo attuale → prezzo stimato, entrambi in cifra** (non solo la
+   percentuale): segnalato dall'utente che "+119%" da solo, accanto a un
+   prezzo, è ambiguo — non è chiaro se il prezzo aumenterà di quella
+   percentuale o se quella percentuale è qualcos'altro. Stessa logica nelle
+   classifiche "previsione" (campo `projected_price` in `forecasts.php`,
+   omesso invece nelle classifiche "andamento storico": lì la percentuale è
+   un CAGR passato, non una proiezione di prezzo, mostrare un "prezzo
+   proiettato" sarebbe scorretto)
+3. Da quale training viene (data, numero di campioni/ticker, R²) — così chi
    guarda può giudicare quanto fidarsi, invece di prendere il numero per
    buono
-3. Le 4 feature usate, coi loro valori grezzi
-4. Il target price analisti, se disponibile, chiaramente etichettato come
+4. Le 4 feature usate, coi loro valori grezzi
+5. Il target price analisti, se disponibile, chiaramente etichettato come
    "non incluso nella stima"
 
 ### Disclaimer obbligatorio, sempre visibile in questa sezione

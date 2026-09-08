@@ -186,10 +186,13 @@ CREATE TABLE IF NOT EXISTS analyst_cache (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Modello di previsione appreso (regressione OLS), append-only: ogni riga
--- e' una versione addestrata, si usa sempre l'ultima (vedi migrazione 035).
+-- e' una versione addestrata di UN modello per asset class (equity/bond/
+-- crypto, vedi migrazione 036 sul perche' di questa separazione), si usa
+-- sempre l'ultima per quella asset class (vedi migrazione 035).
 CREATE TABLE IF NOT EXISTS forecast_model (
     id INT AUTO_INCREMENT PRIMARY KEY,
     trained_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    asset_class VARCHAR(10) NOT NULL DEFAULT 'equity',
     n_samples INT NOT NULL,
     n_tickers INT NOT NULL,
     r_squared DECIMAL(6,4) NOT NULL,
@@ -198,7 +201,7 @@ CREATE TABLE IF NOT EXISTS forecast_model (
     coef_momentum DECIMAL(14,8) NOT NULL,
     coef_volatility DECIMAL(14,8) NOT NULL,
     coef_drawdown DECIMAL(14,8) NOT NULL,
-    INDEX idx_trained_at (trained_at)
+    INDEX idx_asset_class_trained_at (asset_class, trained_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS budgets (
