@@ -246,10 +246,21 @@ function matrix_inverse(array $m): ?array
  * diverso da quelli di un ETF azionario, un solo modello pooled su
  * entrambi estrapola malissimo per l'uno o l'altro gruppo (vedi migrazione
  * 036 per i numeri concreti che l'hanno dimostrato).
+ *
+ * FORECAST_BOND_TICKERS copre solo i bond ETF della lista curata (il cui
+ * `type` resta 'etf' in UI, quindi non sono distinguibili da un ETF
+ * azionario guardando solo `displayType`). Un'obbligazione SINGOLA
+ * aggiunta da un utente ha invece `type` = 'obbligazione' in UI — va
+ * riconosciuta qui altrettanto esplicitamente, altrimenti finirebbe
+ * classificata 'equity' per esclusione e valutata con coefficienti e range
+ * (vedi label_min_pct/max_pct) pensati per azioni, non per obbligazioni:
+ * stesso tipo di estrapolazione fuori scala già visto per i bond ETF prima
+ * di questa distinzione (migrazione 036).
  */
 function forecast_asset_class(string $ticker, string $displayType): string
 {
     if ($displayType === 'crypto') return 'crypto';
+    if ($displayType === 'obbligazione') return 'bond';
     if (in_array($ticker, FORECAST_BOND_TICKERS, true)) return 'bond';
     return 'equity';
 }
