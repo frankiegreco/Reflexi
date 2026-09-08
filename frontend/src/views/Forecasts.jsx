@@ -93,6 +93,108 @@ function ForecastCard({ item }) {
   );
 }
 
+function InvestAdvisor() {
+  const [amount, setAmount] = useState('10000');
+  const [months, setMonths] = useState('4');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function calculate() {
+    const amt = parseFloat(amount);
+    const mo = parseInt(months, 10);
+    if (!amt || amt <= 0 || !mo || mo <= 0) return;
+    setLoading(true);
+    try {
+      const r = await apiGet(`invest_advisor.php?amount=${amt}&months=${mo}`);
+      setResult(r);
+    } catch {
+      setResult({ allocation_available: false, message: 'Errore nel calcolo.' });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mb-10 card p-5">
+      <h2 className="mb-1 text-sm font-bold text-gray-800">Voglio investire</h2>
+      <p className="mb-4 text-xs text-muted">
+        Inserisci un importo ipotetico in euro e un orizzonte: il modello alloca su un paniere di strumenti in base a
+        rendimento stimato, rischio storico e affidabilità del modello per quella categoria (azioni/obbligazioni/crypto).
+      </p>
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <div>
+          <label className="field-label">Importo (€)</label>
+          <input className="field w-36" type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </div>
+        <div>
+          <label className="field-label">Orizzonte (mesi)</label>
+          <input className="field w-28" type="number" min="1" max="60" value={months} onChange={(e) => setMonths(e.target.value)} />
+        </div>
+        <button className="btn-accent" onClick={calculate} disabled={loading}>{loading ? 'Calcolo...' : 'Calcola allocazione'}</button>
+      </div>
+
+      {result && !result.allocation_available && (
+        <p className="text-sm text-muted">{result.message}</p>
+      )}
+
+      {result?.allocation_available && (
+        <>
+          <div className="mb-3 flex items-baseline gap-2">
+            <span className={`font-mono text-2xl font-bold ${result.total_projected_gain_pct >= 0 ? 'text-income' : 'text-expense'}`}>
+              {fmtPrice(result.total_projected_value, 'EUR')}
+            </span>
+            <span className="text-xs text-muted">
+              stimato dopo {result.months} {result.months === 1 ? 'mese' : 'mesi'} ({pct(result.total_projected_gain_pct)})
+            </span>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-border">
+            <table className="w-full min-w-[560px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
+                  <th className="px-3 py-2 font-semibold">Strumento</th>
+                  <th className="px-3 py-2 text-right font-semibold">Quota</th>
+                  <th className="px-3 py-2 text-right font-semibold">Importo</th>
+                  <th className="px-3 py-2 text-right font-semibold">Rendimento stimato</th>
+                  <th className="px-3 py-2 text-right font-semibold">Valore stimato</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.allocations.map((a) => (
+                  <tr key={a.ticker} className="border-b border-border last:border-0">
+                    <td className="px-3 py-2">
+                      <div className="font-semibold text-gray-900">{a.name}</div>
+                      <div className="text-xs text-muted">{a.ticker} · {TYPE_LABELS[a.type] || a.type} · R² modello {(a.r_squared * 100).toFixed(0)}%</div>
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono">{a.weight_pct}%</td>
+                    <td className="px-3 py-2 text-right font-mono">{fmtPrice(a.allocated_amount, 'EUR')}</td>
+                    <td className="px-3 py-2 text-right"><PctPill value={a.horizon_return_pct} /></td>
+                    <td className="px-3 py-2 text-right font-mono">{fmtPrice(a.projected_value, 'EUR')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] text-amber-900">
+            <AlertTriangle size={13} className="mt-0.5 flex-shrink-0 text-amber-600" />
+            <p>
+              <strong>Non è consulenza finanziaria.</strong> Orizzonte di {result.months} mesi ottenuto proiettando
+              matematicamente la stima a 12 mesi del modello (capitalizzazione composta) — il modello NON è validato
+              su questo orizzonte specifico, solo su 12 mesi. Max 35% per strumento, al più 3 strumenti per categoria
+              (azioni/obbligazioni/crypto), pesati anche per quanto è affidabile il modello di quella categoria (R²
+              più basso → peso più basso). Rendimenti calcolati sulla valuta nativa di ogni strumento e applicati
+              all'importo in euro senza conversione valutaria (stessa scelta delle altre schermate di Reflexi — ignora
+              il rischio di cambio). È un calcolo automatico che può sbagliarsi anche di molto, specialmente su
+              orizzonti brevi: non seguirlo come unico riferimento per una decisione reale.
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function RankingList({ title, hint, items }) {
   return (
     <div>
@@ -157,6 +259,8 @@ export default function Forecasts() {
           decisione di investimento.
         </p>
       </div>
+
+      <InvestAdvisor />
 
       <h2 className="mb-3 text-sm font-bold text-gray-800">I tuoi strumenti</h2>
       {portfolio === null && <p className="py-10 text-center text-sm text-muted">Calcolo previsioni...</p>}

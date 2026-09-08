@@ -3,9 +3,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/lib_instrument_metrics.php';   // historical_volatility_pct(), historical_max_drawdown(), closest_row_to()
 require_once __DIR__ . '/lib_instrument_forecast.php';  // forecast_trend_component(), forecast_momentum_component()
 require_once __DIR__ . '/price_fetch.php';              // fetch_analyst_data_cached(), usata da compute_forecast_for_ticker()
-require_once __DIR__ . '/lib_forecast_universe.php';    // FORECAST_BOND_TICKERS
+require_once __DIR__ . '/lib_forecast_universe.php';    // FORECAST_BOND_TICKERS, FORECAST_UNIVERSE
+require_once __DIR__ . '/lib_market_trends.php';        // ensure_price_history()
 
 const FORECAST_ASSET_CLASSES = ['equity', 'bond', 'crypto'];
+// Storico voluto per l'universo curato: abbastanza per il trend a 3 anni
+// usato sia da Indicatori sia dalle feature del modello, con un margine.
+const FORECAST_UNIVERSE_HISTORY_DAYS = 1500;
 
 /**
  * Modello di previsione vero e proprio: una regressione lineare (OLS) i cui
@@ -445,5 +449,56 @@ function compute_instrument_forecast(array $rows, ?array $analyst, float $curren
             'drawdown' => ['pct' => $features['drawdown']],
         ],
         'analyst_reference' => $analystReference,
+    ];
+}
+
+/**
+ * Costruisce l'universo (strumenti dell'utente + lista curata multi-asset,
+ * vedi FORECAST_UNIVERSE) e calcola la previsione per ognuno UNA sola
+ * volta — condiviso da forecasts.php (classifiche) e invest_advisor.php
+ * (allocazione ipotetica), così le due pagine leggono esattamente gli
+ * stessi numeri invece di ricalcolarli in modo scollegato.
+ */
+function forecast_universe_computed(PDO $db, int $uid): array
+{
+    $stmt = $db->prepare("SELECT id, ticker, name, type, currency FROM instruments WHERE user_id = :uid ORDER BY ticker");
+    $stmt->execute(['uid' => $uid]);
+    $myInstruments = $stmt->fetchAll();
+
+    // Ticker distinti tracciati da TUTTI gli utenti (stesso approccio di
+    // market_trends.php::top_movers), PIÙ la lista curata multi-asset —
+    // "tutto il mercato" non è raggiungibile con l'API non ufficiale di
+    // Yahoo usata da questo progetto (vedi lib_forecast_universe.php).
+    $globalMeta = [];
+    foreach ($db->query("SELECT ticker, MIN(name) AS name, MIN(type) AS type FROM instruments GROUP BY ticker") as $r) {
+        $globalMeta[$r['ticker']] = $r;
+    }
+    foreach (FORECAST_UNIVERSE as $item) {
+        // La lista curata prevale (nomi puliti), ma non cancella un ticker
+        // già presente per un altro motivo.
+        $globalMeta[$item['ticker']] = $item;
+        fetch_live_price($item['ticker']); // popola price_cache col prezzo di oggi
+        ensure_price_history($item['ticker'], FORECAST_UNIVERSE_HISTORY_DAYS);
+    }
+
+    $modelsByClass = latest_forecast_models($db);
+
+    $computed = [];
+    foreach ($myInstruments as $inst) {
+        if (!isset($computed[$inst['ticker']])) {
+            $computed[$inst['ticker']] = compute_forecast_for_ticker($db, $inst['ticker'], $inst['type'], $modelsByClass);
+        }
+    }
+    foreach ($globalMeta as $ticker => $meta) {
+        if (!isset($computed[$ticker])) {
+            $computed[$ticker] = compute_forecast_for_ticker($db, $ticker, $meta['type'], $modelsByClass);
+        }
+    }
+
+    return [
+        'my_instruments' => $myInstruments,
+        'global_meta' => $globalMeta,
+        'computed' => $computed,
+        'models_by_class' => $modelsByClass,
     ];
 }

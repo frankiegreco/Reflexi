@@ -1,9 +1,13 @@
-# Specifica: Indicatori di mercato e Previsioni per titoli/ETF
+# Specifica: Indicatori di mercato, Previsioni e allocazione ipotetica
 
-Questo file copre due sezioni distinte dell'app, con scopi deliberatamente
-opposti: **Indicatori** (solo fatti verificabili) e **Previsioni** (una
-stima predittiva vera e propria, prodotta da un modello statistico
-addestrato). Non vanno confuse né la logica dell'una applicata all'altra.
+Questo file copre tre sezioni distinte dell'app, con scopi deliberatamente
+diversi (in un caso opposti): **Indicatori** (solo fatti verificabili),
+**Previsioni** (una stima predittiva vera e propria, prodotta da un
+modello statistico addestrato) e l'**allocatore di investimento ipotetico**
+dentro Previsioni (una raccomandazione di allocazione personalizzata su
+importo e orizzonte specifici — un salto di categoria ulteriore rispetto
+alle Previsioni generali, vedi Parte 3). Non vanno confuse né la logica
+dell'una applicata alle altre.
 
 ---
 
@@ -308,3 +312,118 @@ Ogni card del portafoglio mostra, sempre nello stesso ordine:
 - Nessuna copertura analisti per uno strumento (tipico ETF/crypto): la
   previsione resta disponibile (non dipende dal dato analisti), solo il
   riferimento separato non viene mostrato
+
+---
+
+## Parte 3 — Allocatore di investimento ipotetico ("Voglio investire")
+
+### Perché è un salto di categoria rispetto a Previsioni, e perché è stato costruito comunque
+
+Richiesta esplicita del titolare del progetto: un tool che prenda un
+importo e un orizzonte ("voglio investire 10k per i prossimi 4 mesi,
+indicami dove e come farlo") e restituisca un'allocazione concreta.
+Segnalato prima di costruirlo che questo è diverso da Previsioni in un
+modo che conta legalmente: Previsioni mostra la stessa stima generale a
+tutti, questo tool produce una **raccomandazione personalizzata su un
+importo e un orizzonte specifici di un utente** — la definizione stessa di
+consulenza finanziaria (MiFID II/CONSOB: raccomandazione adatta alla
+situazione specifica del cliente). Il titolare ha scelto consapevolmente
+di costruirlo come raccomandazione vera, non come "simulazione" attenuata.
+Di conseguenza, come per Previsioni:
+
+- Il tool restituisce un'allocazione concreta (importo per strumento).
+- Resta comunque **onesto sulla metodologia e sui suoi limiti** — mostrati
+  sempre, non in piccolo: non è consulenza finanziaria, l'orizzonte
+  richiesto viene proiettato da un modello validato solo a 12 mesi, ogni
+  riga mostra da quale asset class/R² viene la stima.
+
+### Cos'è davvero (e cosa non è)
+
+**Non è un'ottimizzazione di portafoglio** (niente Markowitz, niente
+covarianze tra strumenti — richiederebbe stimare centinaia di correlazioni
+a coppie con lo storico disponibile, rumorose quanto le previsioni
+stesse). È un ranking rendimento/rischio con due regole di diversificazione
+esplicite, pensato per essere spiegabile riga per riga:
+
+1. **Punteggio per candidato**: rendimento stimato sull'orizzonte richiesto
+   (vedi sotto) diviso la volatilità storica dello strumento (rendimento
+   per unità di rischio, come uno Sharpe senza tasso privo di rischio),
+   moltiplicato per `sqrt(R²)` del modello della sua asset class. Questo
+   scala il punteggio in base a quanto ci si può fidare del modello che ha
+   prodotto quella stima — uno strumento crypto (R² = 0.04) pesa molto meno
+   di un bond (R² = 0.50) a parità di rendimento/rischio grezzo, altrimenti
+   il rumore di un modello poco affidabile potrebbe dominare la
+   raccomandazione solo perché quel giorno la sua stima grezza è più alta.
+2. **Selezione**: al più 3 candidati per asset class (equity/bond/crypto),
+   poi uniti e ordinati per punteggio — garantisce diversificazione
+   strutturale invece di poter finire, per esempio, tutto su crypto solo
+   perché quel giorno hanno punteggi alti.
+3. **Pesi**: proporzionali al punteggio, con un tetto del 35% per singolo
+   strumento — l'eccesso oltre il tetto si ridistribuisce sugli altri
+   candidati in proporzione (`cap_and_redistribute_weights()` in
+   `lib_invest_advisor.php`). Se il tetto è matematicamente irraggiungibile
+   (es. solo 2 candidati disponibili quel giorno), viene ignorato invece di
+   produrre pesi che non sommano al 100%.
+4. Solo candidati con **rendimento stimato positivo** sull'orizzonte
+   richiesto entrano in classifica — non ha senso "raccomandare" uno
+   strumento con un calo previsto.
+
+### L'orizzonte richiesto non è quello su cui il modello è validato
+
+Il modello di Previsioni è addestrato e validato solo su rendimenti a 12
+mesi (vedi Parte 2). Un orizzonte diverso (es. 4 mesi) si ottiene
+proiettando matematicamente quella stima con la formula di
+capitalizzazione composta:
+
+```
+rendimento_orizzonte = (1 + rendimento_12_mesi) ^ (mesi_richiesti / 12) - 1
+```
+
+Questo è un calcolo corretto **se** il rendimento annuo si mantenesse
+costante nel tempo — un'assunzione reale, non un dato validato per quello
+specifico orizzonte più corto (o più lungo). Va dichiarato esplicitamente
+in UI ogni volta (`InvestAdvisor` in `frontend/src/views/Forecasts.jsx`),
+non lasciato implicito nel numero.
+
+### Valuta
+
+L'importo inserito dall'utente è trattato come euro. I rendimenti % usati
+per ogni strumento sono calcolati sui prezzi in valuta nativa
+(`price_history` per ticker, mai convertita) e applicati direttamente
+all'importo in euro assegnato — nessuna conversione valutaria, stessa
+scelta già fatta altrove in Reflexi per gli investimenti multi-valuta
+(vedi CLAUDE.md, "Multi-valuta investimenti"). Significa che il rischio di
+cambio viene ignorato: un rendimento del +20% in dollari non è
+esattamente un +20% sull'importo in euro se nel frattempo il cambio
+EUR/USD si muove. Semplificazione dichiarata, non un bug silenzioso.
+
+### Dove vive nell'interfaccia
+
+Dentro la pagina Previsioni (non una vista separata), sezione **"Voglio
+investire"** subito sotto il disclaimer generale — due campi (importo in
+euro, orizzonte in mesi) e un pulsante che chiama `invest_advisor.php`.
+Endpoint condiviso con Previsioni tramite `forecast_universe_computed()`
+(`lib_forecast_model.php`): stesso universo di strumenti, stessi modelli,
+nessun numero diverso tra le due schermate per lo stesso strumento nello
+stesso momento.
+
+### Disclaimer obbligatorio, sempre visibile con un risultato
+
+> Non è consulenza finanziaria. Orizzonte ottenuto proiettando
+> matematicamente la stima a 12 mesi del modello — non validata su questo
+> orizzonte specifico. Rendimenti calcolati sulla valuta nativa di ogni
+> strumento e applicati all'importo in euro senza conversione valutaria.
+> È un calcolo automatico che può sbagliarsi anche di molto, specialmente
+> su orizzonti brevi: non seguirlo come unico riferimento per una
+> decisione reale.
+
+### Casi limite
+
+- Nessuno strumento tracciato ha una previsione di rendimento positiva per
+  l'orizzonte richiesto: `allocation_available: false` con un messaggio
+  esplicito, mai un'allocazione forzata su strumenti in calo previsto
+- Orizzonte fuori range (< 1 o > 60 mesi): troncato ai limiti
+  (`INVEST_ADVISOR_MIN_MONTHS`/`MAX_MONTHS`) invece di un calcolo assurdo
+  su orizzonti non plausibili
+- Importo o orizzonte non validi (≤ 0): errore esplicito dall'endpoint,
+  nessun calcolo silenzioso su un input insensato
