@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, RefreshCw, Pencil, Trash, Trash2, LineChart as LineChartIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, RefreshCw, Pencil, Trash, Trash2, LineChart as LineChartIcon, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { useData } from '../context/DataContext';
 import { apiGet, apiSend, apiDelete } from '../api';
@@ -27,6 +27,25 @@ function groupByType(list, getType) {
 function fmt(n, currency) {
   try { return new Intl.NumberFormat('it-IT', { style: 'currency', currency }).format(n || 0); }
   catch { return euro(n); }
+}
+
+function pct(n) {
+  if (n === null || n === undefined) return '—';
+  return `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
+}
+
+/** Card per un singolo indicatore storico, con icona informativa (tooltip nativo via title). */
+function IndicatorCard({ label, tooltip, value, valueClass = '', hint }) {
+  return (
+    <div className="card min-w-0 p-4">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+        <span>{label}</span>
+        <Info size={12} className="flex-shrink-0 cursor-help text-muted/70" title={tooltip} />
+      </div>
+      <div className={`mt-1 break-words font-mono text-lg font-semibold ${valueClass}`}>{value}</div>
+      {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
+    </div>
+  );
 }
 
 const emptyInstrument = { id: null, ticker: '', name: '', type: 'etf', currency: 'EUR', tax_rate: 26 };
@@ -152,12 +171,18 @@ export default function Investments() {
   const [priceChartInstrument, setPriceChartInstrument] = useState(null);
   const [priceHistory, setPriceHistory] = useState([]);
   const [priceChartDays, setPriceChartDays] = useState(90);
+  const [instrumentMetrics, setInstrumentMetrics] = useState(null);
+  const [analystData, setAnalystData] = useState(null);
 
   async function openPriceChart(instrument) {
     setPriceChartInstrument(instrument);
     setPriceChartOpen(true);
+    setInstrumentMetrics(null);
+    setAnalystData(null);
     const data = await apiGet(`price_history.php?instrument_id=${instrument.id}&days=${priceChartDays}`);
     setPriceHistory(data);
+    apiGet(`instrument_metrics.php?instrument_id=${instrument.id}`).then(setInstrumentMetrics).catch(() => setInstrumentMetrics(null));
+    apiGet(`instrument_analyst.php?instrument_id=${instrument.id}`).then(setAnalystData).catch(() => setAnalystData(null));
   }
 
   useEffect(() => {
@@ -1060,6 +1085,84 @@ export default function Investments() {
           </div>
           </>
         )}
+
+        <div className="mt-6 border-t border-border pt-5">
+          <h4 className="mb-3 text-sm font-semibold text-gray-800">Indicatori</h4>
+
+          {!instrumentMetrics ? (
+            <p className="text-xs text-muted">Calcolo indicatori...</p>
+          ) : instrumentMetrics.insufficient_history ? (
+            <p className="text-sm text-muted">{instrumentMetrics.message}</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {['1y', '3y', '5y'].map((key) => {
+                const label = { '1y': 'Rendimento storico (1 anno)', '3y': 'Rendimento storico (3 anni)', '5y': 'Rendimento storico (5 anni)' }[key];
+                const r = instrumentMetrics.returns?.[key];
+                if (!r) return null;
+                if (!r.available) {
+                  return (
+                    <IndicatorCard key={key} label={label}
+                      tooltip="Rendimento totale e annualizzato realmente registrato nel periodo, calcolato sui dati storici presenti in Reflexi."
+                      value="—" hint={r.message} />
+                  );
+                }
+                return (
+                  <IndicatorCard key={key} label={label}
+                    tooltip="Rendimento totale e annualizzato realmente registrato nel periodo, calcolato sui dati storici presenti in Reflexi."
+                    value={pct(r.total_return_pct)}
+                    valueClass={r.total_return_pct >= 0 ? 'text-income' : 'text-expense'}
+                    hint={`Annualizzato: ${pct(r.annualized_return_pct)} · dal ${formatDate(r.start_date)}`} />
+                );
+              })}
+
+              {instrumentMetrics.volatility && (
+                <IndicatorCard label="Volatilità annualizzata"
+                  tooltip="Deviazione standard dei rendimenti giornalieri, annualizzata (radice di 252 giorni di borsa) — quanto oscilla il prezzo, non un giudizio di rischio."
+                  value={`${instrumentMetrics.volatility.annualized_pct.toFixed(2)}%`}
+                  hint={`Su ultimi ${instrumentMetrics.volatility.window_days} giorni`} />
+              )}
+
+              <IndicatorCard label="Max drawdown"
+                tooltip="Il calo percentuale più grande registrato dal punto più alto raggiunto al punto più basso successivo, nello storico disponibile."
+                value={pct(instrumentMetrics.max_drawdown.pct)}
+                valueClass="text-expense"
+                hint={`${formatDate(instrumentMetrics.max_drawdown.peak_date)} → ${formatDate(instrumentMetrics.max_drawdown.trough_date)}`} />
+
+              {instrumentMetrics.sharpe_ratio && (
+                <IndicatorCard label="Sharpe ratio approssimato"
+                  tooltip={`(Rendimento annualizzato − tasso privo di rischio ipotizzato ${instrumentMetrics.sharpe_ratio.risk_free_rate_pct}%) / volatilità annualizzata.`}
+                  value={instrumentMetrics.sharpe_ratio.value.toFixed(2)}
+                  hint={`Tasso privo di rischio ipotizzato: ${instrumentMetrics.sharpe_ratio.risk_free_rate_pct}%`} />
+              )}
+            </div>
+          )}
+
+          {analystData?.available && analystData.data && (
+            <div className="mt-4">
+              <h5 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Opinioni di analisti esterni</h5>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {analystData.data.target_mean_price != null && (
+                  <IndicatorCard label="Target price medio analisti"
+                    tooltip="Prezzo obiettivo medio stimato dagli analisti coperti da Yahoo Finance — un'opinione di terzi, non un'elaborazione di Reflexi."
+                    value={fmt(analystData.data.target_mean_price, analystData.data.currency)}
+                    hint={`Range ${fmt(analystData.data.target_low_price, analystData.data.currency)} – ${fmt(analystData.data.target_high_price, analystData.data.currency)} · ${analystData.data.number_of_analysts} analisti (dato Yahoo Finance)`} />
+                )}
+                {analystData.data.recommendation_mean != null && (
+                  <IndicatorCard label="Raccomandazione media analisti"
+                    tooltip="Media delle raccomandazioni degli analisti su scala Yahoo Finance: 1 = Strong Buy, 5 = Strong Sell."
+                    value={analystData.data.recommendation_mean.toFixed(2)}
+                    hint="Scala 1 (Strong Buy) – 5 (Strong Sell) · dato Yahoo Finance" />
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-border bg-gray-50 p-3 text-xs text-muted">
+            <Info size={14} className="mt-0.5 flex-shrink-0 text-muted" />
+            <p>Dati storici e opinioni di terzi, non previsioni. Le performance passate non garantiscono risultati futuri.
+              Reflexi non fornisce consulenza finanziaria né raccomandazioni di acquisto o vendita.</p>
+          </div>
+        </div>
       </Modal>
 
       <Modal open={reModalOpen} onClose={() => setReModalOpen(false)} title={reForm.id ? 'Modifica immobile' : 'Nuovo immobile'}

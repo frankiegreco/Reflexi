@@ -217,6 +217,96 @@ function fetch_price_from_yahoo(string $ticker): ?array
 }
 
 /**
+ * Cookie + crumb di sessione richiesti da Yahoo per l'endpoint quoteSummary
+ * (a differenza dell'endpoint chart usato sopra, che non li richiede). Senza
+ * crumb l'API risponde con errore "Invalid Crumb". Richiede cURL (per i
+ * cookie); se non disponibile la funzione ritorna null e chi chiama
+ * (fetch_analyst_data) tratta il dato come semplicemente non disponibile.
+ */
+function fetch_yahoo_crumb(string $userAgent): ?array
+{
+    if (!function_exists('curl_init')) return null;
+
+    $cookieFile = tempnam(sys_get_temp_dir(), 'yc_');
+    if ($cookieFile === false) return null;
+
+    $ch = curl_init('https://fc.yahoo.com');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_USERAGENT => $userAgent,
+        CURLOPT_COOKIEJAR => $cookieFile,
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+    ]);
+    curl_exec($ch);
+    curl_close($ch);
+
+    $ch = curl_init('https://query1.finance.yahoo.com/v1/test/getcrumb');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_USERAGENT => $userAgent,
+        CURLOPT_COOKIEFILE => $cookieFile,
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+    ]);
+    $crumb = curl_exec($ch);
+    curl_close($ch);
+
+    if (!$crumb || str_contains($crumb, '<')) {
+        @unlink($cookieFile);
+        return null;
+    }
+    return ['crumb' => $crumb, 'cookie_file' => $cookieFile];
+}
+
+/**
+ * Opinioni di analisti esterni (target price, raccomandazione media) dal
+ * modulo `financialData` di Yahoo Finance — dati di terzi, mai un'
+ * elaborazione di Reflexi (vedi spec_indicatori_mercato.md). Torna null se
+ * il dato non è disponibile (tipicamente ETF/crypto, che non hanno copertura
+ * di analisti) o se Yahoo non risponde: chi chiama deve semplicemente
+ * nascondere la sezione, non mostrare un placeholder vuoto.
+ */
+function fetch_analyst_data(string $ticker): ?array
+{
+    $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+    $auth = fetch_yahoo_crumb($userAgent);
+    if ($auth === null) return null;
+
+    $url = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary/' . rawurlencode($ticker)
+        . '?modules=financialData&crumb=' . rawurlencode($auth['crumb']);
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_USERAGENT => $userAgent,
+        CURLOPT_COOKIEFILE => $auth['cookie_file'],
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+        CURLOPT_SSL_VERIFYPEER => true,
+    ]);
+    $raw = curl_exec($ch);
+    curl_close($ch);
+    @unlink($auth['cookie_file']);
+
+    if (!$raw) return null;
+
+    $data = json_decode($raw, true);
+    $fd = $data['quoteSummary']['result'][0]['financialData'] ?? null;
+    $analystCount = $fd['numberOfAnalystOpinions']['raw'] ?? null;
+    if (!$fd || !$analystCount) return null;
+
+    return [
+        'target_mean_price' => $fd['targetMeanPrice']['raw'] ?? null,
+        'target_high_price' => $fd['targetHighPrice']['raw'] ?? null,
+        'target_low_price' => $fd['targetLowPrice']['raw'] ?? null,
+        'recommendation_mean' => $fd['recommendationMean']['raw'] ?? null,
+        'number_of_analysts' => (int)$analystCount,
+        'currency' => $fd['financialCurrency'] ?? null,
+    ];
+}
+
+/**
  * cURL forzato su IPv4: su Windows, in reti aziendali con DNS Active Directory
  * che restituiscono anche record IPv6, la risoluzione dual-stack di getaddrinfo
  * (usata da file_get_contents) può fallire con "no data of requested type"
