@@ -92,6 +92,11 @@ Nessuna suite di test automatizzati nel repo (né PHP né JS) al momento — ver
   utenti con i soli dati di account: non deve mai leggere tabelle dati
   finanziari (conti, transazioni, ...). Lato frontend la voce "Admin · Utenti"
   in `Sidebar.jsx` appare solo se `user.is_admin`.
+- **Storico accessi** (`user_sessions`, migrazione 042): una riga per login
+  (IP, user agent), `last_seen_at` aggiornato da `touch_login_session()`
+  dentro `require_auth()` (max 1 scrittura/minuto), `ended_at` al logout.
+  Serve al dettaglio utente dell'area admin; righe oltre 180 giorni cancellate
+  al login. Le sessioni aperte prima del 2026-10-11 non hanno storico.
 - **Lock di sessione**: `db.php` chiude subito la sessione dopo
   `session_start()` (`session_write_close()`), altrimenti una richiesta lenta
   blocca in coda tutte le altre dello stesso utente (l'app sembra congelata).

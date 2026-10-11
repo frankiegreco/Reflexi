@@ -29,6 +29,19 @@ session_reopen();
 session_regenerate_id(true);
 $_SESSION['user_id'] = (int)$user['id'];
 
+// Storico accessi per l'area admin (durata sessioni, IP, dispositivo). Le
+// righe oltre 180 giorni si cancellano qui, al login successivo dell'utente.
+db()->prepare("DELETE FROM user_sessions WHERE user_id = :uid AND started_at < NOW() - INTERVAL 180 DAY")
+    ->execute(['uid' => $user['id']]);
+db()->prepare("INSERT INTO user_sessions (user_id, started_at, last_seen_at, ip, user_agent)
+    VALUES (:uid, NOW(), NOW(), :ip, :ua)")
+    ->execute([
+        'uid' => $user['id'],
+        'ip' => client_ip(),
+        'ua' => mb_substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255) ?: null,
+    ]);
+$_SESSION['login_session_id'] = (int)db()->lastInsertId();
+
 $trialDaysLeft = null;
 if ($user['subscription_status'] === 'trialing' && $user['trial_ends_at']) {
     $trialDaysLeft = max(0, (int)ceil((strtotime($user['trial_ends_at']) - time()) / 86400));

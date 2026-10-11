@@ -89,7 +89,24 @@ function require_auth(): int
     if (!$uid) {
         respond_error('Non autenticato', 401);
     }
+    touch_login_session($uid);
     return $uid;
+}
+
+/**
+ * Aggiorna l'ultima attività della sessione di login corrente (tabella
+ * user_sessions, vedi login.php), da cui l'area admin ricava la durata delle
+ * sessioni. Al massimo una scrittura al minuto per sessione: la condizione su
+ * last_seen_at evita un UPDATE effettivo a ogni richiesta.
+ */
+function touch_login_session(int $uid): void
+{
+    $sid = $_SESSION['login_session_id'] ?? null;
+    if (!$sid) return; // sessioni aperte prima dell'introduzione dello storico
+    db()->prepare("UPDATE user_sessions SET last_seen_at = NOW()
+        WHERE id = :id AND user_id = :uid AND ended_at IS NULL
+          AND last_seen_at < NOW() - INTERVAL 60 SECOND")
+        ->execute(['id' => $sid, 'uid' => $uid]);
 }
 
 /**

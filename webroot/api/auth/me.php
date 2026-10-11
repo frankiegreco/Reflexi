@@ -5,6 +5,7 @@ require __DIR__ . '/../lib_stripe.php';
 
 $uid = current_user_id();
 if (!$uid) respond_error('Non autenticato', 401);
+touch_login_session($uid);
 
 if (method() === 'PUT') {
     $in = json_input();
