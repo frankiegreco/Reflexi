@@ -9,18 +9,29 @@ function navlink($href, $key, $label, $active) {
 }
 // Voci condivise fra nav desktop e overlay mobile: un solo elenco, così le due
 // versioni non possono divergere (prima erano duplicate e in ordine diverso).
-$navItems = [
+// ATTENZIONE: lo stesso menu è replicato in React per la pagina di login
+// dell'app (frontend/src/components/SiteNav.jsx): se cambi le voci qui,
+// aggiornale anche lì e ricompila il frontend.
+// $appItems sono le funzioni dell'app; $toolItems gli strumenti gratuiti
+// (dentro la tendina "Strumenti"), separati di proposito dalle funzioni.
+$appItems = [
     ['/mutui.php', 'mutui', 'Mutui'],
     ['/investimenti.php', 'investimenti', 'Investimenti'],
-    ['/mercati.php', 'mercati', 'Mercati'],
     ['/budget.php', 'budget', 'Budget'],
     ['/analisi.php', 'analisi', 'Analisi predittiva'],
-    ['/calcolatori.php', 'calcolatori', 'Calcolatori'],
+];
+$toolItems = [
+    ['/mercati.php', 'mercati', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
+    ['/calcolatori.php', 'calcolatori', 'Calcolatori', 'Interesse composto, pensione, inflazione e altri'],
+];
+$siteItems = [
     ['/news', 'news', 'News'],
     ['/piani.php', 'piani', 'Piani'],
     ['/about.php', 'about', 'Chi siamo'],
     ['/faq.php', 'faq', 'FAQ'],
 ];
+$toolsActive = in_array($active, array_column($toolItems, 1), true);
+$chevron = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition group-hover:rotate-180 group-[.is-open]:rotate-180"><polyline points="6 9 12 15 18 9"/></svg>';
 ?>
 <header class="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-md">
   <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -29,7 +40,23 @@ $navItems = [
       <span class="text-lg font-bold tracking-tight">Reflexi</span>
     </a>
     <nav class="hidden items-center gap-3 text-sm font-medium xl:flex">
-      <?php foreach ($navItems as [$href, $key, $label]) echo navlink($href, $key, $label, $active); ?>
+      <?php foreach ($appItems as [$href, $key, $label]) echo navlink($href, $key, $label, $active); ?>
+      <div class="group relative" id="tools-menu">
+        <button type="button" onclick="toggleToolsMenu(event)" class="flex items-center gap-1 whitespace-nowrap <?= $toolsActive ? 'text-accent' : 'text-gray-600 hover:text-accent' ?>" aria-haspopup="true" aria-expanded="false" id="tools-menu-toggle">
+          Strumenti <?= $chevron ?>
+        </button>
+        <div class="invisible absolute left-1/2 top-full z-50 -translate-x-1/2 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 group-[.is-open]:visible group-[.is-open]:opacity-100">
+          <div class="w-80 rounded-xl border border-border bg-white p-2 shadow-lg">
+            <?php foreach ($toolItems as [$href, $key, $label, $desc]): ?>
+              <a href="<?= $href ?>" class="block rounded-lg px-3 py-2.5 hover:bg-accentSoft">
+                <span class="block font-semibold <?= $active === $key ? 'text-accent' : 'text-gray-900' ?>"><?= $label ?></span>
+                <span class="block text-xs font-normal text-muted"><?= $desc ?></span>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </div>
+      <?php foreach ($siteItems as [$href, $key, $label]) echo navlink($href, $key, $label, $active); ?>
     </nav>
     <div class="flex flex-shrink-0 items-center gap-3">
       <a href="/app/" class="whitespace-nowrap rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark hover:shadow-accent/40">
@@ -62,11 +89,17 @@ $navItems = [
     <nav class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
       <div class="flex flex-col gap-2">
         <?php
-        foreach ($navItems as [$href, $key, $label]) {
+        function mobilenavlink($href, $key, $label, $active, $desc = null) {
             $isActive = $active === $key;
             $cls = $isActive ? 'border-accent/30 bg-accentSoft text-accent' : 'border-border bg-white text-gray-700';
-            echo "<a href=\"{$href}\" class=\"rounded-xl border {$cls} px-4 py-3 text-base font-medium\">{$label}</a>";
+            $sub = $desc ? "<span class=\"block text-xs font-normal text-muted\">{$desc}</span>" : '';
+            return "<a href=\"{$href}\" class=\"rounded-xl border {$cls} px-4 py-3 text-base font-medium\">{$label}{$sub}</a>";
         }
+        foreach ($appItems as [$href, $key, $label]) echo mobilenavlink($href, $key, $label, $active);
+        echo '<div class="mt-3 px-1 text-xs font-semibold uppercase tracking-wide text-muted">Strumenti</div>';
+        foreach ($toolItems as [$href, $key, $label, $desc]) echo mobilenavlink($href, $key, $label, $active, $desc);
+        echo '<div class="mt-3"></div>';
+        foreach ($siteItems as [$href, $key, $label]) echo mobilenavlink($href, $key, $label, $active);
         ?>
       </div>
     </nav>
@@ -88,8 +121,33 @@ function closeMobileNav() {
   document.getElementById('mobile-nav-toggle').setAttribute('aria-expanded', 'false');
   document.documentElement.style.overflow = '';
 }
+// Tendina "Strumenti" su desktop: si apre anche al passaggio del mouse e con
+// il focus (solo CSS), ma il tap va gestito qui perché Safari non dà il focus
+// ai pulsanti al click, quindi focus-within da solo non basterebbe.
+// Alla chiusura va tolto anche il focus dal pulsante: altrimenti la regola
+// group-focus-within (che serve per chi naviga da tastiera) la terrebbe aperta.
+function toggleToolsMenu(e) {
+  e.stopPropagation();
+  var menu = document.getElementById('tools-menu');
+  if (menu.classList.contains('is-open')) closeToolsMenu();
+  else {
+    menu.classList.add('is-open');
+    document.getElementById('tools-menu-toggle').setAttribute('aria-expanded', 'true');
+  }
+}
+function closeToolsMenu() {
+  var menu = document.getElementById('tools-menu');
+  if (!menu) return;
+  menu.classList.remove('is-open');
+  document.getElementById('tools-menu-toggle').setAttribute('aria-expanded', 'false');
+  if (menu.contains(document.activeElement)) document.activeElement.blur();
+}
+document.addEventListener('click', function (e) {
+  var menu = document.getElementById('tools-menu');
+  if (menu && !menu.contains(e.target)) closeToolsMenu();
+});
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') closeMobileNav();
+  if (e.key === 'Escape') { closeMobileNav(); closeToolsMenu(); }
 });
 // Se si passa a desktop (>= xl) con l'overlay aperto, resterebbe nascosto da
 // xl:hidden ma con lo scroll della pagina ancora bloccato.
