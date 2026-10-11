@@ -92,6 +92,11 @@ Nessuna suite di test automatizzati nel repo (né PHP né JS) al momento — ver
   utenti con i soli dati di account: non deve mai leggere tabelle dati
   finanziari (conti, transazioni, ...). Lato frontend la voce "Admin · Utenti"
   in `Sidebar.jsx` appare solo se `user.is_admin`.
+- **Lock di sessione**: `db.php` chiude subito la sessione dopo
+  `session_start()` (`session_write_close()`), altrimenti una richiesta lenta
+  blocca in coda tutte le altre dello stesso utente (l'app sembra congelata).
+  `$_SESSION` resta leggibile; per SCRIVERLA va chiamato prima
+  `session_reopen()` (oggi solo login, logout, eliminazione account).
 - **Rate limiting**: `rate_limit_check()`/`rate_limit_record()` per azioni
   sensibili (login, registrazione) via tabella `rate_limit_attempts`, per IP
   (letto da `X-Forwarded-For` perché dietro Caddy `REMOTE_ADDR` è l'IP del
@@ -112,6 +117,9 @@ Nessuna suite di test automatizzati nel repo (né PHP né JS) al momento — ver
 - **Prezzi investimenti**: `price_fetch.php` interroga Yahoo Finance (endpoint
   non ufficiale) con cache 15 minuti in tabella `price_cache`, **globale per
   ticker** e non per utente (di proposito, per ridurre le chiamate esterne).
+- **Cache previsioni**: `cron/warm_forecast_cache.php` (ogni 30 min da
+  crontab) rinfresca prezzi/storico dell'universo curato e dati analisti, così
+  `forecasts.php` legge solo dalla cache (a freddo impiegava ~40 s).
 - **Cron** (`webroot/cron/send_digest.php`): invio digest periodici via SMTP;
   processing delle ricorrenze dovute avviene invece via chiamata HTTP a
   `recurring.php?action=process` schedulata da crontab sulla VM, non da PHP CLI.

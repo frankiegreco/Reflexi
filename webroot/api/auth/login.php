@@ -25,6 +25,7 @@ if (!$user['email_verified_at']) {
     respond(['error' => 'Devi prima confermare la tua email. Controlla la posta in arrivo.', 'code' => 'email_not_verified'], 403);
 }
 
+session_reopen();
 session_regenerate_id(true);
 $_SESSION['user_id'] = (int)$user['id'];
 

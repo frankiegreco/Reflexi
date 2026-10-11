@@ -43,6 +43,14 @@ session_set_cookie_params([
     'secure' => $isHttps,
 ]);
 session_start();
+// Rilascia subito il lock sul file di sessione. PHP lo tiene per tutta la
+// durata della richiesta: senza questa chiamata una richiesta lenta (es.
+// forecasts.php a cache fredda, decine di chiamate Yahoo) blocca in coda
+// TUTTE le altre richieste dello stesso utente, e l'app sembra congelata.
+// $_SESSION resta leggibile; chi deve scriverla chiama session_reopen().
+// write_close (e non read_and_close) aggiorna il timestamp del file, così il
+// GC delle sessioni non scollega chi è attivo.
+session_write_close();
 
 set_exception_handler(function (Throwable $e) {
     http_response_code(500);
@@ -66,6 +74,12 @@ header('Content-Type: application/json; charset=utf-8');
 function current_user_id(): ?int
 {
     return $_SESSION['user_id'] ?? null;
+}
+
+/** Riapre la sessione in scrittura: solo per login/logout/eliminazione account. */
+function session_reopen(): void
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 }
 
 /** Richiede una sessione valida: se assente, interrompe con 401 JSON. */

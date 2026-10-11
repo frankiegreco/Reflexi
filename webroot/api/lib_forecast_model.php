@@ -10,6 +10,12 @@ const FORECAST_ASSET_CLASSES = ['equity', 'bond', 'crypto'];
 // Storico voluto per l'universo curato: abbastanza per il trend a 3 anni
 // usato sia da Indicatori sia dalle feature del modello, con un margine.
 const FORECAST_UNIVERSE_HISTORY_DAYS = 1500;
+// Età massima accettata per i prezzi dell'universo curato quando si apre
+// Previsioni: per classifiche a 12 mesi un prezzo vecchio di un'ora va
+// benissimo, e il cron warm_forecast_cache.php (ogni 30 min) li tiene
+// comunque freschi — così la richiesta dell'utente legge solo dalla cache
+// invece di fare ~46 chiamate Yahoo in serie (decine di secondi a freddo).
+const FORECAST_UNIVERSE_PRICE_MAX_AGE = 3600;
 
 /**
  * Modello di previsione vero e proprio: una regressione lineare (OLS) i cui
@@ -610,7 +616,7 @@ function forecast_universe_computed(PDO $db, int $uid): array
         // La lista curata prevale (nomi puliti), ma non cancella un ticker
         // già presente per un altro motivo.
         $globalMeta[$item['ticker']] = $item;
-        fetch_live_price($item['ticker']); // popola price_cache col prezzo di oggi
+        fetch_live_price($item['ticker'], FORECAST_UNIVERSE_PRICE_MAX_AGE); // popola price_cache col prezzo di oggi
         ensure_price_history($item['ticker'], FORECAST_UNIVERSE_HISTORY_DAYS);
     }
 

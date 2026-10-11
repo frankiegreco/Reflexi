@@ -20,5 +20,6 @@ if (!$user || !password_verify($in['password'], $user['password_hash'])) {
 // (conti, transazioni, mutui, investimenti, ecc.) — non serve cancellarli uno per uno.
 db()->prepare("DELETE FROM users WHERE id = :id")->execute(['id' => $uid]);
 
+session_reopen();
 session_destroy();
 respond(['ok' => true]);
