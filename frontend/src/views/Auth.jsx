@@ -1,17 +1,34 @@
 import { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { apiSend } from '../api';
 
+// Link al sito pubblico solo sul web: nell'app Android la WebView porterebbe
+// l'utente fuori dall'app senza un modo di tornare, e un rimando ai prezzi
+// con pagamento esterno a Google Play viola le regole dello store.
+const showSiteLinks = !Capacitor.isNativePlatform();
+
 function AuthShell({ children }) {
+  const Logo = showSiteLinks ? 'a' : 'div';
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg p-4">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center justify-center gap-2">
+        <Logo {...(showSiteLinks ? { href: '/', title: 'Vai alla home di Reflexi' } : {})} className="mb-6 flex items-center justify-center gap-2">
           <img src="/favicon.svg" alt="Reflexi" className="h-10 w-10 rounded-xl" />
           <span className="text-lg font-bold tracking-tight">Reflexi</span>
-        </div>
+        </Logo>
         <p className="mb-4 text-center text-sm italic text-muted">Il riflesso vero delle tue finanze</p>
         <div className="card p-6">{children}</div>
+        {showSiteLinks && (
+          <div className="mt-5 flex items-center justify-center gap-4 text-sm">
+            <a href="/" className="flex items-center gap-1 text-muted hover:text-accent">
+              <ArrowLeft size={14} /> Torna al sito
+            </a>
+            <span className="text-border">|</span>
+            <a href="/piani.php" className="font-medium text-accent hover:underline">Piani e prezzi</a>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -176,8 +193,8 @@ export default function Auth() {
           <label className="flex items-start gap-2 text-xs text-muted">
             <input type="checkbox" required checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-0.5" />
             <span>
-              Accetto i <a href="/termini.html" target="_blank" rel="noopener" className="text-accent hover:underline">Termini di Servizio</a> e ho letto
-              la <a href="/privacy.html" target="_blank" rel="noopener" className="text-accent hover:underline">Privacy Policy</a>
+              Accetto i <a href="/termini.php" target="_blank" rel="noopener" className="text-accent hover:underline">Termini di Servizio</a> e ho letto
+              la <a href="/privacy.php" target="_blank" rel="noopener" className="text-accent hover:underline">Privacy Policy</a>
             </span>
           </label>
           <button className="btn-accent w-full" disabled={loading}>{loading ? 'Attendere...' : 'Registrati'}</button>
