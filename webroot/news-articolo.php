@@ -58,7 +58,13 @@ $canonicalUrl = 'https://reflexi.it/news/' . htmlspecialchars($slug, ENT_QUOTES)
 <title>Articolo non trovato — Reflexi</title>
 <meta name="robots" content="noindex, follow">
 <?php else: ?>
-<title><?= htmlspecialchars($article['title']) ?> — Reflexi</title>
+<?php
+// Title SEO (max 60 caratteri, colonna seo_title) in <title> e anteprime social;
+// il titolo completo resta l'H1. Il suffisso del brand solo se ci sta nei 60.
+$seoTitle = $article['seo_title'] ?: $article['title'];
+$titleTag = mb_strlen($seoTitle) + 10 <= 60 ? $seoTitle . ' — Reflexi' : $seoTitle;
+?>
+<title><?= htmlspecialchars($titleTag) ?></title>
 <meta name="description" content="<?= htmlspecialchars($article['meta_description']) ?>">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="<?= $canonicalUrl ?>">
@@ -66,7 +72,7 @@ $canonicalUrl = 'https://reflexi.it/news/' . htmlspecialchars($slug, ENT_QUOTES)
 <meta property="og:type" content="article">
 <meta property="og:url" content="<?= $canonicalUrl ?>">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="<?= htmlspecialchars($article['title']) ?>">
+<meta property="og:title" content="<?= htmlspecialchars($seoTitle) ?>">
 <meta property="og:description" content="<?= htmlspecialchars($article['meta_description']) ?>">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
@@ -77,7 +83,7 @@ $canonicalUrl = 'https://reflexi.it/news/' . htmlspecialchars($slug, ENT_QUOTES)
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="<?= htmlspecialchars($article['title']) ?>">
+<meta name="twitter:title" content="<?= htmlspecialchars($seoTitle) ?>">
 <meta name="twitter:description" content="<?= htmlspecialchars($article['meta_description']) ?>">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 
