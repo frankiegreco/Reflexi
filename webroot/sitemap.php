@@ -40,7 +40,12 @@ echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
 foreach ($staticUrls as [$path, $priority, $changefreq]) {
-    echo '  <url><loc>https://reflexi.it' . $path . '</loc>'
+    // lastmod = ultima modifica del file PHP della pagina ("/" e "/news" mappati):
+    // dice a Google quando ricontrollarla. Mercati cambia ogni giorno coi
+    // prezzi, ma il file no: lì conta changefreq=daily.
+    $file = __DIR__ . (['/' => '/index.php', '/news' => '/news.php'][$path] ?? $path);
+    $lastmod = is_file($file) ? '<lastmod>' . date('Y-m-d', filemtime($file)) . '</lastmod>' : '';
+    echo '  <url><loc>https://reflexi.it' . $path . '</loc>' . $lastmod
         . '<changefreq>' . $changefreq . '</changefreq>'
         . '<priority>' . $priority . '</priority></url>' . "\n";
 }
