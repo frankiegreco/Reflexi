@@ -18,7 +18,7 @@ $categoryLabels = [
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reflexi — Il riflesso vero delle tue finanze</title>
-<meta name="description" content="Reflexi mette insieme mutuo, investimenti, budget e analisi predittiva in un unico posto — l'unica app che fa parlare tra loro i pezzi della tua vita finanziaria.">
+<meta name="description" content="Reflexi mette insieme mutuo, investimenti, budget e analisi predittiva in un unico posto: l'app che fa parlare tra loro le tue finanze.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/">
 

@@ -43,6 +43,15 @@ analisi predittiva) e `docs/ROADMAP.md` per lo stato del progetto.
   pubblica per funzione dell'app) e "Strumenti" (Mercati, Calcolatori). Lo
   stesso menu è replicato in React in `frontend/src/components/SiteNav.jsx`
   (navbar della pagina di login): le voci vanno cambiate in entrambi i posti.
+- **SEO del sito pubblico**: dati strutturati JSON-LD tramite
+  `webroot/_seo.php` (`seo_breadcrumb()` su ogni pagina nuova, prezzi
+  dell'app in `seo_software_application()` da tenere allineati a
+  `piani.php`). Title <= 60 caratteri, description 110-160. Gli articoli
+  News hanno `seo_title` (<= 60) per `<title>`/social, il `title` lungo resta
+  l'H1. Font in locale in `webroot/fonts/` (niente Google Fonts), dichiarati
+  in `build/tailwind.config.js` + `@font-face` in `tailwind-input.css`.
+  Redirect www -> dominio e compressione in `Caddyfile`; `/index.php` -> `/`
+  e pagina `404.php` via `.htaccess`.
 - **App mobile Android**: stesso codice React impacchettato con Capacitor in
   `frontend/android/` (progetto Android Studio). Vedi sezione dedicata più sotto.
 - **DB**: MariaDB 11, schema in `db/init.sql` (installazioni nuove) +

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Previsioni sugli investimenti — Reflexi</title>
-<meta name="description" content="Stima di rendimento a 12 mesi da un modello statistico su prezzi reali, indicatori di rischio e una proposta di portafoglio per profilo, con i limiti scritti chiaro.">
+<meta name="description" content="Stime di rendimento a 12 mesi da un modello statistico su prezzi reali, indicatori di rischio e una proposta di portafoglio, con i limiti dichiarati.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/previsioni.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://reflexi.it/previsioni.php">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Previsioni sugli investimenti — Reflexi">
-<meta property="og:description" content="Stima di rendimento a 12 mesi da un modello statistico su prezzi reali, indicatori di rischio e una proposta di portafoglio per profilo, con i limiti scritti chiaro.">
+<meta property="og:description" content="Stime di rendimento a 12 mesi da un modello statistico su prezzi reali, indicatori di rischio e una proposta di portafoglio, con i limiti dichiarati.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -21,7 +21,7 @@
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Previsioni sugli investimenti — Reflexi">
-<meta name="twitter:description" content="Stima di rendimento a 12 mesi da un modello statistico su prezzi reali, indicatori di rischio e una proposta di portafoglio per profilo, con i limiti scritti chiaro.">
+<meta name="twitter:description" content="Stime di rendimento a 12 mesi da un modello statistico su prezzi reali, indicatori di rischio e una proposta di portafoglio, con i limiti dichiarati.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
