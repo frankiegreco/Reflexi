@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FIRE e fondo pensione — Reflexi</title>
-<meta name="description" content="Calcola il tuo numero FIRE dalla spesa reale e quanti anni mancano all&#x27;indipendenza finanziaria. Proietta i fondi pensione e il TFR fino all&#x27;età del pensionamento.">
+<title>Calcolo FIRE e proiezione fondo pensione — Reflexi</title>
+<meta name="description" content="Calcola il numero FIRE dalla tua spesa reale e gli anni che mancano all&#x27;indipendenza finanziaria. Proietta fondi pensione e TFR fino alla pensione.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/fire-pensione.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/fire-pensione.php">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="FIRE e fondo pensione — Reflexi">
-<meta property="og:description" content="Calcola il tuo numero FIRE dalla spesa reale e quanti anni mancano all&#x27;indipendenza finanziaria. Proietta i fondi pensione e il TFR fino all&#x27;età del pensionamento.">
+<meta property="og:title" content="Calcolo FIRE e proiezione fondo pensione — Reflexi">
+<meta property="og:description" content="Calcola il numero FIRE dalla tua spesa reale e gli anni che mancano all&#x27;indipendenza finanziaria. Proietta fondi pensione e TFR fino alla pensione.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,8 +20,8 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="FIRE e fondo pensione — Reflexi">
-<meta name="twitter:description" content="Calcola il tuo numero FIRE dalla spesa reale e quanti anni mancano all&#x27;indipendenza finanziaria. Proietta i fondi pensione e il TFR fino all&#x27;età del pensionamento.">
+<meta name="twitter:title" content="Calcolo FIRE e proiezione fondo pensione — Reflexi">
+<meta name="twitter:description" content="Calcola il numero FIRE dalla tua spesa reale e gli anni che mancano all&#x27;indipendenza finanziaria. Proietta fondi pensione e TFR fino alla pensione.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">

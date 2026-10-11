@@ -9,7 +9,7 @@ $relatedArticles = news_related(['rendimento-totale-vs-cagr-come-leggere-la-perf
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calcolatore di rendimento (ROI) — Reflexi</title>
-<meta name="description" content="Calcola il rendimento totale e annuo (CAGR) di un investimento. Gratuito, senza registrazione.">
+<meta name="description" content="Calcola il rendimento totale e annualizzato (CAGR) di un investimento da valore iniziale, valore finale e durata in anni. Gratuito, senza registrazione.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/calcolatore-rendimento.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
@@ -17,7 +17,7 @@ $relatedArticles = news_related(['rendimento-totale-vs-cagr-come-leggere-la-perf
 <meta property="og:url" content="https://reflexi.it/calcolatore-rendimento.php">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore di rendimento (ROI) — Reflexi">
-<meta property="og:description" content="Calcola il rendimento totale e annuo (CAGR) di un investimento. Gratuito, senza registrazione.">
+<meta property="og:description" content="Calcola il rendimento totale e annualizzato (CAGR) di un investimento da valore iniziale, valore finale e durata in anni. Gratuito, senza registrazione.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,7 +26,7 @@ $relatedArticles = news_related(['rendimento-totale-vs-cagr-come-leggere-la-perf
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Calcolatore di rendimento (ROI) — Reflexi">
-<meta name="twitter:description" content="Calcola il rendimento totale e annuo (CAGR) di un investimento. Gratuito, senza registrazione.">
+<meta name="twitter:description" content="Calcola il rendimento totale e annualizzato (CAGR) di un investimento da valore iniziale, valore finale e durata in anni. Gratuito, senza registrazione.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">

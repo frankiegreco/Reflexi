@@ -42,14 +42,14 @@ $stmt->execute();
 $articles = $stmt->fetchAll();
 
 $pageTitle = $categoria !== ''
-    ? ($categoryLabels[$categoria] . ' — News — Reflexi')
-    : 'News — Reflexi';
+    ? ($categoryLabels[$categoria] . ': guide e news — Reflexi')
+    : 'News e guide di finanza personale — Reflexi';
 if ($page > 1) {
     $pageTitle .= " (pagina {$page})";
 }
 $pageDescription = $categoria !== ''
     ? "Articoli su {$categoryLabels[$categoria]}: guide pratiche di finanza personale scritte da Reflexi."
-    : 'Guide pratiche di finanza personale: mutui, investimenti, budget e pianificazione, scritte da Reflexi.';
+    : 'Guide pratiche di finanza personale su mutui, investimenti, budget e pianificazione: spiegazioni chiare, esempi concreti e calcolatori gratuiti.';
 // Ogni pagina della paginazione si auto-canonicalizza (include ?page=N se >1):
 // puntare tutte le pagine al canonical di pagina 1 farebbe perdere agli
 // articoli presenti solo in pagina 2+ il loro segnale di indicizzazione.

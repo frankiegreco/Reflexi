@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Investimenti — Reflexi</title>
-<meta name="description" content="ETF, azioni e crypto con quotazioni in tempo reale, PAC automatici, tassazione sulle plusvalenze calcolata da sola. Il tuo portafoglio, collegato al resto delle tue finanze.">
+<title>Portafoglio ETF e azioni con quotazioni reali — Reflexi</title>
+<meta name="description" content="ETF, azioni e crypto con quotazioni in tempo reale, PAC automatici e tasse sulle plusvalenze calcolate da sole: il portafoglio collegato alle tue finanze.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/investimenti.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/investimenti.php">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Investimenti — Reflexi">
-<meta property="og:description" content="ETF, azioni e crypto con quotazioni in tempo reale, PAC automatici, tassazione sulle plusvalenze calcolata da sola. Il tuo portafoglio, collegato al resto delle tue finanze.">
+<meta property="og:title" content="Portafoglio ETF e azioni con quotazioni reali — Reflexi">
+<meta property="og:description" content="ETF, azioni e crypto con quotazioni in tempo reale, PAC automatici e tasse sulle plusvalenze calcolate da sole: il portafoglio collegato alle tue finanze.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,8 +20,8 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Investimenti — Reflexi">
-<meta name="twitter:description" content="ETF, azioni e crypto con quotazioni in tempo reale, PAC automatici, tassazione sulle plusvalenze calcolata da sola. Il tuo portafoglio, collegato al resto delle tue finanze.">
+<meta name="twitter:title" content="Portafoglio ETF e azioni con quotazioni reali — Reflexi">
+<meta name="twitter:description" content="ETF, azioni e crypto con quotazioni in tempo reale, PAC automatici e tasse sulle plusvalenze calcolate da sole: il portafoglio collegato alle tue finanze.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">

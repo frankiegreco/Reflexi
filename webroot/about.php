@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chi siamo — Reflexi</title>
+<title>Chi siamo — Reflexi, la finanza personale in un posto solo</title>
 <meta name="description" content="Scopri la storia di Reflexi: la nostra missione, i nostri valori e perché stiamo cambiando il modo di gestire le finanze personali.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/about.php">
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/about.php">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Chi siamo — Reflexi">
+<meta property="og:title" content="Chi siamo — Reflexi, la finanza personale in un posto solo">
 <meta property="og:description" content="Scopri la storia di Reflexi: la nostra missione, i nostri valori e perché stiamo cambiando il modo di gestire le finanze personali.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
@@ -21,7 +21,7 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Chi siamo — Reflexi">
+<meta name="twitter:title" content="Chi siamo — Reflexi, la finanza personale in un posto solo">
 <meta name="twitter:description" content="Scopri la storia di Reflexi: la nostra missione, i nostri valori e perché stiamo cambiando il modo di gestire le finanze personali.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">

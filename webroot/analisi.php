@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analisi predittiva — Reflexi</title>
-<meta name="description" content="Simulazione Monte Carlo sul tuo risparmio futuro, rilevamento automatico di abbonamenti dimenticati, avvisi di budget prima che sfori. Non una media, una proiezione statistica vera.">
+<title>Analisi predittiva delle spese e Monte Carlo — Reflexi</title>
+<meta name="description" content="Simulazione Monte Carlo del risparmio futuro, abbonamenti dimenticati scovati in automatico e avvisi prima di sforare il budget: una proiezione vera.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/analisi.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/analisi.php">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Analisi predittiva — Reflexi">
-<meta property="og:description" content="Simulazione Monte Carlo sul tuo risparmio futuro, rilevamento automatico di abbonamenti dimenticati, avvisi di budget prima che sfori. Non una media, una proiezione statistica vera.">
+<meta property="og:title" content="Analisi predittiva delle spese e Monte Carlo — Reflexi">
+<meta property="og:description" content="Simulazione Monte Carlo del risparmio futuro, abbonamenti dimenticati scovati in automatico e avvisi prima di sforare il budget: una proiezione vera.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,8 +20,8 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Analisi predittiva — Reflexi">
-<meta name="twitter:description" content="Simulazione Monte Carlo sul tuo risparmio futuro, rilevamento automatico di abbonamenti dimenticati, avvisi di budget prima che sfori. Non una media, una proiezione statistica vera.">
+<meta name="twitter:title" content="Analisi predittiva delle spese e Monte Carlo — Reflexi">
+<meta name="twitter:description" content="Simulazione Monte Carlo del risparmio futuro, abbonamenti dimenticati scovati in automatico e avvisi prima di sforare il budget: una proiezione vera.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">

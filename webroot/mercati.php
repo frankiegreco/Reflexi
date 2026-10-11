@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mercati — Andamenti di azioni, ETF e crypto | Reflexi</title>
-<meta name="description" content="Quotazioni live di ETF, azioni e crypto: watchlist dei titoli più seguiti, i movimenti più forti della giornata e il grafico storico di qualsiasi ticker tu cerchi. Dati gratuiti, senza registrazione.">
+<meta name="description" content="Quotazioni di ETF, azioni e crypto: i titoli più seguiti, i movimenti più forti del giorno e il grafico storico di ogni ticker. Gratis, senza registrazione.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/mercati.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->

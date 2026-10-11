@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Piani e prezzi — Reflexi</title>
+<title>Prezzi di Reflexi: 6 mesi gratis, poi mensile o annuale</title>
 <meta name="description" content="6 mesi di prova gratuita, poi scegli il piano mensile o annuale. Tutte le funzionalità incluse in entrambi, nessuna sorpresa.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/piani.php">
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/piani.php">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Piani e prezzi — Reflexi">
+<meta property="og:title" content="Prezzi di Reflexi: 6 mesi gratis, poi mensile o annuale">
 <meta property="og:description" content="6 mesi di prova gratuita, poi scegli il piano mensile o annuale. Tutte le funzionalità incluse in entrambi, nessuna sorpresa.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
@@ -21,7 +21,7 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Piani e prezzi — Reflexi">
+<meta name="twitter:title" content="Prezzi di Reflexi: 6 mesi gratis, poi mensile o annuale">
 <meta name="twitter:description" content="6 mesi di prova gratuita, poi scegli il piano mensile o annuale. Tutte le funzionalità incluse in entrambi, nessuna sorpresa.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">

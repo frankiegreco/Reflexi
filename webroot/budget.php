@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Budget — Reflexi</title>
+<title>Budget mensile per categoria con avvisi — Reflexi</title>
 <meta name="description" content="Un limite di spesa per categoria, con rollover: l'eccedenza non spesa si riporta al mese successivo. Un avviso prima di sforare, non dopo.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/budget.php">
@@ -11,7 +11,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/budget.php">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Budget — Reflexi">
+<meta property="og:title" content="Budget mensile per categoria con avvisi — Reflexi">
 <meta property="og:description" content="Un limite di spesa per categoria, con rollover: l'eccedenza non spesa si riporta al mese successivo. Un avviso prima di sforare, non dopo.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
@@ -20,7 +20,7 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Budget — Reflexi">
+<meta name="twitter:title" content="Budget mensile per categoria con avvisi — Reflexi">
 <meta name="twitter:description" content="Un limite di spesa per categoria, con rollover: l'eccedenza non spesa si riporta al mese successivo. Un avviso prima di sforare, non dopo.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">

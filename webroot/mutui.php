@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mutui — Reflexi</title>
-<meta name="description" content="Piano di ammortamento reale, simulazione di estinzione anticipata, gestione della quota di proprietà per mutui cointestati. Il tuo mutuo, collegato al resto delle tue finanze.">
+<title>Gestione mutuo e piano di ammortamento — Reflexi</title>
+<meta name="description" content="Piano di ammortamento reale, simulazione di estinzione anticipata e quota per mutui cointestati: il tuo mutuo, collegato al resto delle tue finanze.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/mutui.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/mutui.php">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Mutui — Reflexi">
-<meta property="og:description" content="Piano di ammortamento reale, simulazione di estinzione anticipata, gestione della quota di proprietà per mutui cointestati. Il tuo mutuo, collegato al resto delle tue finanze.">
+<meta property="og:title" content="Gestione mutuo e piano di ammortamento — Reflexi">
+<meta property="og:description" content="Piano di ammortamento reale, simulazione di estinzione anticipata e quota per mutui cointestati: il tuo mutuo, collegato al resto delle tue finanze.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,8 +20,8 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Mutui — Reflexi">
-<meta name="twitter:description" content="Piano di ammortamento reale, simulazione di estinzione anticipata, gestione della quota di proprietà per mutui cointestati. Il tuo mutuo, collegato al resto delle tue finanze.">
+<meta name="twitter:title" content="Gestione mutuo e piano di ammortamento — Reflexi">
+<meta name="twitter:description" content="Piano di ammortamento reale, simulazione di estinzione anticipata e quota per mutui cointestati: il tuo mutuo, collegato al resto delle tue finanze.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">

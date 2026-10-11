@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calcolatori finanziari gratuiti — Reflexi</title>
-<meta name="description" content="9 calcolatori finanziari gratuiti: interesse composto, piano di investimento, obiettivo di risparmio, rendimento, recupero perdite, inflazione, regola 50/30/20, patrimonio netto, pensione. Nessuna registrazione.">
+<meta name="description" content="9 calcolatori finanziari gratuiti e senza registrazione: interesse composto, PAC, rendimento, inflazione, regola 50/30/20, patrimonio netto, pensione e altri.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/calcolatori.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
@@ -13,7 +13,7 @@
 <meta property="og:url" content="https://reflexi.it/calcolatori.php">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatori finanziari gratuiti — Reflexi">
-<meta property="og:description" content="9 calcolatori finanziari gratuiti: interesse composto, piano di investimento, obiettivo di risparmio, rendimento, recupero perdite, inflazione, regola 50/30/20, patrimonio netto, pensione. Nessuna registrazione.">
+<meta property="og:description" content="9 calcolatori finanziari gratuiti e senza registrazione: interesse composto, PAC, rendimento, inflazione, regola 50/30/20, patrimonio netto, pensione e altri.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,7 +22,7 @@
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Calcolatori finanziari gratuiti — Reflexi">
-<meta name="twitter:description" content="9 calcolatori finanziari gratuiti: interesse composto, piano di investimento, obiettivo di risparmio, rendimento, recupero perdite, inflazione, regola 50/30/20, patrimonio netto, pensione. Nessuna registrazione.">
+<meta name="twitter:description" content="9 calcolatori finanziari gratuiti e senza registrazione: interesse composto, PAC, rendimento, inflazione, regola 50/30/20, patrimonio netto, pensione e altri.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">

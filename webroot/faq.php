@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Domande frequenti — Reflexi</title>
+<title>Domande frequenti su Reflexi: sicurezza, prezzi e funzioni</title>
 <meta name="description" content="Tutto quello che c'è da sapere su Reflexi: come funziona, sicurezza dei dati, mutui, investimenti, budget e abbonamento.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/faq.php">
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/faq.php">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Domande frequenti — Reflexi">
+<meta property="og:title" content="Domande frequenti su Reflexi: sicurezza, prezzi e funzioni">
 <meta property="og:description" content="Tutto quello che c'è da sapere su Reflexi: come funziona, sicurezza dei dati, mutui, investimenti, budget e abbonamento.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
@@ -21,7 +21,7 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Domande frequenti — Reflexi">
+<meta name="twitter:title" content="Domande frequenti su Reflexi: sicurezza, prezzi e funzioni">
 <meta name="twitter:description" content="Tutto quello che c'è da sapere su Reflexi: come funziona, sicurezza dei dati, mutui, investimenti, budget e abbonamento.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">

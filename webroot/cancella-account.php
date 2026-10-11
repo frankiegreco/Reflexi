@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cancellazione account — Reflexi</title>
-<meta name="description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati.">
+<meta name="description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati, dall'app in modo immediato oppure con una richiesta via email.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/cancella-account.php">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
@@ -13,7 +13,7 @@
 <meta property="og:url" content="https://reflexi.it/cancella-account.php">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Cancellazione account — Reflexi">
-<meta property="og:description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati.">
+<meta property="og:description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati, dall'app in modo immediato oppure con una richiesta via email.">
 <meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,7 +22,7 @@
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Cancellazione account — Reflexi">
-<meta name="twitter:description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati.">
+<meta name="twitter:description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati, dall'app in modo immediato oppure con una richiesta via email.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
