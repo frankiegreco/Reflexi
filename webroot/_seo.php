@@ -83,3 +83,19 @@ function seo_calculator(string $name, string $path, string $description): void
         'publisher' => seo_organization(),
     ]);
 }
+
+/**
+ * Immagine di anteprima social della pagina (og:image/twitter:image), generata
+ * da build/og/generate.py in webroot/og/<nome>.jpg. $name di default è il
+ * nome del file PHP (mutui.php -> og/mutui.jpg); per gli articoli
+ * 'news/<slug>'. Se l'immagine non esiste ancora (pagina o articolo nuovo,
+ * generatore non rilanciato) torna quella generica del sito.
+ */
+function seo_og_image(?string $name = null): string
+{
+    $name ??= basename($_SERVER['SCRIPT_NAME'] ?? '', '.php');
+    $file = __DIR__ . '/og/' . $name . '.jpg';
+    return is_file($file)
+        ? SEO_BASE_URL . '/og/' . $name . '.jpg?v=' . filemtime($file)
+        : SEO_BASE_URL . '/og-image.png?v=3';
+}

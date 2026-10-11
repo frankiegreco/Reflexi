@@ -22,3 +22,6 @@ frontend/dist_incoming/
 
 # Impostazioni locali di Claude Code (personali, non condivise)
 .claude/settings.local.json
+
+# Elenco intermedio generato da build/og/generate.py
+build/og/items.json

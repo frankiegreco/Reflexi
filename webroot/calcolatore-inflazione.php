@@ -18,7 +18,7 @@ $relatedArticles = news_related(['inflazione-potere-acquisto-perche-il-capitale-
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore di inflazione e potere d'acquisto — Reflexi">
 <meta property="og:description" content="Scopri quanto varrà davvero una somma di denaro tra qualche anno, al netto dell'inflazione. Gratuito, senza registrazione.">
-<meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
+<meta property="og:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="it_IT">
@@ -27,7 +27,7 @@ $relatedArticles = news_related(['inflazione-potere-acquisto-perche-il-capitale-
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Calcolatore di inflazione e potere d'acquisto — Reflexi">
 <meta name="twitter:description" content="Scopri quanto varrà davvero una somma di denaro tra qualche anno, al netto dell'inflazione. Gratuito, senza registrazione.">
-<meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
+<meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">

@@ -18,7 +18,7 @@ $relatedArticles = news_related(['regola-50-30-20-vs-budget-per-categoria', 'obi
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore regola 50/30/20 — Reflexi">
 <meta property="og:description" content="Suddividi il tuo reddito netto mensile tra necessità, desideri e risparmio con la regola 50/30/20. Gratuito, senza registrazione.">
-<meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
+<meta property="og:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="it_IT">
@@ -27,7 +27,7 @@ $relatedArticles = news_related(['regola-50-30-20-vs-budget-per-categoria', 'obi
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Calcolatore regola 50/30/20 — Reflexi">
 <meta name="twitter:description" content="Suddividi il tuo reddito netto mensile tra necessità, desideri e risparmio con la regola 50/30/20. Gratuito, senza registrazione.">
-<meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
+<meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">

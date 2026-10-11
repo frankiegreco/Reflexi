@@ -74,7 +74,7 @@ $titleTag = mb_strlen($seoTitle) + 10 <= 60 ? $seoTitle . ' — Reflexi' : $seoT
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="<?= htmlspecialchars($seoTitle) ?>">
 <meta property="og:description" content="<?= htmlspecialchars($article['meta_description']) ?>">
-<meta property="og:image" content="https://reflexi.it/og-image.png?v=3">
+<meta property="og:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image('news/' . $article['slug']); ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="it_IT">
@@ -85,7 +85,7 @@ $titleTag = mb_strlen($seoTitle) + 10 <= 60 ? $seoTitle . ' — Reflexi' : $seoT
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="<?= htmlspecialchars($seoTitle) ?>">
 <meta name="twitter:description" content="<?= htmlspecialchars($article['meta_description']) ?>">
-<meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
+<meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image('news/' . $article['slug']); ?>">
 
 <script type="application/ld+json">
 <?= json_encode([
@@ -93,7 +93,7 @@ $titleTag = mb_strlen($seoTitle) + 10 <= 60 ? $seoTitle . ' — Reflexi' : $seoT
     '@type' => 'Article',
     'headline' => $article['title'],
     'description' => $article['meta_description'],
-    'image' => 'https://reflexi.it/og-image.png',
+    'image' => seo_og_image('news/' . $article['slug']),
     'datePublished' => date('c', strtotime($article['published_at'])),
     'dateModified' => date('c', strtotime($article['updated_at'])),
     'author' => ['@type' => 'Organization', 'name' => 'Reflexi', 'url' => 'https://reflexi.it/'],
