@@ -19,7 +19,19 @@ const FEATURE_ITEMS = [
 ];
 const TOOL_ITEMS = [
   ['/mercati.php', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
-  ['/calcolatori.php', 'Calcolatori', 'Interesse composto, pensione, inflazione e altri'],
+  ['/calcolatori.php', 'Tutti i calcolatori', 'La pagina con tutti gli strumenti di calcolo'],
+];
+// I singoli calcolatori, in forma compatta sotto i due strumenti principali.
+const CALCULATOR_ITEMS = [
+  ['/calcolatore-interesse-composto.php', 'Interesse composto'],
+  ['/calcolatore-piano-investimento.php', 'Piano di investimento'],
+  ['/calcolatore-obiettivo-risparmio.php', 'Obiettivo di risparmio'],
+  ['/calcolatore-rendimento.php', 'Rendimento (ROI)'],
+  ['/calcolatore-recupero-perdite.php', 'Recupero perdite'],
+  ['/calcolatore-inflazione.php', 'Inflazione'],
+  ['/calcolatore-budget-503020.php', 'Regola 50/30/20'],
+  ['/calcolatore-patrimonio-netto.php', 'Patrimonio netto'],
+  ['/calcolatore-pensione.php', 'Pensione'],
 ];
 const SITE_ITEMS = [
   ['/news', 'News'],
@@ -35,7 +47,8 @@ const mobileLinkCls = 'rounded-xl border border-border bg-white font-medium text
 // con un click fuori o con Esc. Hover e click sono stati separati: così un
 // click dopo l'hover non la richiude, e sul touch (niente hover vero, solo
 // pointerType 'touch') il tap la apre e la chiude.
-function Dropdown({ label, items, wide = false }) {
+// `compact` = voci opzionali senza descrizione [href, label], sotto `compactTitle`.
+function Dropdown({ label, items, wide = false, compact = [], compactTitle = '' }) {
   const [hover, setHover] = useState(false);
   const [clicked, setClicked] = useState(false);
   const open = hover || clicked;
@@ -71,25 +84,37 @@ function Dropdown({ label, items, wide = false }) {
         {label} <ChevronDown size={14} className={`transition ${open ? 'rotate-180' : ''}`} />
       </button>
       <div className={`absolute left-1/2 top-full z-50 -translate-x-1/2 pt-3 transition ${open ? 'visible opacity-100' : 'invisible opacity-0'}`}>
-        <div className={`${wide ? 'grid w-[36rem] grid-cols-2 gap-1' : 'w-80'} rounded-xl border border-border bg-white p-2 shadow-lg`}>
-          {items.map(([href, itemLabel, desc]) => (
-            <a key={href} href={href} className="block rounded-lg px-3 py-2.5 hover:bg-accentSoft">
-              <span className="block font-semibold text-gray-900">{itemLabel}</span>
-              <span className="block text-xs font-normal text-muted">{desc}</span>
-            </a>
-          ))}
+        <div className={`${wide ? 'w-[36rem]' : 'w-80'} rounded-xl border border-border bg-white p-2 shadow-lg`}>
+          <div className={wide ? 'grid grid-cols-2 gap-1' : ''}>
+            {items.map(([href, itemLabel, desc]) => (
+              <a key={href} href={href} className="block rounded-lg px-3 py-2.5 hover:bg-accentSoft">
+                <span className="block font-semibold text-gray-900">{itemLabel}</span>
+                <span className="block text-xs font-normal text-muted">{desc}</span>
+              </a>
+            ))}
+          </div>
+          {compact.length > 0 && (
+            <>
+              <div className="mx-3 mt-2 border-t border-border pt-3 text-xs font-semibold uppercase tracking-wide text-muted">{compactTitle}</div>
+              <div className="grid grid-cols-2 gap-x-1 pb-1 pt-1">
+                {compact.map(([href, itemLabel]) => (
+                  <a key={href} href={href} className="block rounded-lg px-3 py-1.5 text-sm text-gray-700 hover:bg-accentSoft">{itemLabel}</a>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function MobileSection({ title, items }) {
+function MobileSection({ title, items, small = false }) {
   return (
     <>
       <div className="mt-3 px-1 text-xs font-semibold uppercase tracking-wide text-muted first:mt-0">{title}</div>
       <div className="grid grid-cols-2 gap-2">
-        {items.map(([href, label]) => <a key={href} href={href} className={`${mobileLinkCls} px-3 py-2.5 text-sm`}>{label}</a>)}
+        {items.map(([href, label]) => <a key={href} href={href} className={`${mobileLinkCls} px-3 ${small ? 'py-2' : 'py-2.5'} text-sm`}>{label}</a>)}
       </div>
     </>
   );
@@ -140,7 +165,7 @@ export default function SiteNav({ cta }) {
           <Logo />
           <nav className="hidden items-center gap-5 text-sm font-medium lg:flex">
             <Dropdown label="Funzionalità" items={FEATURE_ITEMS} wide />
-            <Dropdown label="Strumenti" items={TOOL_ITEMS} />
+            <Dropdown label="Strumenti" items={TOOL_ITEMS} wide compact={CALCULATOR_ITEMS} compactTitle="Calcolatori" />
             {SITE_ITEMS.map(([href, label]) => <a key={href} href={href} className={linkCls}>{label}</a>)}
           </nav>
           <div className="flex flex-shrink-0 items-center gap-3">
@@ -176,6 +201,7 @@ export default function SiteNav({ cta }) {
               <div className="flex flex-col gap-2">
                 <MobileSection title="Funzionalità" items={FEATURE_ITEMS} />
                 <MobileSection title="Strumenti" items={TOOL_ITEMS} />
+                <MobileSection title="Calcolatori" items={CALCULATOR_ITEMS} small />
                 <div className="mt-3" />
                 {SITE_ITEMS.map(([href, label]) => <a key={href} href={href} className={`${mobileLinkCls} px-4 py-3 text-base`}>{label}</a>)}
               </div>

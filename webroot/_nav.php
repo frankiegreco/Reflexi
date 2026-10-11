@@ -29,8 +29,24 @@ $featureItems = [
 ];
 $toolItems = [
     ['/mercati.php', 'mercati', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
-    ['/calcolatori.php', 'calcolatori', 'Calcolatori', 'Interesse composto, pensione, inflazione e altri'],
+    ['/calcolatori.php', 'calcolatori', 'Tutti i calcolatori', 'La pagina con tutti gli strumenti di calcolo'],
 ];
+// I singoli calcolatori, in forma compatta sotto i due strumenti principali.
+// Tutte le pagine calcolatore usano $active = 'calcolatori'.
+$calculatorItems = [
+    ['/calcolatore-interesse-composto.php', 'Interesse composto'],
+    ['/calcolatore-piano-investimento.php', 'Piano di investimento'],
+    ['/calcolatore-obiettivo-risparmio.php', 'Obiettivo di risparmio'],
+    ['/calcolatore-rendimento.php', 'Rendimento (ROI)'],
+    ['/calcolatore-recupero-perdite.php', 'Recupero perdite'],
+    ['/calcolatore-inflazione.php', 'Inflazione'],
+    ['/calcolatore-budget-503020.php', 'Regola 50/30/20'],
+    ['/calcolatore-patrimonio-netto.php', 'Patrimonio netto'],
+    ['/calcolatore-pensione.php', 'Pensione'],
+];
+// Pagina corrente, per evidenziare la voce giusta dentro le tendine (la chiave
+// $active non basta: è la stessa per tutti i calcolatori).
+$currentPath = $_SERVER['SCRIPT_NAME'] ?? '';
 $siteItems = [
     ['/news', 'news', 'News'],
     ['/piani.php', 'piani', 'Piani'],
@@ -41,18 +57,30 @@ $siteItems = [
 /**
  * Tendina desktop: si apre al passaggio del mouse e con il focus (CSS) e al
  * click/tap (JS, classe .is-open: Safari non dà il focus ai pulsanti al click).
- * $cols = 2 per la tendina larga su due colonne.
+ * $cols = 2 per la tendina larga su due colonne; $compact = elenco opzionale
+ * di voci senza descrizione [href, label], sotto un'intestazione $compactTitle.
  */
-function navdropdown($id, $label, $items, $active, $cols = 1) {
+function navdropdown($id, $label, $items, $active, $currentPath, $cols = 1, $compact = [], $compactTitle = '') {
     $isActive = in_array($active, array_column($items, 1), true);
     $btnCls = $isActive ? 'text-accent' : 'text-gray-600 hover:text-accent';
-    $panelCls = $cols === 2 ? 'grid w-[36rem] grid-cols-2 gap-1' : 'w-80';
+    $gridCls = $cols === 2 ? 'grid grid-cols-2 gap-1' : '';
+    $widthCls = ($cols === 2 || $compact) ? 'w-[36rem]' : 'w-80';
     $links = '';
     foreach ($items as [$href, $key, $itemLabel, $desc]) {
-        $labelCls = $active === $key ? 'text-accent' : 'text-gray-900';
+        $labelCls = $currentPath === $href ? 'text-accent' : 'text-gray-900';
         $links .= "<a href=\"{$href}\" class=\"block rounded-lg px-3 py-2.5 hover:bg-accentSoft\">"
             . "<span class=\"block font-semibold {$labelCls}\">{$itemLabel}</span>"
             . "<span class=\"block text-xs font-normal text-muted\">{$desc}</span></a>";
+    }
+    $links = "<div class=\"{$gridCls}\">{$links}</div>";
+    if ($compact) {
+        $links .= "<div class=\"mx-3 mt-2 border-t border-border pt-3 text-xs font-semibold uppercase tracking-wide text-muted\">{$compactTitle}</div>"
+            . '<div class="grid grid-cols-2 gap-x-1 px-0 pb-1 pt-1">';
+        foreach ($compact as [$href, $itemLabel]) {
+            $cls = $currentPath === $href ? 'text-accent' : 'text-gray-700';
+            $links .= "<a href=\"{$href}\" class=\"block rounded-lg px-3 py-1.5 text-sm {$cls} hover:bg-accentSoft\">{$itemLabel}</a>";
+        }
+        $links .= '</div>';
     }
     return <<<HTML
       <div class="nav-dropdown group relative" id="{$id}">
@@ -60,7 +88,7 @@ function navdropdown($id, $label, $items, $active, $cols = 1) {
           {$label} <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition group-hover:rotate-180 group-[.is-open]:rotate-180"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="invisible absolute left-1/2 top-full z-50 -translate-x-1/2 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 group-[.is-open]:visible group-[.is-open]:opacity-100">
-          <div class="{$panelCls} rounded-xl border border-border bg-white p-2 shadow-lg">{$links}</div>
+          <div class="{$widthCls} rounded-xl border border-border bg-white p-2 shadow-lg">{$links}</div>
         </div>
       </div>
 HTML;
@@ -73,8 +101,8 @@ HTML;
       <span class="text-lg font-bold tracking-tight">Reflexi</span>
     </a>
     <nav class="hidden items-center gap-5 text-sm font-medium lg:flex">
-<?= navdropdown('nav-features', 'Funzionalità', $featureItems, $active, 2) ?>
-<?= navdropdown('nav-tools', 'Strumenti', $toolItems, $active) ?>
+<?= navdropdown('nav-features', 'Funzionalità', $featureItems, $active, $currentPath, 2) ?>
+<?= navdropdown('nav-tools', 'Strumenti', $toolItems, $active, $currentPath, 2, $calculatorItems, 'Calcolatori') ?>
       <?php foreach ($siteItems as [$href, $key, $label]) echo navlink($href, $key, $label, $active); ?>
     </nav>
     <div class="flex flex-shrink-0 items-center gap-3">
@@ -109,7 +137,7 @@ HTML;
       <div class="flex flex-col gap-2">
         <?php
         function mobilenavlink($href, $key, $label, $active, $extraCls = 'px-4 py-3 text-base') {
-            $isActive = $active === $key;
+            $isActive = ($key !== null && $active === $key) || ($_SERVER['SCRIPT_NAME'] ?? '') === $href;
             $cls = $isActive ? 'border-accent/30 bg-accentSoft text-accent' : 'border-border bg-white text-gray-700';
             return "<a href=\"{$href}\" class=\"rounded-xl border {$cls} {$extraCls} font-medium\">{$label}</a>";
         }
@@ -120,7 +148,11 @@ HTML;
         echo '</div>';
         echo $heading('Strumenti');
         echo '<div class="grid grid-cols-2 gap-2">';
-        foreach ($toolItems as [$href, $key, $label]) echo mobilenavlink($href, $key, $label, $active, 'px-3 py-2.5 text-sm');
+        foreach ($toolItems as [$href, $key, $label]) echo mobilenavlink($href, null, $label, '', 'px-3 py-2.5 text-sm');
+        echo '</div>';
+        echo $heading('Calcolatori');
+        echo '<div class="grid grid-cols-2 gap-2">';
+        foreach ($calculatorItems as [$href, $label]) echo mobilenavlink($href, null, $label, '', 'px-3 py-2 text-sm');
         echo '</div>';
         echo '<div class="mt-3"></div>';
         foreach ($siteItems as [$href, $key, $label]) echo mobilenavlink($href, $key, $label, $active);
