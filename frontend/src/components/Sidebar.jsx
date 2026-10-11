@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ListOrdered, Wallet, Landmark, LineChart, Compass, TrendingUp, Scale, Flame, PiggyBank,
-  Tags, Repeat, Layers, Target, BarChart3, FileText, Receipt, Plus, LogOut, UserCircle2, X, FlaskConical,
+  Tags, Repeat, Layers, Target, BarChart3, FileText, Receipt, Plus, LogOut, UserCircle2, X, FlaskConical, ShieldCheck,
 } from 'lucide-react';
 
 const NAV = [
@@ -75,6 +75,20 @@ export default function Sidebar({ view, setView, onAddTransaction, user, onLogou
             Profilo
           </button>
         </li>
+        {user?.is_admin && (
+          <li className="relative mt-2 border-t border-white/10 pt-2">
+            {view === 'admin' && <span className="absolute -left-4 top-1/2 mt-1 h-5 w-1 -translate-y-1/2 rounded-r-full bg-accent" />}
+            <button
+              onClick={() => go('admin')}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
+                view === 'admin' ? 'bg-white/10 text-white' : 'text-white/55 hover:bg-white/5 hover:text-white/90'
+              }`}
+            >
+              <ShieldCheck size={16} strokeWidth={view === 'admin' ? 2.25 : 1.75} className={view === 'admin' ? 'text-accent' : ''} />
+              Admin · Utenti
+            </button>
+          </li>
+        )}
       </ul>
       <button
         onClick={() => { onAddTransaction(); onClose?.(); }}

@@ -27,6 +27,7 @@ import Subscriptions from './views/Subscriptions';
 import Goals from './views/Goals';
 import Analytics from './views/Analytics';
 import Profile from './views/Profile';
+import AdminUsers from './views/AdminUsers';
 import TransactionModal from './views/TransactionModal';
 
 const VIEWS = {
@@ -49,6 +50,7 @@ const VIEWS = {
   goals: Goals,
   analytics: Analytics,
   profile: Profile,
+  admin: AdminUsers,
 };
 
 function Shell() {
@@ -57,7 +59,7 @@ function Shell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { bump } = useData();
   const { user, logout } = useAuth();
-  const ActiveView = VIEWS[view];
+  const ActiveView = VIEWS[view === 'admin' && !user?.is_admin ? 'dashboard' : view];
   const lastBackPress = useRef(0);
   const exitToastTimer = useRef(null);
   const [showExitToast, setShowExitToast] = useState(false);

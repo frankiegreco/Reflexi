@@ -86,6 +86,12 @@ Nessuna suite di test automatizzati nel repo (né PHP né JS) al momento — ver
   chiamata per ogni FK esterna accettata in input**, altrimenti un utente
   potrebbe agganciare dati a risorse di un altro utente semplicemente
   passando un ID diverso.
+- **Area admin**: `require_admin()` (in `db.php`) = `require_auth()` + flag
+  `users.is_admin` riletto dal DB a ogni richiesta. Il flag si assegna solo
+  via SQL (migrazione 041), mai da API. `admin_users.php` espone l'elenco
+  utenti con i soli dati di account: non deve mai leggere tabelle dati
+  finanziari (conti, transazioni, ...). Lato frontend la voce "Admin · Utenti"
+  in `Sidebar.jsx` appare solo se `user.is_admin`.
 - **Rate limiting**: `rate_limit_check()`/`rate_limit_record()` per azioni
   sensibili (login, registrazione) via tabella `rate_limit_attempts`, per IP
   (letto da `X-Forwarded-For` perché dietro Caddy `REMOTE_ADDR` è l'IP del

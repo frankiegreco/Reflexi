@@ -79,6 +79,22 @@ function require_auth(): int
 }
 
 /**
+ * Richiede una sessione valida di un utente admin: 401 se non loggato, 403 se
+ * loggato ma senza flag is_admin. Il flag è riletto dal DB a ogni richiesta
+ * (non messo in sessione), così una revoca ha effetto immediato.
+ */
+function require_admin(): int
+{
+    $uid = require_auth();
+    $stmt = db()->prepare("SELECT is_admin FROM users WHERE id = :id");
+    $stmt->execute(['id' => $uid]);
+    if ((int)$stmt->fetchColumn() !== 1) {
+        respond_error('Accesso riservato agli amministratori', 403);
+    }
+    return $uid;
+}
+
+/**
  * Verifica una risorsa referenziata (conto, categoria, strumento, ecc.)
  * appartenga davvero all'utente loggato, prima di usarla in una scrittura.
  * Senza questo controllo, un utente autenticato potrebbe agganciare le proprie

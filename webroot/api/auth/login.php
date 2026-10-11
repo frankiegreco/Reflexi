@@ -43,4 +43,5 @@ respond([
     'trial_days_left' => $trialDaysLeft,
     'subscription_current_period_end' => $user['subscription_current_period_end'],
     'has_access' => has_active_access($user),
+    'is_admin' => (int)$user['is_admin'] === 1,
 ]);
