@@ -53,10 +53,20 @@ session_start();
 session_write_close();
 
 set_exception_handler(function (Throwable $e) {
+    log_event('error', 'server_error', get_class($e) . ': ' . $e->getMessage()
+        . ' @ ' . basename($e->getFile()) . ':' . $e->getLine(), current_user_id());
     http_response_code(500);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(['error' => 'Errore interno: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
     exit;
+});
+// Errori fatali (memoria, timeout, ...) non passano dal gestore eccezioni:
+// li registra comunque nel log di sicurezza, a fine richiesta.
+register_shutdown_function(function () {
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        log_event('error', 'server_error', 'Errore fatale: ' . $err['message'] . ' @ ' . basename($err['file']) . ':' . $err['line'], current_user_id());
+    }
 });
 set_error_handler(function ($severity, $message, $file, $line) {
     // Rispetta l'operatore @: se l'errore è stato volutamente soppresso
@@ -74,6 +84,38 @@ header('Content-Type: application/json; charset=utf-8');
 function current_user_id(): ?int
 {
     return $_SESSION['user_id'] ?? null;
+}
+
+/**
+ * Registra un evento nel log di sicurezza (sezione "Admin · Log"): login
+ * falliti, rate limit, accessi negati, errori server, ... Non deve MAI far
+ * fallire la richiesta che lo chiama (né ricorrere nel gestore eccezioni):
+ * qualunque errore di scrittura finisce solo nell'error_log di PHP. Mai
+ * passare password o token in $message.
+ */
+function log_event(string $level, string $type, string $message = '', ?int $userId = null, ?string $email = null): void
+{
+    try {
+        db()->prepare("INSERT INTO security_events (level, type, user_id, email, ip, user_agent, endpoint, message)
+            VALUES (:level, :type, :uid, :email, :ip, :ua, :endpoint, :message)")
+            ->execute([
+                'level' => $level,
+                'type' => $type,
+                'uid' => $userId,
+                'email' => $email !== null ? mb_substr($email, 0, 190) : null,
+                'ip' => PHP_SAPI === 'cli' ? null : client_ip(),
+                'ua' => mb_substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255) ?: null,
+                'endpoint' => PHP_SAPI === 'cli' ? ($_SERVER['SCRIPT_NAME'] ?? 'cli')
+                    : mb_substr(($_SERVER['REQUEST_METHOD'] ?? '') . ' ' . strtok($_SERVER['REQUEST_URI'] ?? '', '?'), 0, 255),
+                'message' => mb_substr($message, 0, 2000),
+            ]);
+        // Pulizia occasionale (circa 1 scrittura su 100): log oltre 90 giorni.
+        if (random_int(1, 100) === 1) {
+            db()->exec("DELETE FROM security_events WHERE created_at < NOW() - INTERVAL 90 DAY");
+        }
+    } catch (Throwable $e) {
+        error_log('log_event fallito: ' . $e->getMessage());
+    }
 }
 
 /** Riapre la sessione in scrittura: solo per login/logout/eliminazione account. */
@@ -120,6 +162,7 @@ function require_admin(): int
     $stmt = db()->prepare("SELECT is_admin FROM users WHERE id = :id");
     $stmt->execute(['id' => $uid]);
     if ((int)$stmt->fetchColumn() !== 1) {
+        log_event('warning', 'admin_denied', 'Tentativo di accesso a ' . basename($_SERVER['SCRIPT_NAME'] ?? ''), $uid);
         respond_error('Accesso riservato agli amministratori', 403);
     }
     return $uid;
@@ -169,6 +212,7 @@ function rate_limit_check(string $action, int $maxAttempts, int $windowSeconds):
         AND created_at >= DATE_SUB(NOW(), INTERVAL :window SECOND)");
     $stmt->execute(['action' => $action, 'identifier' => client_ip(), 'window' => $windowSeconds]);
     if ((int)$stmt->fetchColumn() >= $maxAttempts) {
+        log_event('warning', 'rate_limited', "Superato il limite per '{$action}' ({$maxAttempts} in {$windowSeconds} s)", current_user_id());
         respond_error('Troppi tentativi. Riprova tra qualche minuto.', 429);
     }
 }
@@ -229,6 +273,7 @@ function respond($data, int $status = 200): void
 
 function respond_error(string $message, int $status = 400): void
 {
+    if ($status >= 500) log_event('error', 'server_error', "HTTP {$status}: {$message}", current_user_id());
     respond(['error' => $message], $status);
 }
 

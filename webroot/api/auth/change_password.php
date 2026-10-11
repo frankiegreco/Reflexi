@@ -20,11 +20,13 @@ $stmt->execute(['id' => $uid]);
 $user = $stmt->fetch();
 
 if (!$user || !password_verify($currentPassword, $user['password_hash'])) {
+    log_event('warning', 'password_check_failed', 'Password attuale errata nel cambio password', $uid);
     respond_error('La password attuale non è corretta', 401);
 }
 
 $hash = password_hash($newPassword, PASSWORD_DEFAULT);
 db()->prepare("UPDATE users SET password_hash = :hash WHERE id = :id")
     ->execute(['hash' => $hash, 'id' => $uid]);
+log_event('info', 'password_changed', 'Password cambiata dal profilo', $uid);
 
 respond(['ok' => true]);

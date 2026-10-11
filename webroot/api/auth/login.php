@@ -19,9 +19,11 @@ $stmt->execute(['email' => $email]);
 $user = $stmt->fetch();
 
 if (!$user || !password_verify($password, $user['password_hash'])) {
+    log_event('warning', 'login_failed', $user ? 'Password errata' : 'Email non registrata', $user ? (int)$user['id'] : null, $email);
     respond_error('Email o password non corretti', 401);
 }
 if (!$user['email_verified_at']) {
+    log_event('info', 'login_unverified', 'Login con email non ancora verificata', (int)$user['id'], $email);
     respond(['error' => 'Devi prima confermare la tua email. Controlla la posta in arrivo.', 'code' => 'email_not_verified'], 403);
 }
 

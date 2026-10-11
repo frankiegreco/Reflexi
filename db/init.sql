@@ -353,3 +353,20 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     INDEX idx_user_sessions_user (user_id, started_at),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS security_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    level ENUM('info','warning','error') NOT NULL,
+    type VARCHAR(40) NOT NULL,
+    user_id INT DEFAULT NULL,
+    email VARCHAR(190) DEFAULT NULL,
+    ip VARCHAR(45) DEFAULT NULL,
+    user_agent VARCHAR(255) DEFAULT NULL,
+    endpoint VARCHAR(255) DEFAULT NULL,
+    message TEXT,
+    INDEX idx_security_events_created (created_at),
+    INDEX idx_security_events_type (type, created_at),
+    INDEX idx_security_events_ip (ip, created_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -13,10 +13,14 @@ if (strlen($password) < 8) respond_error('La password deve avere almeno 8 caratt
 $stmt = db()->prepare("SELECT id FROM users WHERE reset_token = :token AND reset_token_expires >= NOW()");
 $stmt->execute(['token' => $token]);
 $user = $stmt->fetch();
-if (!$user) respond_error('Link di reset non valido o scaduto', 400);
+if (!$user) {
+    log_event('warning', 'reset_invalid', 'Link di reset password non valido o scaduto');
+    respond_error('Link di reset non valido o scaduto', 400);
+}
 
 $hash = password_hash($password, PASSWORD_DEFAULT);
 db()->prepare("UPDATE users SET password_hash = :hash, reset_token = NULL, reset_token_expires = NULL WHERE id = :id")
     ->execute(['hash' => $hash, 'id' => $user['id']]);
+log_event('info', 'password_reset', 'Password reimpostata via link email', (int)$user['id']);
 
 respond(['ok' => true]);

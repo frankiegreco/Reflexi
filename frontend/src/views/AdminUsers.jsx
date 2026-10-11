@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Users, BadgeCheck, CreditCard, Hourglass, UserPlus, ArrowLeft, LogIn, Timer, Clock, Globe, ChevronRight } from 'lucide-react';
+import { Users, BadgeCheck, CreditCard, Hourglass, UserPlus, ArrowLeft, LogIn, Timer, Clock, Globe, ChevronRight, ShieldAlert } from 'lucide-react';
 import { apiGet } from '../api';
-import { formatDate } from '../lib/format';
+import { day, dayTime, duration, device } from '../lib/admin';
 import StatCard from '../components/StatCard';
 
 const STATUS = {
@@ -17,36 +17,6 @@ const SESSION_STATUS = {
   logout: { label: 'Logout', cls: 'bg-gray-100 text-gray-600' },
   scaduta: { label: 'Scaduta', cls: 'bg-amber-50 text-amber-800' },
 };
-
-// I datetime MySQL arrivano come "YYYY-MM-DD HH:MM:SS": formatDate vuole solo la data.
-const day = (dt) => (dt ? formatDate(dt.slice(0, 10)) : '—');
-const dayTime = (dt) => (dt ? `${day(dt)} ${dt.slice(11, 16)}` : '—');
-
-function duration(sec) {
-  if (sec == null) return '—';
-  if (sec < 60) return '< 1 min';
-  const h = Math.floor(sec / 3600);
-  const m = Math.round((sec % 3600) / 60);
-  return h ? `${h} h ${m} min` : `${m} min`;
-}
-
-// Riassunto leggibile dello user agent: abbastanza per distinguere app/browser
-// e dispositivo, senza una libreria di parsing dedicata.
-function device(ua) {
-  if (!ua) return 'Sconosciuto';
-  const os = /Android/.test(ua) ? 'Android'
-    : /iPhone|iPad/.test(ua) ? 'iOS'
-    : /Windows/.test(ua) ? 'Windows'
-    : /Mac OS X/.test(ua) ? 'macOS'
-    : /Linux/.test(ua) ? 'Linux' : 'altro';
-  if (/; wv\)/.test(ua)) return `App ${os}`;
-  const browser = /Edg\//.test(ua) ? 'Edge'
-    : /OPR\//.test(ua) ? 'Opera'
-    : /Firefox\//.test(ua) ? 'Firefox'
-    : /Chrome\//.test(ua) ? 'Chrome'
-    : /Safari\//.test(ua) ? 'Safari' : 'Browser';
-  return `${browser} su ${os}`;
-}
 
 function renewal(u) {
   if (u.subscription_status === 'trialing') return u.trial_ends_at ? `Fine prova ${day(u.trial_ends_at)}` : '—';
@@ -118,11 +88,18 @@ function UserDetail({ id, onBack }) {
         <Field label="Ultima attività">{dayTime(u.last_seen_at)}</Field>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label="Login totali" value={s.logins_total} hint={`${s.logins_30d} negli ultimi 30 giorni`} icon={LogIn} />
         <StatCard label="Durata media" value={duration(s.avg_session_seconds)} icon={Timer} iconColor="#7fa876" />
         <StatCard label="Tempo totale" value={duration(s.total_session_seconds)} icon={Clock} iconColor="#d4a24c" />
         <StatCard label="IP diversi" value={s.distinct_ips} icon={Globe} />
+        <StatCard
+          label="Tentativi falliti (30 gg)"
+          value={s.failed_logins_30d}
+          valueClass={s.failed_logins_30d > 0 ? 'text-expense' : ''}
+          icon={ShieldAlert}
+          iconColor="#c1665a"
+        />
       </div>
 
       <h2 className="mb-3 text-sm font-bold text-gray-800">Accessi</h2>

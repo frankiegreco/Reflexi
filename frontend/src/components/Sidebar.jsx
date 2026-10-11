@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ListOrdered, Wallet, Landmark, LineChart, Compass, TrendingUp, Scale, Flame, PiggyBank,
-  Tags, Repeat, Layers, Target, BarChart3, FileText, Receipt, Plus, LogOut, UserCircle2, X, FlaskConical, ShieldCheck,
+  Tags, Repeat, Layers, Target, BarChart3, FileText, Receipt, Plus, LogOut, UserCircle2, X, FlaskConical, ShieldCheck, ScrollText,
 } from 'lucide-react';
 
 const NAV = [
@@ -22,6 +22,12 @@ const NAV = [
   { key: 'goals', label: 'Obiettivi', icon: Target },
   { key: 'analytics', label: 'Analisi', icon: BarChart3 },
   { key: 'report', label: 'Report', icon: FileText },
+];
+
+// Voci visibili solo agli admin (user.is_admin), separate dal resto del menu.
+const ADMIN_NAV = [
+  { key: 'admin', label: 'Admin · Utenti', icon: ShieldCheck },
+  { key: 'adminlogs', label: 'Admin · Log', icon: ScrollText },
 ];
 
 export default function Sidebar({ view, setView, onAddTransaction, user, onLogout, mobileOpen, onClose }) {
@@ -75,20 +81,23 @@ export default function Sidebar({ view, setView, onAddTransaction, user, onLogou
             Profilo
           </button>
         </li>
-        {user?.is_admin && (
-          <li className="relative mt-2 border-t border-white/10 pt-2">
-            {view === 'admin' && <span className="absolute -left-4 top-1/2 mt-1 h-5 w-1 -translate-y-1/2 rounded-r-full bg-accent" />}
-            <button
-              onClick={() => go('admin')}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
-                view === 'admin' ? 'bg-white/10 text-white' : 'text-white/55 hover:bg-white/5 hover:text-white/90'
-              }`}
-            >
-              <ShieldCheck size={16} strokeWidth={view === 'admin' ? 2.25 : 1.75} className={view === 'admin' ? 'text-accent' : ''} />
-              Admin · Utenti
-            </button>
-          </li>
-        )}
+        {user?.is_admin && ADMIN_NAV.map(({ key, label, icon: Icon }, i) => {
+          const active = view === key;
+          return (
+            <li key={key} className={`relative ${i === 0 ? 'mt-2 border-t border-white/10 pt-2' : ''}`}>
+              {active && <span className={`absolute -left-4 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-accent ${i === 0 ? 'mt-1' : ''}`} />}
+              <button
+                onClick={() => go(key)}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
+                  active ? 'bg-white/10 text-white' : 'text-white/55 hover:bg-white/5 hover:text-white/90'
+                }`}
+              >
+                <Icon size={16} strokeWidth={active ? 2.25 : 1.75} className={active ? 'text-accent' : ''} />
+                {label}
+              </button>
+            </li>
+          );
+        })}
       </ul>
       <button
         onClick={() => { onAddTransaction(); onClose?.(); }}

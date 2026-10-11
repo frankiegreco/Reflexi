@@ -61,6 +61,13 @@ if (isset($_GET['id'])) {
         'status' => $s['ended_at'] !== null ? 'logout' : ((int)$s['is_active'] === 1 ? 'attiva' : 'scaduta'),
     ], $stmt->fetchAll());
 
+    // Login falliti (password errata) e controlli password falliti, dal log di sicurezza.
+    $stmt = db()->prepare("SELECT COUNT(*) FROM security_events
+        WHERE user_id = :uid AND type IN ('login_failed', 'password_check_failed')
+          AND created_at >= NOW() - INTERVAL 30 DAY");
+    $stmt->execute(['uid' => $u['id']]);
+    $failed30 = (int)$stmt->fetchColumn();
+
     $durations = array_column($sessions, 'duration_seconds');
     $since30 = strtotime('-30 days');
     respond([
@@ -70,6 +77,7 @@ if (isset($_GET['id'])) {
             'logins_30d' => count(array_filter($sessions, fn($s) => strtotime($s['started_at']) >= $since30)),
             'avg_session_seconds' => $durations ? (int)round(array_sum($durations) / count($durations)) : null,
             'total_session_seconds' => $durations ? array_sum($durations) : null,
+            'failed_logins_30d' => $failed30,
             'distinct_ips' => count(array_unique(array_filter(array_column($sessions, 'ip')))),
         ],
         // Le ultime 100 bastano per il dettaglio; le statistiche sopra usano tutto lo storico (max 180 giorni).

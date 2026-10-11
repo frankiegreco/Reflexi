@@ -28,6 +28,7 @@ import Goals from './views/Goals';
 import Analytics from './views/Analytics';
 import Profile from './views/Profile';
 import AdminUsers from './views/AdminUsers';
+import AdminLogs from './views/AdminLogs';
 import TransactionModal from './views/TransactionModal';
 
 const VIEWS = {
@@ -51,7 +52,12 @@ const VIEWS = {
   analytics: Analytics,
   profile: Profile,
   admin: AdminUsers,
+  adminlogs: AdminLogs,
 };
+
+// Sezioni visibili solo agli admin: un non-admin che ci finisse (es. dopo un
+// cambio sessione) viene riportato al Riepilogo.
+const ADMIN_VIEWS = ['admin', 'adminlogs'];
 
 function Shell() {
   const [view, setView] = useState('dashboard');
@@ -59,7 +65,7 @@ function Shell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { bump } = useData();
   const { user, logout } = useAuth();
-  const ActiveView = VIEWS[view === 'admin' && !user?.is_admin ? 'dashboard' : view];
+  const ActiveView = VIEWS[ADMIN_VIEWS.includes(view) && !user?.is_admin ? 'dashboard' : view];
   const lastBackPress = useRef(0);
   const exitToastTimer = useRef(null);
   const [showExitToast, setShowExitToast] = useState(false);

@@ -97,6 +97,13 @@ Nessuna suite di test automatizzati nel repo (né PHP né JS) al momento — ver
   dentro `require_auth()` (max 1 scrittura/minuto), `ended_at` al logout.
   Serve al dettaglio utente dell'area admin; righe oltre 180 giorni cancellate
   al login. Le sessioni aperte prima del 2026-10-11 non hanno storico.
+- **Log di sicurezza** (`security_events`, migrazione 043): `log_event()` in
+  `db.php` registra login falliti, rate limit, accessi admin negati, password
+  errate, reset non validi, webhook Stripe non validi ed errori server
+  (gestore eccezioni, shutdown per errori fatali, `respond_error` >= 500).
+  Non deve mai far fallire la richiesta (try/catch interno). Mai password o
+  token nel messaggio. Righe > 90 giorni cancellate a campione da `log_event()`.
+  Letto da `admin_logs.php` (sezione "Admin · Log").
 - **Lock di sessione**: `db.php` chiude subito la sessione dopo
   `session_start()` (`session_write_close()`), altrimenti una richiesta lenta
   blocca in coda tutte le altre dello stesso utente (l'app sembra congelata).

@@ -14,6 +14,7 @@ $webhookSecret = getenv('STRIPE_WEBHOOK_SECRET') ?: '';
 try {
     $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
 } catch (\Exception $e) {
+    log_event('warning', 'stripe_webhook_invalid', 'Firma webhook non valida: ' . $e->getMessage());
     http_response_code(400);
     exit('Firma non valida: ' . $e->getMessage());
 }
