@@ -1,5 +1,19 @@
 RewriteEngine On
 
+# Pagina 404 del sito (al posto di quella predefinita di Apache in inglese).
+ErrorDocument 404 /404.php
+
+# Una sola URL per la home: /index.php -> / con 301. Il controllo su
+# THE_REQUEST (la richiesta originale del browser) evita il loop con il
+# DirectoryIndex, che internamente serve proprio index.php per "/".
+# Dietro Caddy la richiesta arriva in HTTP: X-Forwarded-Proto dice se
+# l'originale era HTTPS, così il redirect punta subito a https (un salto solo).
+RewriteCond %{THE_REQUEST} \s/index\.php[\s?]
+RewriteCond %{HTTP:X-Forwarded-Proto} =https
+RewriteRule ^index\.php$ https://%{HTTP_HOST}/ [R=301,L]
+RewriteCond %{THE_REQUEST} \s/index\.php[\s?]
+RewriteRule ^index\.php$ / [R=301,L]
+
 # URL puliti per la sezione news: /news/{slug} -> news-articolo.php?slug={slug}
 RewriteRule ^news/([a-z0-9-]+)/?$ news-articolo.php?slug=$1 [L,QSA]
 RewriteRule ^news/?$ news.php [L,QSA]
@@ -9,9 +23,9 @@ RewriteRule ^sitemap\.xml$ sitemap.php [L]
 
 # Cache lato browser per asset statici (Core Web Vitals: evita richieste di
 # revalidazione ripetute sulle visite di ritorno). site.css è versionato via
-# query string (?v=N in ogni <link>, da incrementare a mano quando si
-# rigenera con build/build-css.sh) quindi puo' avere una scadenza piu' lunga;
-# le icone SVG/PNG non sono versionate, scadenza piu' prudente.
+# query string (?v=<filemtime> in ogni <link>, cambia da solo a ogni rebuild)
+# quindi puo' avere una scadenza lunga; le icone SVG/PNG non sono versionate,
+# scadenza piu' prudente.
 <IfModule mod_expires.c>
     ExpiresActive On
     ExpiresByType text/css "access plus 1 month"

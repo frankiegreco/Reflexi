@@ -1,3 +1,18 @@
 {$SITE_ADDRESS} {
+	# Un solo host canonico: www.<dominio> -> <dominio> con 301, altrimenti
+	# Google vede due copie dello stesso sito (prima rispondevano entrambi 200).
+	@www header_regexp www Host ^www\.(.+)$
+	redir @www https://{re.www.1}{uri} permanent
+
+	# Compressione delle risposte (HTML, CSS, JS, JSON, SVG): meno byte da
+	# scaricare, migliori Core Web Vitals.
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
 	reverse_proxy web:80
 }
