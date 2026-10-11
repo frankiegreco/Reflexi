@@ -130,7 +130,7 @@ include '_nav.php';
 <section class="px-6 py-20">
   <div class="mx-auto max-w-2xl rounded-3xl bg-gradient-to-br from-accent via-accentDark to-indigo-900 p-10 text-center text-white sm:p-14">
     <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Guarda il tuo futuro finanziario, non solo il passato</h2>
-    <p class="mb-8 text-white/80">Gratuito in questa fase beta. Nessuna carta di credito richiesta.</p>
+    <p class="mb-8 text-white/80">6 mesi gratis, senza carta di credito.</p>
     <a href="/app/" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Crea il tuo account</a>
   </div>
 </section>
