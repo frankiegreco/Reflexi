@@ -108,6 +108,7 @@ seo_calculator('Calcolatore patrimonio netto', '/calcolatore-patrimonio-netto', 
   <h2 class="mb-2 text-xl font-bold">Vuoi che il calcolo si aggiorni da solo, quota mutuo inclusa?</h2>
   <p class="mb-6 text-muted">Reflexi calcola il patrimonio netto in automatico, gestendo da solo le quote di proprietà sui mutui cointestati.</p>
   <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>
+  <p class="mt-4 text-sm text-muted">Come funziona in Reflexi: <a href="/patrimonio" class="font-semibold text-accent hover:underline">Patrimonio e report →</a></p>
 </section>
 
 <?php include '_footer.php'; ?>

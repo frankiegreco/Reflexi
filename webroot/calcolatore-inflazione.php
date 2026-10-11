@@ -112,6 +112,7 @@ seo_calculator('Calcolatore inflazione', '/calcolatore-inflazione', 'Scopri quan
   <h2 class="mb-2 text-xl font-bold">Fai lavorare i tuoi risparmi</h2>
   <p class="mb-6 text-muted">Reflexi traccia anche gli interessi su conti deposito e vincolati, con proiezione netta reale.</p>
   <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>
+  <p class="mt-4 text-sm text-muted">Come funziona in Reflexi: <a href="/patrimonio" class="font-semibold text-accent hover:underline">Patrimonio e report →</a></p>
 </section>
 
 <?php include '_footer.php'; ?>

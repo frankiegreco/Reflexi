@@ -150,6 +150,96 @@ seo_breadcrumb([
 </section>
 <?php endif; ?>
 
+<?php
+// "Mettilo in pratica": dall'articolo alla funzione dell'app e ai calcolatori
+// pertinenti. Gli articoli sono le pagine che portano traffico dalla ricerca,
+// e questi link interni passano visite e rilevanza alle pagine che portano
+// alle iscrizioni. Regole sullo slug (prima quelle più specifiche), poi i
+// predefiniti della categoria; al massimo 3 collegamenti.
+$practiceTargets = [
+    '/mutui' => ['Funzionalità', 'Mutui', 'Piano di ammortamento ed estinzione anticipata'],
+    '/investimenti' => ['Funzionalità', 'Investimenti', 'Portafoglio con quotazioni reali'],
+    '/budget' => ['Funzionalità', 'Budget', 'Limiti per categoria e avvisi'],
+    '/analisi' => ['Funzionalità', 'Analisi predittiva', 'Proiezioni e simulazione Monte Carlo'],
+    '/previsioni' => ['Funzionalità', 'Previsioni', 'Stime a 12 mesi e proposte di investimento'],
+    '/simulazione-trading' => ['Funzionalità', 'Simulazione trading', 'Fai pratica con capitale virtuale'],
+    '/fire-pensione' => ['Funzionalità', 'FIRE e pensione', 'Indipendenza finanziaria e fondi pensione'],
+    '/obiettivi' => ['Funzionalità', 'Obiettivi', 'Traguardi di risparmio con un piano'],
+    '/abbonamenti' => ['Funzionalità', 'Abbonamenti', 'Spese ricorrenti, anche quelle nascoste'],
+    '/patrimonio' => ['Funzionalità', 'Patrimonio e report', 'Patrimonio netto, immobili e report'],
+    '/calcolatore-interesse-composto' => ['Calcolatore gratuito', 'Interesse composto', 'Quanto cresce un capitale nel tempo'],
+    '/calcolatore-piano-investimento' => ['Calcolatore gratuito', 'Piano di investimento', 'Quanto diventa un PAC mensile'],
+    '/calcolatore-obiettivo-risparmio' => ['Calcolatore gratuito', 'Obiettivo di risparmio', 'Quanto mettere da parte al mese'],
+    '/calcolatore-rendimento' => ['Calcolatore gratuito', 'Rendimento (ROI)', 'Rendimento totale e CAGR'],
+    '/calcolatore-recupero-perdite' => ['Calcolatore gratuito', 'Recupero perdite', 'Quanto serve per tornare in pari'],
+    '/calcolatore-inflazione' => ['Calcolatore gratuito', 'Inflazione', "Quanto perde valore il denaro"],
+    '/calcolatore-budget-503020' => ['Calcolatore gratuito', 'Regola 50/30/20', 'Dividi lo stipendio in tre parti'],
+    '/calcolatore-patrimonio-netto' => ['Calcolatore gratuito', 'Patrimonio netto', 'Quanto possiedi davvero'],
+    '/calcolatore-pensione' => ['Calcolatore gratuito', 'Pensione', 'Quanto potresti avere al pensionamento'],
+];
+$practiceRules = [
+    'fire' => ['/fire-pensione', '/calcolatore-pensione'],
+    'pension' => ['/fire-pensione', '/calcolatore-pensione'],
+    'tfr' => ['/fire-pensione', '/calcolatore-pensione'],
+    'interesse-composto' => ['/calcolatore-interesse-composto', '/investimenti'],
+    'pac' => ['/calcolatore-piano-investimento', '/investimenti'],
+    'recupero-perdite' => ['/calcolatore-recupero-perdite', '/simulazione-trading'],
+    'cagr' => ['/calcolatore-rendimento', '/investimenti'],
+    'inflazione' => ['/calcolatore-inflazione', '/patrimonio'],
+    'tasso-di-risparmio' => ['/analisi', '/calcolatore-obiettivo-risparmio'],
+    'obiettiv' => ['/obiettivi', '/calcolatore-obiettivo-risparmio'],
+    'emergenza' => ['/obiettivi', '/calcolatore-obiettivo-risparmio'],
+    'figlio' => ['/obiettivi', '/budget'],
+    'abbonament' => ['/abbonamenti', '/budget'],
+    'spese-fisse' => ['/abbonamenti', '/budget'],
+    'impulsiv' => ['/budget', '/abbonamenti'],
+    '50-30-20' => ['/calcolatore-budget-503020', '/budget'],
+    'budget' => ['/budget', '/calcolatore-budget-503020'],
+    'buste' => ['/budget', '/calcolatore-budget-503020'],
+    'tracciare' => ['/budget', '/analisi'],
+    'patrimonio' => ['/patrimonio', '/calcolatore-patrimonio-netto'],
+    'gestire-i-soldi' => ['/patrimonio', '/calcolatore-patrimonio-netto'],
+    'coppia' => ['/budget', '/patrimonio'],
+    'debito-reddito' => ['/mutui', '/analisi'],
+    'etf' => ['/investimenti', '/previsioni'],
+    'btp' => ['/investimenti', '/calcolatore-rendimento'],
+    'diversificazione' => ['/investimenti', '/previsioni'],
+    'ribilanciamento' => ['/investimenti', '/patrimonio'],
+    'tassazione' => ['/investimenti', '/calcolatore-rendimento'],
+    'mutuo' => ['/mutui', '/patrimonio'],
+];
+$practiceDefaults = [
+    'mutui' => ['/mutui', '/patrimonio'],
+    'investimenti' => ['/investimenti', '/calcolatore-interesse-composto'],
+    'budget' => ['/budget', '/calcolatore-budget-503020'],
+    'pianificazione' => ['/patrimonio', '/fire-pensione'],
+];
+$practiceLinks = [];
+if ($article !== null) {
+    foreach ($practiceRules as $needle => $paths) {
+        if (str_contains($article['slug'], $needle)) $practiceLinks = array_merge($practiceLinks, $paths);
+    }
+    $practiceLinks = array_slice(array_values(array_unique(array_merge($practiceLinks, $practiceDefaults[$article['category']] ?? []))), 0, 3);
+}
+?>
+<?php if (!empty($practiceLinks)): ?>
+<section class="border-t border-border px-6 py-14">
+  <div class="mx-auto max-w-5xl">
+    <h2 class="mb-2 text-center text-xl font-bold">Mettilo in pratica</h2>
+    <p class="mb-6 text-center text-sm text-muted">Dalla teoria ai tuoi numeri, con gli strumenti di Reflexi.</p>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <?php foreach ($practiceLinks as $href): [$kind, $label, $desc] = $practiceTargets[$href]; ?>
+      <a href="<?= $href ?>" class="flex flex-col rounded-2xl border border-border bg-white p-5 transition hover:border-accent hover:bg-accentSoft">
+        <span class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent"><?= $kind ?></span>
+        <span class="font-bold"><?= htmlspecialchars($label) ?> →</span>
+        <span class="mt-1 text-sm text-muted"><?= htmlspecialchars($desc) ?></span>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <?php if (!empty($related)): ?>
 <section class="border-t border-border bg-white px-6 py-16">
   <div class="mx-auto max-w-5xl">
