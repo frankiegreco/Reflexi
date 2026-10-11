@@ -25,8 +25,7 @@
 <meta name="twitter:description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati, dall'app in modo immediato oppure con una richiesta via email.">
 <meta name="twitter:image" content="https://reflexi.it/og-image.png?v=3">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 </head>
 <body class="bg-bg text-gray-900 antialiased">

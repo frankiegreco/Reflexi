@@ -16,6 +16,14 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Font del sito (file in webroot/fonts/, @font-face in tailwind-input.css).
+      // Va dichiarato qui: la regola .font-mono in @layer base veniva
+      // sovrascritta dall'utility font-mono di Tailwind, quindi i numeri
+      // uscivano nel monospace di sistema (es. Courier) invece di Plex Mono.
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+      },
       colors: {
         accent: '#4f46e5',
         accentDark: '#4338ca',

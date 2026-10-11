@@ -32,9 +32,14 @@ RewriteRule ^sitemap\.xml$ sitemap.php [L]
     ExpiresByType image/svg+xml "access plus 1 week"
     ExpiresByType image/png "access plus 1 week"
     ExpiresByType image/jpeg "access plus 1 week"
+    # Font con la versione nel nome del file: possono restare in cache a lungo.
+    ExpiresByType font/woff2 "access plus 1 year"
 </IfModule>
 <IfModule mod_headers.c>
     <FilesMatch "\.(css|svg|png|jpe?g)$">
         Header set Cache-Control "public"
+    </FilesMatch>
+    <FilesMatch "\.woff2$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
 </IfModule>
