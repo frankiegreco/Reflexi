@@ -1,34 +1,29 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { apiSend } from '../api';
+import SiteNav from '../components/SiteNav';
 
-// Link al sito pubblico solo sul web: nell'app Android la WebView porterebbe
-// l'utente fuori dall'app senza un modo di tornare, e un rimando ai prezzi
-// con pagamento esterno a Google Play viola le regole dello store.
-const showSiteLinks = !Capacitor.isNativePlatform();
+// Navbar del sito pubblico solo sul web: nell'app Android la WebView
+// porterebbe l'utente fuori dall'app senza un modo di tornare, e un rimando ai
+// prezzi con pagamento esterno a Google Play viola le regole dello store.
+const showSiteNav = !Capacitor.isNativePlatform();
 
-function AuthShell({ children }) {
-  const Logo = showSiteLinks ? 'a' : 'div';
+function AuthShell({ cta, children }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg p-4">
-      <div className="w-full max-w-sm">
-        <Logo {...(showSiteLinks ? { href: '/', title: 'Vai alla home di Reflexi' } : {})} className="mb-6 flex items-center justify-center gap-2">
-          <img src="/favicon.svg" alt="Reflexi" className="h-10 w-10 rounded-xl" />
-          <span className="text-lg font-bold tracking-tight">Reflexi</span>
-        </Logo>
-        <p className="mb-4 text-center text-sm italic text-muted">Il riflesso vero delle tue finanze</p>
-        <div className="card p-6">{children}</div>
-        {showSiteLinks && (
-          <div className="mt-5 flex items-center justify-center gap-4 text-sm">
-            <a href="/" className="flex items-center gap-1 text-muted hover:text-accent">
-              <ArrowLeft size={14} /> Torna al sito
-            </a>
-            <span className="text-border">|</span>
-            <a href="/piani.php" className="font-medium text-accent hover:underline">Piani e prezzi</a>
-          </div>
-        )}
+    <div className="flex min-h-screen flex-col bg-bg">
+      {showSiteNav && <SiteNav cta={cta} />}
+      <div className="flex flex-1 items-center justify-center p-4">
+        <div className="w-full max-w-sm">
+          {!showSiteNav && (
+            <div className="mb-6 flex items-center justify-center gap-2">
+              <img src="/favicon.svg" alt="Reflexi" className="h-10 w-10 rounded-xl" />
+              <span className="text-lg font-bold tracking-tight">Reflexi</span>
+            </div>
+          )}
+          <p className="mb-4 text-center text-sm italic text-muted">Il riflesso vero delle tue finanze</p>
+          <div className="card p-6">{children}</div>
+        </div>
       </div>
     </div>
   );
@@ -60,6 +55,11 @@ export default function Auth() {
     if (verify === 'invalid') setError('Il link di conferma non è valido o è scaduto.');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Pulsante a destra nella navbar: porta alla registrazione, o al login se ci sei già.
+  const cta = mode === 'register'
+    ? { label: 'Accedi', onClick: () => { setMode('login'); resetMessages(); } }
+    : { label: 'Crea un account', onClick: () => { setMode('register'); resetMessages(); } };
 
   function resetMessages() {
     setError(''); setInfo(''); setNeedsVerification(false); setResendMsg('');
@@ -138,7 +138,7 @@ export default function Auth() {
 
   if (mode === 'reset') {
     return (
-      <AuthShell>
+      <AuthShell cta={cta}>
         <h2 className="mb-4 text-lg font-semibold">Scegli una nuova password</h2>
         {error && <Message type="error">{error}</Message>}
         {info && <Message type="info">{info}</Message>}
@@ -155,7 +155,7 @@ export default function Auth() {
 
   if (mode === 'forgot') {
     return (
-      <AuthShell>
+      <AuthShell cta={cta}>
         <h2 className="mb-4 text-lg font-semibold">Password dimenticata</h2>
         {error && <Message type="error">{error}</Message>}
         {info && <Message type="info">{info}</Message>}
@@ -173,7 +173,7 @@ export default function Auth() {
 
   if (mode === 'register') {
     return (
-      <AuthShell>
+      <AuthShell cta={cta}>
         <h2 className="mb-4 text-lg font-semibold">Crea un account</h2>
         {error && <Message type="error">{error}</Message>}
         {info && <Message type="info">{info}</Message>}
@@ -208,7 +208,7 @@ export default function Auth() {
   }
 
   return (
-    <AuthShell>
+    <AuthShell cta={cta}>
       <h2 className="mb-4 text-lg font-semibold">Accedi</h2>
       {sessionBanner}
       {error && <Message type="error">{error}</Message>}
