@@ -35,6 +35,11 @@ $relatedArticles = news_related(['pac-piano-accumulo-etf-come-funziona', 'cosa-e
 <style>
   body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; } .font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 </style>
+<?php
+require_once __DIR__ . '/_seo.php';
+seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore piano di investimento', '/calcolatore-piano-investimento.php']]);
+seo_calculator('Calcolatore piano di investimento', '/calcolatore-piano-investimento.php', 'Calcola quanto puoi accumulare investendo una cifra fissa ogni mese, con grafico anno per anno. Gratuito, senza registrazione.');
+?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 

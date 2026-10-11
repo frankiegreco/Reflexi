@@ -35,6 +35,11 @@ $relatedArticles = news_related(['pensione-integrativa-fondo-pensione-quanto-ser
 <style>
   body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; } .font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 </style>
+<?php
+require_once __DIR__ . '/_seo.php';
+seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore pensione', '/calcolatore-pensione.php']]);
+seo_calculator('Calcolatore pensione', '/calcolatore-pensione.php', 'Calcola quanto capitale potresti accumulare entro l\'età obiettivo, con grafico di accumulo. Gratuito, senza registrazione.');
+?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 

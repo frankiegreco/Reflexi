@@ -35,6 +35,11 @@ $relatedArticles = news_related(['inflazione-potere-acquisto-perche-il-capitale-
 <style>
   body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; } .font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 </style>
+<?php
+require_once __DIR__ . '/_seo.php';
+seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore inflazione', '/calcolatore-inflazione.php']]);
+seo_calculator('Calcolatore inflazione', '/calcolatore-inflazione.php', 'Scopri quanto varrà davvero una somma di denaro tra qualche anno, al netto dell\'inflazione. Gratuito, senza registrazione.');
+?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 

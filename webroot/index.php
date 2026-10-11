@@ -42,23 +42,17 @@ $categoryLabels = [
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Reflexi",
-  "url": "https://reflexi.it/",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "description": "App di finanza personale che unisce mutuo, investimenti, budget e analisi predittiva in un'unica piattaforma.",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "EUR"
-  },
-  "inLanguage": "it-IT"
-}
-</script>
+<?php
+require_once __DIR__ . '/_seo.php';
+// Grafo della home: organizzazione, sito e app con i prezzi reali di piani.php
+// (prima l'offerta dichiarava prezzo 0, non corrispondente alla pagina prezzi).
+seo_jsonld(['@graph' => [
+    seo_organization(),
+    ['@type' => 'WebSite', '@id' => SEO_BASE_URL . '/#website', 'name' => 'Reflexi', 'url' => SEO_BASE_URL . '/',
+     'inLanguage' => 'it-IT', 'publisher' => ['@id' => SEO_BASE_URL . '/#organization']],
+    seo_software_application(),
+]]);
+?>
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <style>
   .glow { position: absolute; border-radius: 9999px; filter: blur(60px); pointer-events: none; }

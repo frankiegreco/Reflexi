@@ -32,6 +32,10 @@
   details summary::-webkit-details-marker { display: none; }
   details[open] .faq-chevron { transform: rotate(180deg); }
 </style>
+<?php
+require_once __DIR__ . '/_seo.php';
+seo_breadcrumb([['Domande frequenti', '/faq.php']]);
+?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 

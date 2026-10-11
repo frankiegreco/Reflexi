@@ -97,10 +97,20 @@ $titleTag = mb_strlen($seoTitle) + 10 <= 60 ? $seoTitle . ' — Reflexi' : $seoT
     'datePublished' => date('c', strtotime($article['published_at'])),
     'dateModified' => date('c', strtotime($article['updated_at'])),
     'author' => ['@type' => 'Organization', 'name' => 'Reflexi', 'url' => 'https://reflexi.it/'],
-    'publisher' => ['@type' => 'Organization', 'name' => 'Reflexi', 'url' => 'https://reflexi.it/'],
+    'publisher' => ['@type' => 'Organization', 'name' => 'Reflexi', 'url' => 'https://reflexi.it/', 'logo' => ['@type' => 'ImageObject', 'url' => 'https://reflexi.it/favicon.svg']],
     'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $canonicalUrl],
+    'inLanguage' => 'it-IT',
+    'articleSection' => $categoryLabels[$article['category']] ?? $article['category'],
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
 </script>
+<?php
+require_once __DIR__ . '/_seo.php';
+seo_breadcrumb([
+    ['News', '/news'],
+    [$categoryLabels[$article['category']] ?? $article['category'], '/news?categoria=' . $article['category']],
+    [$seoTitle, '/news/' . $article['slug']],
+]);
+?>
 <?php endif; ?>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -35,6 +35,11 @@ $relatedArticles = news_related(['regola-50-30-20-vs-budget-per-categoria', 'obi
 <style>
   body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; } .font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 </style>
+<?php
+require_once __DIR__ . '/_seo.php';
+seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore regola 50/30/20', '/calcolatore-budget-503020.php']]);
+seo_calculator('Calcolatore regola 50/30/20', '/calcolatore-budget-503020.php', 'Suddividi il tuo reddito netto mensile tra necessità, desideri e risparmio con la regola 50/30/20. Gratuito, senza registrazione.');
+?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 

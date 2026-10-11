@@ -35,6 +35,11 @@ $relatedArticles = news_related(['obiettivi-risparmio-come-fissarli-e-raggiunger
 <style>
   body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; } .font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
 </style>
+<?php
+require_once __DIR__ . '/_seo.php';
+seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore obiettivo di risparmio', '/calcolatore-obiettivo-risparmio.php']]);
+seo_calculator('Calcolatore obiettivo di risparmio', '/calcolatore-obiettivo-risparmio.php', 'Calcola quanto versare ogni mese per raggiungere un obiettivo di risparmio entro una data specifica. Gratuito, senza registrazione.');
+?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 

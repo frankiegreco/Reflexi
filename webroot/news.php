@@ -92,6 +92,12 @@ function news_fmt_date(string $datetime): string
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
+<?php
+require_once __DIR__ . '/_seo.php';
+seo_breadcrumb($categoria !== ''
+    ? [['News', '/news'], [$categoryLabels[$categoria], '/news?categoria=' . $categoria]]
+    : [['News', '/news']]);
+?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 
