@@ -47,11 +47,12 @@ $calculatorItems = [
 // Pagina corrente, per evidenziare la voce giusta dentro le tendine (la chiave
 // $active non basta: è la stessa per tutti i calcolatori).
 $currentPath = $_SERVER['SCRIPT_NAME'] ?? '';
+// Ordine del menu: Chi siamo, Funzionalità ▾, Strumenti ▾, poi $siteItems.
+$aboutItem = ['/about.php', 'about', 'Chi siamo'];
 $siteItems = [
-    ['/news', 'news', 'News'],
-    ['/piani.php', 'piani', 'Piani'],
-    ['/about.php', 'about', 'Chi siamo'],
+    ['/piani.php', 'piani', 'Piani e prezzi'],
     ['/faq.php', 'faq', 'FAQ'],
+    ['/news', 'news', 'News'],
 ];
 
 /**
@@ -101,6 +102,7 @@ HTML;
       <span class="text-lg font-bold tracking-tight">Reflexi</span>
     </a>
     <nav class="hidden items-center gap-5 text-sm font-medium lg:flex">
+      <?= navlink($aboutItem[0], $aboutItem[1], $aboutItem[2], $active) ?>
 <?= navdropdown('nav-features', 'Funzionalità', $featureItems, $active, $currentPath, 2) ?>
 <?= navdropdown('nav-tools', 'Strumenti', $toolItems, $active, $currentPath, 2, $calculatorItems, 'Calcolatori') ?>
       <?php foreach ($siteItems as [$href, $key, $label]) echo navlink($href, $key, $label, $active); ?>
@@ -142,6 +144,7 @@ HTML;
             return "<a href=\"{$href}\" class=\"rounded-xl border {$cls} {$extraCls} font-medium\">{$label}</a>";
         }
         $heading = fn($t) => "<div class=\"mt-3 px-1 text-xs font-semibold uppercase tracking-wide text-muted first:mt-0\">{$t}</div>";
+        echo mobilenavlink($aboutItem[0], $aboutItem[1], $aboutItem[2], $active);
         echo $heading('Funzionalità');
         echo '<div class="grid grid-cols-2 gap-2">';
         foreach ($featureItems as [$href, $key, $label]) echo mobilenavlink($href, $key, $label, $active, 'px-3 py-2.5 text-sm');

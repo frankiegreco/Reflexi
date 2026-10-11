@@ -33,11 +33,12 @@ const CALCULATOR_ITEMS = [
   ['/calcolatore-patrimonio-netto.php', 'Patrimonio netto'],
   ['/calcolatore-pensione.php', 'Pensione'],
 ];
+// Ordine del menu: Chi siamo, Funzionalità, Strumenti, poi SITE_ITEMS.
+const ABOUT_ITEM = ['/about.php', 'Chi siamo'];
 const SITE_ITEMS = [
-  ['/news', 'News'],
-  ['/piani.php', 'Piani'],
-  ['/about.php', 'Chi siamo'],
+  ['/piani.php', 'Piani e prezzi'],
   ['/faq.php', 'FAQ'],
+  ['/news', 'News'],
 ];
 
 const linkCls = 'whitespace-nowrap text-gray-600 hover:text-accent';
@@ -164,6 +165,7 @@ export default function SiteNav({ cta }) {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Logo />
           <nav className="hidden items-center gap-5 text-sm font-medium lg:flex">
+            <a href={ABOUT_ITEM[0]} className={linkCls}>{ABOUT_ITEM[1]}</a>
             <Dropdown label="Funzionalità" items={FEATURE_ITEMS} wide />
             <Dropdown label="Strumenti" items={TOOL_ITEMS} wide compact={CALCULATOR_ITEMS} compactTitle="Calcolatori" />
             {SITE_ITEMS.map(([href, label]) => <a key={href} href={href} className={linkCls}>{label}</a>)}
@@ -199,6 +201,7 @@ export default function SiteNav({ cta }) {
             </div>
             <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
               <div className="flex flex-col gap-2">
+                <a href={ABOUT_ITEM[0]} className={`${mobileLinkCls} px-4 py-3 text-base`}>{ABOUT_ITEM[1]}</a>
                 <MobileSection title="Funzionalità" items={FEATURE_ITEMS} />
                 <MobileSection title="Strumenti" items={TOOL_ITEMS} />
                 <MobileSection title="Calcolatori" items={CALCULATOR_ITEMS} small />
