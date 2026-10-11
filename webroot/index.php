@@ -59,7 +59,7 @@ $categoryLabels = [
   "inLanguage": "it-IT"
 }
 </script>
-<link rel="stylesheet" href="/css/site.css?v=1">
+<link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <style>
   .glow { position: absolute; border-radius: 9999px; filter: blur(60px); pointer-events: none; }
 </style>

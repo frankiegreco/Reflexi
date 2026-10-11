@@ -35,6 +35,14 @@ analisi predittiva) e `docs/ROADMAP.md` per lo stato del progetto.
   classi vanno elencate nella `safelist` di `build/tailwind.config.js`,
   altrimenti verrebbero scartate dal build). Questa VPS non ha Node: lo
   script usa un container `node:20` temporaneo via Docker.
+  Le pagine includono `site.css?v=<filemtime>`: la versione cambia da sola
+  a ogni rebuild. Non tornare a una `?v=` fissa: `.htaccess` mette il CSS in
+  cache per un mese e i visitatori vedrebbero il CSS vecchio (successo con la
+  tendina del menu, rimasta sempre aperta).
+- **Menu del sito** (`webroot/_nav.php`): tendine "Funzionalità" (una pagina
+  pubblica per funzione dell'app) e "Strumenti" (Mercati, Calcolatori). Lo
+  stesso menu è replicato in React in `frontend/src/components/SiteNav.jsx`
+  (navbar della pagina di login): le voci vanno cambiate in entrambi i posti.
 - **App mobile Android**: stesso codice React impacchettato con Capacitor in
   `frontend/android/` (progetto Android Studio). Vedi sezione dedicata più sotto.
 - **DB**: MariaDB 11, schema in `db/init.sql` (installazioni nuove) +
