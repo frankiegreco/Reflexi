@@ -11,10 +11,10 @@ $relatedArticles = news_related(['rendimento-totale-vs-cagr-come-leggere-la-perf
 <title>Calcolatore di rendimento (ROI) — Reflexi</title>
 <meta name="description" content="Calcola il rendimento totale e annualizzato (CAGR) di un investimento da valore iniziale, valore finale e durata in anni. Gratuito, senza registrazione.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/calcolatore-rendimento.php">
+<link rel="canonical" href="https://reflexi.it/calcolatore-rendimento">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/calcolatore-rendimento.php">
+<meta property="og:url" content="https://reflexi.it/calcolatore-rendimento">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore di rendimento (ROI) — Reflexi">
 <meta property="og:description" content="Calcola il rendimento totale e annualizzato (CAGR) di un investimento da valore iniziale, valore finale e durata in anni. Gratuito, senza registrazione.">
@@ -36,8 +36,8 @@ $relatedArticles = news_related(['rendimento-totale-vs-cagr-come-leggere-la-perf
 </style>
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore di rendimento (ROI)', '/calcolatore-rendimento.php']]);
-seo_calculator('Calcolatore di rendimento (ROI)', '/calcolatore-rendimento.php', 'Calcola il rendimento totale e annualizzato (CAGR) di un investimento da valore iniziale, valore finale e durata in anni. Gratuito, senza registrazione.');
+seo_breadcrumb([['Calcolatori', '/calcolatori'], ['Calcolatore di rendimento (ROI)', '/calcolatore-rendimento']]);
+seo_calculator('Calcolatore di rendimento (ROI)', '/calcolatore-rendimento', 'Calcola il rendimento totale e annualizzato (CAGR) di un investimento da valore iniziale, valore finale e durata in anni. Gratuito, senza registrazione.');
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
@@ -45,7 +45,7 @@ seo_calculator('Calcolatore di rendimento (ROI)', '/calcolatore-rendimento.php',
 <?php include '_nav.php'; ?>
 
 <section class="px-6 pb-6 pt-14 text-center sm:pt-16">
-  <a href="/calcolatori.php" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
+  <a href="/calcolatori" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
   <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-income/10 text-3xl">📊</div>
   <h1 class="mx-auto mb-3 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Calcolatore di rendimento (ROI)</h1>
   <p class="mx-auto max-w-xl text-lg text-muted">Quanto ha reso davvero un investimento, in totale e su base annua (CAGR).</p>
@@ -113,10 +113,10 @@ seo_calculator('Calcolatore di rendimento (ROI)', '/calcolatore-rendimento.php',
 
 <section class="px-6 py-16 text-center">
   <p class="mb-4 text-sm text-muted">Cerchi anche un altro calcolatore?</p>
-  <a href="/calcolatori.php" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
+  <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Vuoi il rendimento reale del tuo portafoglio, calcolato da solo?</h2>
   <p class="mb-6 text-muted">Reflexi calcola plus e minusvalenze con il costo medio di carico, aggiornato ad ogni quotazione.</p>
-  <a href="/investimenti.php" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Scopri gli investimenti su Reflexi</a>
+  <a href="/investimenti" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Scopri gli investimenti su Reflexi</a>
 </section>
 
 <?php include '_footer.php'; ?>

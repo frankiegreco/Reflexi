@@ -193,8 +193,8 @@ export default function Auth() {
           <label className="flex items-start gap-2 text-xs text-muted">
             <input type="checkbox" required checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-0.5" />
             <span>
-              Accetto i <a href="/termini.php" target="_blank" rel="noopener" className="text-accent hover:underline">Termini di Servizio</a> e ho letto
-              la <a href="/privacy.php" target="_blank" rel="noopener" className="text-accent hover:underline">Privacy Policy</a>
+              Accetto i <a href="/termini" target="_blank" rel="noopener" className="text-accent hover:underline">Termini di Servizio</a> e ho letto
+              la <a href="/privacy" target="_blank" rel="noopener" className="text-accent hover:underline">Privacy Policy</a>
             </span>
           </label>
           <button className="btn-accent w-full" disabled={loading}>{loading ? 'Attendere...' : 'Registrati'}</button>

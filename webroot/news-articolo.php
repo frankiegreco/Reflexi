@@ -10,10 +10,10 @@ $categoryLabels = [
 ];
 
 $categoryCta = [
-    'mutui' => ['label' => 'Scopri i mutui su Reflexi', 'href' => '/mutui.php', 'text' => 'Piano di ammortamento reale, simulazione di estinzione anticipata, gestione della quota di proprietà.'],
-    'investimenti' => ['label' => 'Scopri gli investimenti su Reflexi', 'href' => '/investimenti.php', 'text' => 'ETF, azioni e crypto con quotazioni live, PAC automatici, tassazione sulle plusvalenze calcolata da sola.'],
-    'budget' => ['label' => 'Scopri il budget su Reflexi', 'href' => '/budget.php', 'text' => 'Un limite per categoria, con rollover e avviso prima di sforare, non dopo.'],
-    'pianificazione' => ['label' => 'Scopri l\'analisi predittiva su Reflexi', 'href' => '/analisi.php', 'text' => 'Simulazione Monte Carlo sul tuo risparmio futuro, basata sulla tua storia finanziaria reale.'],
+    'mutui' => ['label' => 'Scopri i mutui su Reflexi', 'href' => '/mutui', 'text' => 'Piano di ammortamento reale, simulazione di estinzione anticipata, gestione della quota di proprietà.'],
+    'investimenti' => ['label' => 'Scopri gli investimenti su Reflexi', 'href' => '/investimenti', 'text' => 'ETF, azioni e crypto con quotazioni live, PAC automatici, tassazione sulle plusvalenze calcolata da sola.'],
+    'budget' => ['label' => 'Scopri il budget su Reflexi', 'href' => '/budget', 'text' => 'Un limite per categoria, con rollover e avviso prima di sforare, non dopo.'],
+    'pianificazione' => ['label' => 'Scopri l\'analisi predittiva su Reflexi', 'href' => '/analisi', 'text' => 'Simulazione Monte Carlo sul tuo risparmio futuro, basata sulla tua storia finanziaria reale.'],
 ];
 
 $slug = $_GET['slug'] ?? '';

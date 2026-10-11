@@ -6,10 +6,10 @@
 <title>Termini di Servizio — Reflexi</title>
 <meta name="description" content="Termini e condizioni d'uso del servizio Reflexi.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/termini.php">
+<link rel="canonical" href="https://reflexi.it/termini">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/termini.php">
+<meta property="og:url" content="https://reflexi.it/termini">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Termini di Servizio — Reflexi">
 <meta property="og:description" content="Termini e condizioni d'uso del servizio Reflexi.">
@@ -74,7 +74,7 @@
 
     <section>
       <h2 class="mb-2 text-lg font-bold text-gray-900">6. I tuoi dati</h2>
-      <p>Il trattamento dei tuoi dati personali è descritto nella <a href="/privacy.php" class="text-accent">Privacy Policy</a>, parte integrante di questi Termini.</p>
+      <p>Il trattamento dei tuoi dati personali è descritto nella <a href="/privacy" class="text-accent">Privacy Policy</a>, parte integrante di questi Termini.</p>
     </section>
 
     <section>
@@ -105,7 +105,7 @@
   </div>
 
   <p class="mt-12 text-sm">
-    <a href="/privacy.php" class="text-accent hover:underline">← Leggi anche la Privacy Policy</a>
+    <a href="/privacy" class="text-accent hover:underline">← Leggi anche la Privacy Policy</a>
   </p>
 </main>
 

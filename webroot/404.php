@@ -30,7 +30,7 @@ $active = '';
         <span class="block font-semibold">Home</span>
         <span class="block text-sm text-muted">Cos'è Reflexi e come funziona</span>
       </a>
-      <a href="/calcolatori.php" class="rounded-2xl border border-border bg-white p-5 transition hover:border-accent hover:bg-accentSoft">
+      <a href="/calcolatori" class="rounded-2xl border border-border bg-white p-5 transition hover:border-accent hover:bg-accentSoft">
         <span class="block font-semibold">Calcolatori gratuiti</span>
         <span class="block text-sm text-muted">Interesse composto, pensione, inflazione e altri</span>
       </a>
@@ -38,7 +38,7 @@ $active = '';
         <span class="block font-semibold">News e guide</span>
         <span class="block text-sm text-muted">Mutui, investimenti, budget e pianificazione</span>
       </a>
-      <a href="/piani.php" class="rounded-2xl border border-border bg-white p-5 transition hover:border-accent hover:bg-accentSoft">
+      <a href="/piani" class="rounded-2xl border border-border bg-white p-5 transition hover:border-accent hover:bg-accentSoft">
         <span class="block font-semibold">Piani e prezzi</span>
         <span class="block text-sm text-muted">6 mesi gratis, senza carta di credito</span>
       </a>

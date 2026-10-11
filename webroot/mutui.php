@@ -6,10 +6,10 @@
 <title>Gestione mutuo e piano di ammortamento — Reflexi</title>
 <meta name="description" content="Piano di ammortamento reale, simulazione di estinzione anticipata e quota per mutui cointestati: il tuo mutuo, collegato al resto delle tue finanze.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/mutui.php">
+<link rel="canonical" href="https://reflexi.it/mutui">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/mutui.php">
+<meta property="og:url" content="https://reflexi.it/mutui">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Gestione mutuo e piano di ammortamento — Reflexi">
 <meta property="og:description" content="Piano di ammortamento reale, simulazione di estinzione anticipata e quota per mutui cointestati: il tuo mutuo, collegato al resto delle tue finanze.">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Mutui', '/mutui.php']]);
+seo_breadcrumb([['Mutui', '/mutui']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">

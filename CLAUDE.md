@@ -52,6 +52,11 @@ analisi predittiva) e `docs/ROADMAP.md` per lo stato del progetto.
   in `build/tailwind.config.js` + `@font-face` in `tailwind-input.css`.
   Redirect www -> dominio e compressione in `Caddyfile`; `/index.php` -> `/`
   e pagina `404.php` via `.htaccess`.
+- **URL senza estensione**: ogni pagina pubblica nella radice di `webroot/`
+  si apre come `/nome` (rewrite interno a `nome.php`) e `/nome.php` fa 301
+  verso `/nome`. Link, canonical, sitemap e breadcrumb vanno scritti SENZA
+  `.php`. Un file nuovo `webroot/x.php` funziona da solo come `/x`. I file
+  che iniziano con `_` (parziali da includere) rispondono 404 se aperti.
 - **App mobile Android**: stesso codice React impacchettato con Capacitor in
   `frontend/android/` (progetto Android Studio). Vedi sezione dedicata più sotto.
 - **DB**: MariaDB 11, schema in `db/init.sql` (installazioni nuove) +

@@ -6,10 +6,10 @@
 <title>Privacy Policy — Reflexi</title>
 <meta name="description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/privacy.php">
+<link rel="canonical" href="https://reflexi.it/privacy">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/privacy.php">
+<meta property="og:url" content="https://reflexi.it/privacy">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Privacy Policy — Reflexi">
 <meta property="og:description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari.">
@@ -119,7 +119,7 @@
   </div>
 
   <p class="mt-12 text-sm">
-    <a href="/termini.php" class="text-accent hover:underline">Leggi anche i Termini di Servizio →</a>
+    <a href="/termini" class="text-accent hover:underline">Leggi anche i Termini di Servizio →</a>
   </p>
 </main>
 

@@ -6,10 +6,10 @@
 <title>Calcolo FIRE e proiezione fondo pensione — Reflexi</title>
 <meta name="description" content="Calcola il numero FIRE dalla tua spesa reale e gli anni che mancano all&#x27;indipendenza finanziaria. Proietta fondi pensione e TFR fino alla pensione.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/fire-pensione.php">
+<link rel="canonical" href="https://reflexi.it/fire-pensione">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/fire-pensione.php">
+<meta property="og:url" content="https://reflexi.it/fire-pensione">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolo FIRE e proiezione fondo pensione — Reflexi">
 <meta property="og:description" content="Calcola il numero FIRE dalla tua spesa reale e gli anni che mancano all&#x27;indipendenza finanziaria. Proietta fondi pensione e TFR fino alla pensione.">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['FIRE e pensione', '/fire-pensione.php']]);
+seo_breadcrumb([['FIRE e pensione', '/fire-pensione']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">

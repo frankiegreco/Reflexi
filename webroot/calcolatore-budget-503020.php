@@ -11,10 +11,10 @@ $relatedArticles = news_related(['regola-50-30-20-vs-budget-per-categoria', 'obi
 <title>Calcolatore regola 50/30/20 — Reflexi</title>
 <meta name="description" content="Suddividi il tuo reddito netto mensile tra necessità, desideri e risparmio con la regola 50/30/20. Gratuito, senza registrazione.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/calcolatore-budget-503020.php">
+<link rel="canonical" href="https://reflexi.it/calcolatore-budget-503020">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/calcolatore-budget-503020.php">
+<meta property="og:url" content="https://reflexi.it/calcolatore-budget-503020">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore regola 50/30/20 — Reflexi">
 <meta property="og:description" content="Suddividi il tuo reddito netto mensile tra necessità, desideri e risparmio con la regola 50/30/20. Gratuito, senza registrazione.">
@@ -36,8 +36,8 @@ $relatedArticles = news_related(['regola-50-30-20-vs-budget-per-categoria', 'obi
 </style>
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore regola 50/30/20', '/calcolatore-budget-503020.php']]);
-seo_calculator('Calcolatore regola 50/30/20', '/calcolatore-budget-503020.php', 'Suddividi il tuo reddito netto mensile tra necessità, desideri e risparmio con la regola 50/30/20. Gratuito, senza registrazione.');
+seo_breadcrumb([['Calcolatori', '/calcolatori'], ['Calcolatore regola 50/30/20', '/calcolatore-budget-503020']]);
+seo_calculator('Calcolatore regola 50/30/20', '/calcolatore-budget-503020', 'Suddividi il tuo reddito netto mensile tra necessità, desideri e risparmio con la regola 50/30/20. Gratuito, senza registrazione.');
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
@@ -45,7 +45,7 @@ seo_calculator('Calcolatore regola 50/30/20', '/calcolatore-budget-503020.php', 
 <?php include '_nav.php'; ?>
 
 <section class="px-6 pb-6 pt-14 text-center sm:pt-16">
-  <a href="/calcolatori.php" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
+  <a href="/calcolatori" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
   <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-income/10 text-3xl">🥧</div>
   <h1 class="mx-auto mb-3 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Calcolatore regola 50/30/20</h1>
   <p class="mx-auto max-w-xl text-lg text-muted">Una suddivisione di base del reddito netto: 50% necessità, 30% desideri, 20% risparmio.</p>
@@ -93,10 +93,10 @@ seo_calculator('Calcolatore regola 50/30/20', '/calcolatore-budget-503020.php', 
 
 <section class="px-6 py-16 text-center">
   <p class="mb-4 text-sm text-muted">Cerchi anche un altro calcolatore?</p>
-  <a href="/calcolatori.php" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
+  <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Vuoi un budget su misura, non solo tre fette generiche?</h2>
   <p class="mb-6 text-muted">Reflexi ti permette di impostare un limite per ogni categoria reale che usi, con avvisi prima di sforare.</p>
-  <a href="/budget.php" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Scopri il budget su Reflexi</a>
+  <a href="/budget" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Scopri il budget su Reflexi</a>
 </section>
 
 <?php include '_footer.php'; ?>

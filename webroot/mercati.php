@@ -6,10 +6,10 @@
 <title>Mercati — Andamenti di azioni, ETF e crypto | Reflexi</title>
 <meta name="description" content="Quotazioni di ETF, azioni e crypto: i titoli più seguiti, i movimenti più forti del giorno e il grafico storico di ogni ticker. Gratis, senza registrazione.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/mercati.php">
+<link rel="canonical" href="https://reflexi.it/mercati">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/mercati.php">
+<meta property="og:url" content="https://reflexi.it/mercati">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Mercati — Andamenti di azioni, ETF e crypto | Reflexi">
 <meta property="og:description" content="Quotazioni live di ETF, azioni e crypto: watchlist dei titoli più seguiti, i movimenti più forti della giornata e il grafico storico di qualsiasi ticker tu cerchi.">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Mercati', '/mercati.php']]);
+seo_breadcrumb([['Mercati', '/mercati']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
@@ -153,7 +153,7 @@ include '_nav.php';
   <div class="mx-auto max-w-2xl rounded-3xl bg-gradient-to-br from-accent via-accentDark to-indigo-900 p-10 text-center text-white sm:p-14">
     <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Vuoi collegare questi titoli al tuo portafoglio?</h2>
     <p class="mb-8 text-white/80">Con Reflexi tracci quanto possiedi davvero, con costo medio di carico, plus/minus e PAC automatici.</p>
-    <a href="/investimenti.php" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Scopri Investimenti</a>
+    <a href="/investimenti" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Scopri Investimenti</a>
   </div>
 </section>
 

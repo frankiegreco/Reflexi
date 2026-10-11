@@ -6,10 +6,10 @@
 <title>Obiettivi di risparmio — Reflexi</title>
 <meta name="description" content="Obiettivi di risparmio con importo e scadenza: progressi sul risparmio reale e un piano mensile per arrivarci, con le categorie dove recuperare margine.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/obiettivi.php">
+<link rel="canonical" href="https://reflexi.it/obiettivi">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/obiettivi.php">
+<meta property="og:url" content="https://reflexi.it/obiettivi">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Obiettivi di risparmio — Reflexi">
 <meta property="og:description" content="Obiettivi di risparmio con importo e scadenza: progressi sul risparmio reale e un piano mensile per arrivarci, con le categorie dove recuperare margine.">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Obiettivi', '/obiettivi.php']]);
+seo_breadcrumb([['Obiettivi', '/obiettivi']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">

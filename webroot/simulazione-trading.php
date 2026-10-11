@@ -6,10 +6,10 @@
 <title>Simulazione trading con capitale virtuale — Reflexi</title>
 <meta name="description" content="Simulatore di trading con capitale virtuale: compra e vendi azioni, ETF e crypto ai prezzi reali di mercato, con commissioni simulate e andamento del conto.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/simulazione-trading.php">
+<link rel="canonical" href="https://reflexi.it/simulazione-trading">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/simulazione-trading.php">
+<meta property="og:url" content="https://reflexi.it/simulazione-trading">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Simulazione trading con capitale virtuale — Reflexi">
 <meta property="og:description" content="Simulatore di trading con capitale virtuale: compra e vendi azioni, ETF e crypto ai prezzi reali di mercato, con commissioni simulate e andamento del conto.">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Simulazione trading', '/simulazione-trading.php']]);
+seo_breadcrumb([['Simulazione trading', '/simulazione-trading']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">

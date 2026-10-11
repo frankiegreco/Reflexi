@@ -6,38 +6,38 @@ import { Menu, X, ChevronDown } from 'lucide-react';
 // se cambi le voci lì, aggiornale anche qui. Due tendine: "Funzionalità" (le
 // funzioni dell'app) e "Strumenti" (gli strumenti gratuiti), poi le pagine del sito.
 const FEATURE_ITEMS = [
-  ['/mutui.php', 'Mutui', 'Ammortamento ed estinzione anticipata'],
-  ['/investimenti.php', 'Investimenti', 'Portafoglio con quotazioni reali'],
-  ['/budget.php', 'Budget', 'Limiti per categoria e avvisi'],
-  ['/analisi.php', 'Analisi predittiva', 'Proiezioni e simulazione Monte Carlo'],
-  ['/previsioni.php', 'Previsioni', 'Stime a 12 mesi e proposte di investimento'],
-  ['/simulazione-trading.php', 'Simulazione trading', 'Fai pratica con capitale virtuale'],
-  ['/fire-pensione.php', 'FIRE e pensione', 'Indipendenza finanziaria e fondi pensione'],
-  ['/obiettivi.php', 'Obiettivi', 'Traguardi di risparmio con un piano'],
-  ['/abbonamenti.php', 'Abbonamenti', 'Spese ricorrenti, anche quelle nascoste'],
-  ['/patrimonio.php', 'Patrimonio e report', 'Patrimonio netto, immobili e report'],
+  ['/mutui', 'Mutui', 'Ammortamento ed estinzione anticipata'],
+  ['/investimenti', 'Investimenti', 'Portafoglio con quotazioni reali'],
+  ['/budget', 'Budget', 'Limiti per categoria e avvisi'],
+  ['/analisi', 'Analisi predittiva', 'Proiezioni e simulazione Monte Carlo'],
+  ['/previsioni', 'Previsioni', 'Stime a 12 mesi e proposte di investimento'],
+  ['/simulazione-trading', 'Simulazione trading', 'Fai pratica con capitale virtuale'],
+  ['/fire-pensione', 'FIRE e pensione', 'Indipendenza finanziaria e fondi pensione'],
+  ['/obiettivi', 'Obiettivi', 'Traguardi di risparmio con un piano'],
+  ['/abbonamenti', 'Abbonamenti', 'Spese ricorrenti, anche quelle nascoste'],
+  ['/patrimonio', 'Patrimonio e report', 'Patrimonio netto, immobili e report'],
 ];
 const TOOL_ITEMS = [
-  ['/mercati.php', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
-  ['/calcolatori.php', 'Tutti i calcolatori', 'La pagina con tutti gli strumenti di calcolo'],
+  ['/mercati', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
+  ['/calcolatori', 'Tutti i calcolatori', 'La pagina con tutti gli strumenti di calcolo'],
 ];
 // I singoli calcolatori, in forma compatta sotto i due strumenti principali.
 const CALCULATOR_ITEMS = [
-  ['/calcolatore-interesse-composto.php', 'Interesse composto'],
-  ['/calcolatore-piano-investimento.php', 'Piano di investimento'],
-  ['/calcolatore-obiettivo-risparmio.php', 'Obiettivo di risparmio'],
-  ['/calcolatore-rendimento.php', 'Rendimento (ROI)'],
-  ['/calcolatore-recupero-perdite.php', 'Recupero perdite'],
-  ['/calcolatore-inflazione.php', 'Inflazione'],
-  ['/calcolatore-budget-503020.php', 'Regola 50/30/20'],
-  ['/calcolatore-patrimonio-netto.php', 'Patrimonio netto'],
-  ['/calcolatore-pensione.php', 'Pensione'],
+  ['/calcolatore-interesse-composto', 'Interesse composto'],
+  ['/calcolatore-piano-investimento', 'Piano di investimento'],
+  ['/calcolatore-obiettivo-risparmio', 'Obiettivo di risparmio'],
+  ['/calcolatore-rendimento', 'Rendimento (ROI)'],
+  ['/calcolatore-recupero-perdite', 'Recupero perdite'],
+  ['/calcolatore-inflazione', 'Inflazione'],
+  ['/calcolatore-budget-503020', 'Regola 50/30/20'],
+  ['/calcolatore-patrimonio-netto', 'Patrimonio netto'],
+  ['/calcolatore-pensione', 'Pensione'],
 ];
 // Ordine del menu: Chi siamo, Funzionalità, Strumenti, poi SITE_ITEMS.
-const ABOUT_ITEM = ['/about.php', 'Chi siamo'];
+const ABOUT_ITEM = ['/about', 'Chi siamo'];
 const SITE_ITEMS = [
-  ['/piani.php', 'Piani e prezzi'],
-  ['/faq.php', 'FAQ'],
+  ['/piani', 'Piani e prezzi'],
+  ['/faq', 'FAQ'],
   ['/news', 'News'],
 ];
 

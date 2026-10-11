@@ -6,10 +6,10 @@
 <title>Budget mensile per categoria con avvisi — Reflexi</title>
 <meta name="description" content="Un limite di spesa per categoria, con rollover: l'eccedenza non spesa si riporta al mese successivo. Un avviso prima di sforare, non dopo.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/budget.php">
+<link rel="canonical" href="https://reflexi.it/budget">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/budget.php">
+<meta property="og:url" content="https://reflexi.it/budget">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Budget mensile per categoria con avvisi — Reflexi">
 <meta property="og:description" content="Un limite di spesa per categoria, con rollover: l'eccedenza non spesa si riporta al mese successivo. Un avviso prima di sforare, non dopo.">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Budget', '/budget.php']]);
+seo_breadcrumb([['Budget', '/budget']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">

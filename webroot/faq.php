@@ -7,10 +7,10 @@
 <title>Domande frequenti su Reflexi: sicurezza, prezzi e funzioni</title>
 <meta name="description" content="Tutto quello che c'è da sapere su Reflexi: come funziona, sicurezza dei dati, mutui, investimenti, budget e abbonamento.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/faq.php">
+<link rel="canonical" href="https://reflexi.it/faq">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/faq.php">
+<meta property="og:url" content="https://reflexi.it/faq">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Domande frequenti su Reflexi: sicurezza, prezzi e funzioni">
 <meta property="og:description" content="Tutto quello che c'è da sapere su Reflexi: come funziona, sicurezza dei dati, mutui, investimenti, budget e abbonamento.">
@@ -33,7 +33,7 @@
 </style>
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Domande frequenti', '/faq.php']]);
+seo_breadcrumb([['Domande frequenti', '/faq']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
@@ -126,7 +126,7 @@ function faq_category($title, $items) {
 <?php faq_category('Sicurezza e Privacy', [
     ['Come proteggete i miei dati?', 'Connessione sempre cifrata (HTTPS), password mai salvate in chiaro, dati isolati per ogni utente, server in Italia, nessuna pubblicità o vendita dei tuoi dati a terzi.'],
     ['Posso cancellare il mio account?', 'Sì, in qualsiasi momento — scrivi a <a href="mailto:privacy@reflexi.it" class="text-accent hover:underline">privacy@reflexi.it</a> e cancelliamo account e dati completamente.'],
-    ['Dove trovo tutti i dettagli legali?', 'Nella <a href="/privacy.php" class="text-accent hover:underline">Privacy Policy</a> e nei <a href="/termini.php" class="text-accent hover:underline">Termini di Servizio</a>.'],
+    ['Dove trovo tutti i dettagli legali?', 'Nella <a href="/privacy" class="text-accent hover:underline">Privacy Policy</a> e nei <a href="/termini" class="text-accent hover:underline">Termini di Servizio</a>.'],
 ]); ?>
 
 <script type="application/ld+json">

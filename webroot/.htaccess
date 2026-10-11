@@ -3,16 +3,57 @@ RewriteEngine On
 # Pagina 404 del sito (al posto di quella predefinita di Apache in inglese).
 ErrorDocument 404 /404.php
 
-# Una sola URL per la home: /index.php -> / con 301. Il controllo su
-# THE_REQUEST (la richiesta originale del browser) evita il loop con il
-# DirectoryIndex, che internamente serve proprio index.php per "/".
-# Dietro Caddy la richiesta arriva in HTTP: X-Forwarded-Proto dice se
-# l'originale era HTTPS, così il redirect punta subito a https (un salto solo).
-RewriteCond %{THE_REQUEST} \s/index\.php[\s?]
+# --- Redirect 301 verso gli URL canonici -----------------------------------
+# Valgono solo per la richiesta originale del browser (REDIRECT_STATUS vuoto):
+# altrimenti si riapplicherebbero anche quando Apache serve internamente
+# 404.php o news-articolo.php. Solo GET/HEAD: un 301 su una POST la
+# trasformerebbe in GET perdendo i dati.
+# Dietro Caddy la richiesta arriva in HTTP: PROTO prende X-Forwarded-Proto,
+# così il redirect punta subito a https (un salto solo).
+RewriteRule ^ - [E=PROTO:http]
 RewriteCond %{HTTP:X-Forwarded-Proto} =https
-RewriteRule ^index\.php$ https://%{HTTP_HOST}/ [R=301,L]
+RewriteRule ^ - [E=PROTO:https]
+
+# I file parziali (_nav.php, _footer.php, _seo.php, _news_db.php) sono solo
+# da includere: aperti direttamente rispondono 404, non una pagina a metà.
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule ^_ - [R=404,L]
+
+# Home: /index.php -> /. Il controllo su THE_REQUEST (la richiesta originale)
+# evita il loop con il DirectoryIndex, che serve index.php per "/".
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
 RewriteCond %{THE_REQUEST} \s/index\.php[\s?]
-RewriteRule ^index\.php$ / [R=301,L]
+RewriteRule ^index\.php$ %{ENV:PROTO}://%{HTTP_HOST}/ [R=301,L]
+
+# Sitemap: /sitemap.php -> /sitemap.xml.
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteCond %{THE_REQUEST} \s/sitemap\.php[\s?]
+RewriteRule ^sitemap\.php$ %{ENV:PROTO}://%{HTTP_HOST}/sitemap.xml [R=301,L]
+
+# News: /news.php -> /news e /news-articolo.php?slug=x -> /news/x.
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+RewriteCond %{THE_REQUEST} \s/news\.php[\s?]
+RewriteRule ^news\.php$ %{ENV:PROTO}://%{HTTP_HOST}/news [R=301,L]
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+RewriteCond %{THE_REQUEST} \s/news-articolo\.php\?slug=([a-z0-9-]+)[\s&]
+RewriteRule ^news-articolo\.php$ %{ENV:PROTO}://%{HTTP_HOST}/news/%1? [R=301,L]
+
+# Pagine del sito senza estensione: /mutui.php -> /mutui. Solo file che
+# esistono nella radice: /api/ e /app/ restano intatti.
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{THE_REQUEST} \s/([a-z0-9-]+)\.php[\s?]
+RewriteCond %1 !^(index|news|news-articolo|sitemap|404)$
+RewriteRule ^([a-z0-9-]+)\.php$ %{ENV:PROTO}://%{HTTP_HOST}/$1 [R=301,L]
+
+# --- Rewrite interni -------------------------------------------------------
+# /mutui -> mutui.php (l'URL nel browser resta /mutui).
+RewriteCond %{DOCUMENT_ROOT}/$1.php -f
+RewriteRule ^([a-z0-9-]+)$ $1.php [L]
 
 # URL puliti per la sezione news: /news/{slug} -> news-articolo.php?slug={slug}
 RewriteRule ^news/([a-z0-9-]+)/?$ news-articolo.php?slug=$1 [L,QSA]

@@ -7,10 +7,10 @@
 <title>Cancellazione account — Reflexi</title>
 <meta name="description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati, dall'app in modo immediato oppure con una richiesta via email.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/cancella-account.php">
+<link rel="canonical" href="https://reflexi.it/cancella-account">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/cancella-account.php">
+<meta property="og:url" content="https://reflexi.it/cancella-account">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Cancellazione account — Reflexi">
 <meta property="og:description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati, dall'app in modo immediato oppure con una richiesta via email.">
@@ -67,7 +67,7 @@
     </ul>
     <p class="mt-3 text-sm text-muted">
       Per i dettagli completi su come trattiamo i tuoi dati, leggi la
-      <a href="/privacy.php" class="text-accent hover:underline">Privacy Policy</a>.
+      <a href="/privacy" class="text-accent hover:underline">Privacy Policy</a>.
     </p>
   </div>
 </main>

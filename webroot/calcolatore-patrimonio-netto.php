@@ -11,10 +11,10 @@ $relatedArticles = news_related(['patrimonio-netto-cos-e-perche-seguirlo-nel-tem
 <title>Calcolatore di patrimonio netto — Reflexi</title>
 <meta name="description" content="Calcola il tuo patrimonio netto: tutto quello che possiedi meno tutto quello che devi. Gratuito, senza registrazione.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/calcolatore-patrimonio-netto.php">
+<link rel="canonical" href="https://reflexi.it/calcolatore-patrimonio-netto">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/calcolatore-patrimonio-netto.php">
+<meta property="og:url" content="https://reflexi.it/calcolatore-patrimonio-netto">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore di patrimonio netto — Reflexi">
 <meta property="og:description" content="Calcola il tuo patrimonio netto: tutto quello che possiedi meno tutto quello che devi. Gratuito, senza registrazione.">
@@ -36,8 +36,8 @@ $relatedArticles = news_related(['patrimonio-netto-cos-e-perche-seguirlo-nel-tem
 </style>
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore patrimonio netto', '/calcolatore-patrimonio-netto.php']]);
-seo_calculator('Calcolatore patrimonio netto', '/calcolatore-patrimonio-netto.php', 'Calcola il tuo patrimonio netto: tutto quello che possiedi meno tutto quello che devi. Gratuito, senza registrazione.');
+seo_breadcrumb([['Calcolatori', '/calcolatori'], ['Calcolatore patrimonio netto', '/calcolatore-patrimonio-netto']]);
+seo_calculator('Calcolatore patrimonio netto', '/calcolatore-patrimonio-netto', 'Calcola il tuo patrimonio netto: tutto quello che possiedi meno tutto quello che devi. Gratuito, senza registrazione.');
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
@@ -45,7 +45,7 @@ seo_calculator('Calcolatore patrimonio netto', '/calcolatore-patrimonio-netto.ph
 <?php include '_nav.php'; ?>
 
 <section class="px-6 pb-6 pt-14 text-center sm:pt-16">
-  <a href="/calcolatori.php" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
+  <a href="/calcolatori" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
   <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-accentSoft text-3xl">🏦</div>
   <h1 class="mx-auto mb-3 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Calcolatore di patrimonio netto</h1>
   <p class="mx-auto max-w-xl text-lg text-muted">Tutto quello che possiedi, meno tutto quello che devi.</p>
@@ -104,7 +104,7 @@ seo_calculator('Calcolatore patrimonio netto', '/calcolatore-patrimonio-netto.ph
 
 <section class="px-6 py-16 text-center">
   <p class="mb-4 text-sm text-muted">Cerchi anche un altro calcolatore?</p>
-  <a href="/calcolatori.php" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
+  <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Vuoi che il calcolo si aggiorni da solo, quota mutuo inclusa?</h2>
   <p class="mb-6 text-muted">Reflexi calcola il patrimonio netto in automatico, gestendo da solo le quote di proprietà sui mutui cointestati.</p>
   <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>

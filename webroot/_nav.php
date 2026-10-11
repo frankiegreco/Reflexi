@@ -16,42 +16,43 @@ function navlink($href, $key, $label, $active) {
 // pubblica) e "Strumenti" (gli strumenti gratuiti), separate di proposito;
 // poi le pagine del sito.
 $featureItems = [
-    ['/mutui.php', 'mutui', 'Mutui', 'Ammortamento ed estinzione anticipata'],
-    ['/investimenti.php', 'investimenti', 'Investimenti', 'Portafoglio con quotazioni reali'],
-    ['/budget.php', 'budget', 'Budget', 'Limiti per categoria e avvisi'],
-    ['/analisi.php', 'analisi', 'Analisi predittiva', 'Proiezioni e simulazione Monte Carlo'],
-    ['/previsioni.php', 'previsioni', 'Previsioni', 'Stime a 12 mesi e proposte di investimento'],
-    ['/simulazione-trading.php', 'trading', 'Simulazione trading', 'Fai pratica con capitale virtuale'],
-    ['/fire-pensione.php', 'fire', 'FIRE e pensione', 'Indipendenza finanziaria e fondi pensione'],
-    ['/obiettivi.php', 'obiettivi', 'Obiettivi', 'Traguardi di risparmio con un piano'],
-    ['/abbonamenti.php', 'abbonamenti', 'Abbonamenti', 'Spese ricorrenti, anche quelle nascoste'],
-    ['/patrimonio.php', 'patrimonio', 'Patrimonio e report', 'Patrimonio netto, immobili e report'],
+    ['/mutui', 'mutui', 'Mutui', 'Ammortamento ed estinzione anticipata'],
+    ['/investimenti', 'investimenti', 'Investimenti', 'Portafoglio con quotazioni reali'],
+    ['/budget', 'budget', 'Budget', 'Limiti per categoria e avvisi'],
+    ['/analisi', 'analisi', 'Analisi predittiva', 'Proiezioni e simulazione Monte Carlo'],
+    ['/previsioni', 'previsioni', 'Previsioni', 'Stime a 12 mesi e proposte di investimento'],
+    ['/simulazione-trading', 'trading', 'Simulazione trading', 'Fai pratica con capitale virtuale'],
+    ['/fire-pensione', 'fire', 'FIRE e pensione', 'Indipendenza finanziaria e fondi pensione'],
+    ['/obiettivi', 'obiettivi', 'Obiettivi', 'Traguardi di risparmio con un piano'],
+    ['/abbonamenti', 'abbonamenti', 'Abbonamenti', 'Spese ricorrenti, anche quelle nascoste'],
+    ['/patrimonio', 'patrimonio', 'Patrimonio e report', 'Patrimonio netto, immobili e report'],
 ];
 $toolItems = [
-    ['/mercati.php', 'mercati', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
-    ['/calcolatori.php', 'calcolatori', 'Tutti i calcolatori', 'La pagina con tutti gli strumenti di calcolo'],
+    ['/mercati', 'mercati', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
+    ['/calcolatori', 'calcolatori', 'Tutti i calcolatori', 'La pagina con tutti gli strumenti di calcolo'],
 ];
 // I singoli calcolatori, in forma compatta sotto i due strumenti principali.
 // Tutte le pagine calcolatore usano $active = 'calcolatori'.
 $calculatorItems = [
-    ['/calcolatore-interesse-composto.php', 'Interesse composto'],
-    ['/calcolatore-piano-investimento.php', 'Piano di investimento'],
-    ['/calcolatore-obiettivo-risparmio.php', 'Obiettivo di risparmio'],
-    ['/calcolatore-rendimento.php', 'Rendimento (ROI)'],
-    ['/calcolatore-recupero-perdite.php', 'Recupero perdite'],
-    ['/calcolatore-inflazione.php', 'Inflazione'],
-    ['/calcolatore-budget-503020.php', 'Regola 50/30/20'],
-    ['/calcolatore-patrimonio-netto.php', 'Patrimonio netto'],
-    ['/calcolatore-pensione.php', 'Pensione'],
+    ['/calcolatore-interesse-composto', 'Interesse composto'],
+    ['/calcolatore-piano-investimento', 'Piano di investimento'],
+    ['/calcolatore-obiettivo-risparmio', 'Obiettivo di risparmio'],
+    ['/calcolatore-rendimento', 'Rendimento (ROI)'],
+    ['/calcolatore-recupero-perdite', 'Recupero perdite'],
+    ['/calcolatore-inflazione', 'Inflazione'],
+    ['/calcolatore-budget-503020', 'Regola 50/30/20'],
+    ['/calcolatore-patrimonio-netto', 'Patrimonio netto'],
+    ['/calcolatore-pensione', 'Pensione'],
 ];
 // Pagina corrente, per evidenziare la voce giusta dentro le tendine (la chiave
 // $active non basta: è la stessa per tutti i calcolatori).
-$currentPath = $_SERVER['SCRIPT_NAME'] ?? '';
+// SCRIPT_NAME è il file (/mutui.php), i link sono senza estensione (/mutui).
+$currentPath = preg_replace('/\.php$/', '', $_SERVER['SCRIPT_NAME'] ?? '');
 // Ordine del menu: Chi siamo, Funzionalità ▾, Strumenti ▾, poi $siteItems.
-$aboutItem = ['/about.php', 'about', 'Chi siamo'];
+$aboutItem = ['/about', 'about', 'Chi siamo'];
 $siteItems = [
-    ['/piani.php', 'piani', 'Piani e prezzi'],
-    ['/faq.php', 'faq', 'FAQ'],
+    ['/piani', 'piani', 'Piani e prezzi'],
+    ['/faq', 'faq', 'FAQ'],
     ['/news', 'news', 'News'],
 ];
 
@@ -139,7 +140,7 @@ HTML;
       <div class="flex flex-col gap-2">
         <?php
         function mobilenavlink($href, $key, $label, $active, $extraCls = 'px-4 py-3 text-base') {
-            $isActive = ($key !== null && $active === $key) || ($_SERVER['SCRIPT_NAME'] ?? '') === $href;
+            $isActive = ($key !== null && $active === $key) || preg_replace('/\.php$/', '', $_SERVER['SCRIPT_NAME'] ?? '') === $href;
             $cls = $isActive ? 'border-accent/30 bg-accentSoft text-accent' : 'border-border bg-white text-gray-700';
             return "<a href=\"{$href}\" class=\"rounded-xl border {$cls} {$extraCls} font-medium\">{$label}</a>";
         }

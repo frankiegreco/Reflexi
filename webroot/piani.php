@@ -7,10 +7,10 @@
 <title>Prezzi di Reflexi: 6 mesi gratis, poi mensile o annuale</title>
 <meta name="description" content="6 mesi di prova gratuita, poi scegli il piano mensile o annuale. Tutte le funzionalità incluse in entrambi, nessuna sorpresa.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/piani.php">
+<link rel="canonical" href="https://reflexi.it/piani">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/piani.php">
+<meta property="og:url" content="https://reflexi.it/piani">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Prezzi di Reflexi: 6 mesi gratis, poi mensile o annuale">
 <meta property="og:description" content="6 mesi di prova gratuita, poi scegli il piano mensile o annuale. Tutte le funzionalità incluse in entrambi, nessuna sorpresa.">
@@ -32,7 +32,7 @@
 </style>
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Piani e prezzi', '/piani.php']]);
+seo_breadcrumb([['Piani e prezzi', '/piani']]);
 seo_jsonld(seo_software_application());
 ?>
 </head>
@@ -118,7 +118,7 @@ seo_jsonld(seo_software_application());
         <div class="border-t border-border px-5 py-4 text-sm text-gray-700">Sì, dal portale di gestione abbonamento nel tuo Profilo.</div>
       </details>
     </div>
-    <p class="mt-4 text-center text-sm text-muted">Altre domande? Vedi tutte le <a href="/faq.php" class="text-accent hover:underline">FAQ</a>.</p>
+    <p class="mt-4 text-center text-sm text-muted">Altre domande? Vedi tutte le <a href="/faq" class="text-accent hover:underline">FAQ</a>.</p>
   </div>
 </main>
 

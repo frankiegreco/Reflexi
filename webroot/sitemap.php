@@ -8,42 +8,42 @@ header('Content-Type: application/xml; charset=utf-8');
 // in sitemap.xml (ora rimosso: questo file lo sostituisce).
 $staticUrls = [
     ['/', '1.0', 'monthly'],
-    ['/mutui.php', '0.8', 'monthly'],
-    ['/investimenti.php', '0.8', 'monthly'],
-    ['/mercati.php', '0.8', 'daily'],
-    ['/budget.php', '0.8', 'monthly'],
-    ['/analisi.php', '0.8', 'monthly'],
-    ['/previsioni.php', '0.8', 'monthly'],
-    ['/simulazione-trading.php', '0.8', 'monthly'],
-    ['/fire-pensione.php', '0.8', 'monthly'],
-    ['/obiettivi.php', '0.8', 'monthly'],
-    ['/abbonamenti.php', '0.8', 'monthly'],
-    ['/patrimonio.php', '0.8', 'monthly'],
-    ['/calcolatori.php', '0.9', 'monthly'],
-    ['/calcolatore-interesse-composto.php', '0.7', 'monthly'],
-    ['/calcolatore-piano-investimento.php', '0.7', 'monthly'],
-    ['/calcolatore-obiettivo-risparmio.php', '0.7', 'monthly'],
-    ['/calcolatore-rendimento.php', '0.7', 'monthly'],
-    ['/calcolatore-recupero-perdite.php', '0.7', 'monthly'],
-    ['/calcolatore-inflazione.php', '0.7', 'monthly'],
-    ['/calcolatore-budget-503020.php', '0.7', 'monthly'],
-    ['/calcolatore-patrimonio-netto.php', '0.7', 'monthly'],
-    ['/calcolatore-pensione.php', '0.7', 'monthly'],
-    ['/about.php', '0.6', 'monthly'],
-    ['/faq.php', '0.7', 'monthly'],
-    ['/piani.php', '0.9', 'monthly'],
+    ['/mutui', '0.8', 'monthly'],
+    ['/investimenti', '0.8', 'monthly'],
+    ['/mercati', '0.8', 'daily'],
+    ['/budget', '0.8', 'monthly'],
+    ['/analisi', '0.8', 'monthly'],
+    ['/previsioni', '0.8', 'monthly'],
+    ['/simulazione-trading', '0.8', 'monthly'],
+    ['/fire-pensione', '0.8', 'monthly'],
+    ['/obiettivi', '0.8', 'monthly'],
+    ['/abbonamenti', '0.8', 'monthly'],
+    ['/patrimonio', '0.8', 'monthly'],
+    ['/calcolatori', '0.9', 'monthly'],
+    ['/calcolatore-interesse-composto', '0.7', 'monthly'],
+    ['/calcolatore-piano-investimento', '0.7', 'monthly'],
+    ['/calcolatore-obiettivo-risparmio', '0.7', 'monthly'],
+    ['/calcolatore-rendimento', '0.7', 'monthly'],
+    ['/calcolatore-recupero-perdite', '0.7', 'monthly'],
+    ['/calcolatore-inflazione', '0.7', 'monthly'],
+    ['/calcolatore-budget-503020', '0.7', 'monthly'],
+    ['/calcolatore-patrimonio-netto', '0.7', 'monthly'],
+    ['/calcolatore-pensione', '0.7', 'monthly'],
+    ['/about', '0.6', 'monthly'],
+    ['/faq', '0.7', 'monthly'],
+    ['/piani', '0.9', 'monthly'],
     ['/news', '0.8', 'daily'],
-    ['/cancella-account.php', '0.4', 'yearly'],
+    ['/cancella-account', '0.4', 'yearly'],
 ];
 
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
 foreach ($staticUrls as [$path, $priority, $changefreq]) {
-    // lastmod = ultima modifica del file PHP della pagina ("/" e "/news" mappati):
+    // lastmod = ultima modifica del file PHP della pagina (URL senza estensione):
     // dice a Google quando ricontrollarla. Mercati cambia ogni giorno coi
     // prezzi, ma il file no: lì conta changefreq=daily.
-    $file = __DIR__ . (['/' => '/index.php', '/news' => '/news.php'][$path] ?? $path);
+    $file = __DIR__ . ($path === '/' ? '/index.php' : $path . '.php');
     $lastmod = is_file($file) ? '<lastmod>' . date('Y-m-d', filemtime($file)) . '</lastmod>' : '';
     echo '  <url><loc>https://reflexi.it' . $path . '</loc>' . $lastmod
         . '<changefreq>' . $changefreq . '</changefreq>'

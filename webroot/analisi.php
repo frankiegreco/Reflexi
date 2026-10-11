@@ -6,10 +6,10 @@
 <title>Analisi predittiva delle spese e Monte Carlo — Reflexi</title>
 <meta name="description" content="Simulazione Monte Carlo del risparmio futuro, abbonamenti dimenticati scovati in automatico e avvisi prima di sforare il budget: una proiezione vera.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/analisi.php">
+<link rel="canonical" href="https://reflexi.it/analisi">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/analisi.php">
+<meta property="og:url" content="https://reflexi.it/analisi">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Analisi predittiva delle spese e Monte Carlo — Reflexi">
 <meta property="og:description" content="Simulazione Monte Carlo del risparmio futuro, abbonamenti dimenticati scovati in automatico e avvisi prima di sforare il budget: una proiezione vera.">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Analisi predittiva', '/analisi.php']]);
+seo_breadcrumb([['Analisi predittiva', '/analisi']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">

@@ -11,10 +11,10 @@ $relatedArticles = news_related(['pac-piano-accumulo-etf-come-funziona', 'cosa-e
 <title>Calcolatore piano di investimento periodico — Reflexi</title>
 <meta name="description" content="Calcola quanto puoi accumulare investendo una cifra fissa ogni mese, con grafico anno per anno. Gratuito, senza registrazione.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/calcolatore-piano-investimento.php">
+<link rel="canonical" href="https://reflexi.it/calcolatore-piano-investimento">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/calcolatore-piano-investimento.php">
+<meta property="og:url" content="https://reflexi.it/calcolatore-piano-investimento">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore piano di investimento periodico — Reflexi">
 <meta property="og:description" content="Calcola quanto puoi accumulare investendo una cifra fissa ogni mese, con grafico anno per anno. Gratuito, senza registrazione.">
@@ -36,8 +36,8 @@ $relatedArticles = news_related(['pac-piano-accumulo-etf-come-funziona', 'cosa-e
 </style>
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore piano di investimento', '/calcolatore-piano-investimento.php']]);
-seo_calculator('Calcolatore piano di investimento', '/calcolatore-piano-investimento.php', 'Calcola quanto puoi accumulare investendo una cifra fissa ogni mese, con grafico anno per anno. Gratuito, senza registrazione.');
+seo_breadcrumb([['Calcolatori', '/calcolatori'], ['Calcolatore piano di investimento', '/calcolatore-piano-investimento']]);
+seo_calculator('Calcolatore piano di investimento', '/calcolatore-piano-investimento', 'Calcola quanto puoi accumulare investendo una cifra fissa ogni mese, con grafico anno per anno. Gratuito, senza registrazione.');
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
@@ -45,7 +45,7 @@ seo_calculator('Calcolatore piano di investimento', '/calcolatore-piano-investim
 <?php include '_nav.php'; ?>
 
 <section class="px-6 pb-6 pt-14 text-center sm:pt-16">
-  <a href="/calcolatori.php" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
+  <a href="/calcolatori" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
   <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-income/10 text-3xl">💰</div>
   <h1 class="mx-auto mb-3 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Calcolatore di piano di investimento periodico</h1>
   <p class="mx-auto max-w-xl text-lg text-muted">Quanto puoi accumulare investendo una cifra fissa ogni mese (come un PAC), oltre a un capitale iniziale.</p>
@@ -115,10 +115,10 @@ seo_calculator('Calcolatore piano di investimento', '/calcolatore-piano-investim
 
 <section class="px-6 py-16 text-center">
   <p class="mb-4 text-sm text-muted">Cerchi anche un altro calcolatore?</p>
-  <a href="/calcolatori.php" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
+  <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Vuoi un PAC vero, che compra da solo?</h2>
   <p class="mb-6 text-muted">Reflexi calcola le quote acquistate al prezzo reale del giorno, automaticamente.</p>
-  <a href="/investimenti.php" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Scopri gli investimenti su Reflexi</a>
+  <a href="/investimenti" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Scopri gli investimenti su Reflexi</a>
 </section>
 
 <?php include '_footer.php'; ?>

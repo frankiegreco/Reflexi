@@ -11,10 +11,10 @@ $relatedArticles = news_related(['interesse-composto-esempi-reali', 'ter-costi-e
 <title>Calcolatore di interesse composto gratuito — Reflexi</title>
 <meta name="description" content="Calcola quanto cresce un capitale nel tempo con l'interesse composto, con grafico anno per anno. Gratuito, senza registrazione.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/calcolatore-interesse-composto.php">
+<link rel="canonical" href="https://reflexi.it/calcolatore-interesse-composto">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/calcolatore-interesse-composto.php">
+<meta property="og:url" content="https://reflexi.it/calcolatore-interesse-composto">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore di interesse composto gratuito — Reflexi">
 <meta property="og:description" content="Calcola quanto cresce un capitale nel tempo con l'interesse composto, con grafico anno per anno. Gratuito, senza registrazione.">
@@ -33,8 +33,8 @@ $relatedArticles = news_related(['interesse-composto-esempi-reali', 'ter-costi-e
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore interesse composto', '/calcolatore-interesse-composto.php']]);
-seo_calculator('Calcolatore interesse composto', '/calcolatore-interesse-composto.php', 'Calcola quanto cresce un capitale nel tempo con l\'interesse composto, con grafico anno per anno. Gratuito, senza registrazione.');
+seo_breadcrumb([['Calcolatori', '/calcolatori'], ['Calcolatore interesse composto', '/calcolatore-interesse-composto']]);
+seo_calculator('Calcolatore interesse composto', '/calcolatore-interesse-composto', 'Calcola quanto cresce un capitale nel tempo con l\'interesse composto, con grafico anno per anno. Gratuito, senza registrazione.');
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
@@ -42,7 +42,7 @@ seo_calculator('Calcolatore interesse composto', '/calcolatore-interesse-compost
 <?php include '_nav.php'; ?>
 
 <section class="px-6 pb-6 pt-14 text-center sm:pt-16">
-  <a href="/calcolatori.php" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
+  <a href="/calcolatori" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
   <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-accentSoft text-3xl">📈</div>
   <h1 class="mx-auto mb-3 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Calcolatore di interesse composto</h1>
   <p class="mx-auto max-w-xl text-lg text-muted">Quanto cresce un capitale nel tempo, reinvestendo ogni anno gli interessi maturati invece di incassarli.</p>
@@ -128,7 +128,7 @@ seo_calculator('Calcolatore interesse composto', '/calcolatore-interesse-compost
 
 <section class="px-6 py-16 text-center">
   <p class="mb-4 text-sm text-muted">Cerchi anche un altro calcolatore?</p>
-  <a href="/calcolatori.php" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
+  <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Vuoi che questi calcoli si aggiornino da soli col tempo?</h2>
   <p class="mb-6 text-muted">Reflexi collega i tuoi investimenti reali, con quotazioni live e proiezioni sempre aggiornate.</p>
   <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>

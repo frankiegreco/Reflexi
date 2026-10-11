@@ -11,10 +11,10 @@ $relatedArticles = news_related(['inflazione-potere-acquisto-perche-il-capitale-
 <title>Calcolatore di inflazione e potere d'acquisto — Reflexi</title>
 <meta name="description" content="Scopri quanto varrà davvero una somma di denaro tra qualche anno, al netto dell'inflazione. Gratuito, senza registrazione.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/calcolatore-inflazione.php">
+<link rel="canonical" href="https://reflexi.it/calcolatore-inflazione">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/calcolatore-inflazione.php">
+<meta property="og:url" content="https://reflexi.it/calcolatore-inflazione">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Calcolatore di inflazione e potere d'acquisto — Reflexi">
 <meta property="og:description" content="Scopri quanto varrà davvero una somma di denaro tra qualche anno, al netto dell'inflazione. Gratuito, senza registrazione.">
@@ -36,8 +36,8 @@ $relatedArticles = news_related(['inflazione-potere-acquisto-perche-il-capitale-
 </style>
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Calcolatori', '/calcolatori.php'], ['Calcolatore inflazione', '/calcolatore-inflazione.php']]);
-seo_calculator('Calcolatore inflazione', '/calcolatore-inflazione.php', 'Scopri quanto varrà davvero una somma di denaro tra qualche anno, al netto dell\'inflazione. Gratuito, senza registrazione.');
+seo_breadcrumb([['Calcolatori', '/calcolatori'], ['Calcolatore inflazione', '/calcolatore-inflazione']]);
+seo_calculator('Calcolatore inflazione', '/calcolatore-inflazione', 'Scopri quanto varrà davvero una somma di denaro tra qualche anno, al netto dell\'inflazione. Gratuito, senza registrazione.');
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">
@@ -45,7 +45,7 @@ seo_calculator('Calcolatore inflazione', '/calcolatore-inflazione.php', 'Scopri 
 <?php include '_nav.php'; ?>
 
 <section class="px-6 pb-6 pt-14 text-center sm:pt-16">
-  <a href="/calcolatori.php" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
+  <a href="/calcolatori" class="mb-4 inline-block text-sm text-muted hover:text-accent">← Tutti i calcolatori</a>
   <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-loan/10 text-3xl">📉</div>
   <h1 class="mx-auto mb-3 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Calcolatore di potere d'acquisto (inflazione)</h1>
   <p class="mx-auto max-w-xl text-lg text-muted">Quanto varrà davvero una somma tra qualche anno, al netto dell'inflazione.</p>
@@ -108,7 +108,7 @@ seo_calculator('Calcolatore inflazione', '/calcolatore-inflazione.php', 'Scopri 
 
 <section class="px-6 py-16 text-center">
   <p class="mb-4 text-sm text-muted">Cerchi anche un altro calcolatore?</p>
-  <a href="/calcolatori.php" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
+  <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Fai lavorare i tuoi risparmi</h2>
   <p class="mb-6 text-muted">Reflexi traccia anche gli interessi su conti deposito e vincolati, con proiezione netta reale.</p>
   <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>

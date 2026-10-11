@@ -6,10 +6,10 @@
 <title>Previsioni sugli investimenti — Reflexi</title>
 <meta name="description" content="Stime di rendimento a 12 mesi da un modello statistico su prezzi reali, indicatori di rischio e una proposta di portafoglio, con i limiti dichiarati.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://reflexi.it/previsioni.php">
+<link rel="canonical" href="https://reflexi.it/previsioni">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://reflexi.it/previsioni.php">
+<meta property="og:url" content="https://reflexi.it/previsioni">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Previsioni sugli investimenti — Reflexi">
 <meta property="og:description" content="Stime di rendimento a 12 mesi da un modello statistico su prezzi reali, indicatori di rischio e una proposta di portafoglio, con i limiti dichiarati.">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
 <?php
 require_once __DIR__ . '/_seo.php';
-seo_breadcrumb([['Previsioni', '/previsioni.php']]);
+seo_breadcrumb([['Previsioni', '/previsioni']]);
 ?>
 </head>
 <body class="bg-bg text-gray-900 antialiased">

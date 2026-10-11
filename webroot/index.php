@@ -263,7 +263,7 @@ seo_jsonld(['@graph' => [
         <h3 class="mb-3 text-xl font-bold">Il piano di ammortamento vero, non un promemoria</h3>
         <p class="mb-4 text-muted">Rata calcolata col metodo francese, simulazione di estinzione anticipata, e — se il mutuo è
           cointestato — la tua quota reale su capitale e interessi, non l'importo totale che confonde i conti.</p>
-        <a href="/mutui.php" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
+        <a href="/mutui" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
       </div>
       <div class="rounded-2xl border border-border bg-white p-5 shadow-lg shadow-gray-200/50">
         <div class="mb-3 text-xs uppercase tracking-wide text-muted">Capitale residuo</div>
@@ -293,7 +293,7 @@ seo_jsonld(['@graph' => [
         <h3 class="mb-3 text-xl font-bold">ETF e azioni con quotazioni vere, non stimate</h3>
         <p class="mb-4 text-muted">Prezzi live, costo medio di carico, plus e minusvalenze realizzate e non — collegati allo
           stesso quadro delle tue spese quotidiane, non un'app separata da controllare a parte.</p>
-        <a href="/investimenti.php" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
+        <a href="/investimenti" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
       </div>
     </div>
 
@@ -304,7 +304,7 @@ seo_jsonld(['@graph' => [
         <h3 class="mb-3 text-xl font-bold">Un limite per categoria, un avviso prima di sforare</h3>
         <p class="mb-4 text-muted">Imposti quanto vuoi spendere in ristoranti, spesa, abbonamenti — Reflexi ti avvisa quando
           il ritmo del mese ti porterebbe a superarlo, non dopo che è già successo.</p>
-        <a href="/budget.php" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
+        <a href="/budget" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
       </div>
       <div class="space-y-3 rounded-2xl border border-border bg-white p-5 shadow-lg shadow-gray-200/50">
         <div>
@@ -337,7 +337,7 @@ seo_jsonld(['@graph' => [
         <h3 class="mb-3 text-xl font-bold">Non una media, una simulazione vera</h3>
         <p class="mb-4 text-muted">Migliaia di scenari calcolati sulla tua reale variabilità storica, più il rilevamento
           automatico di abbonamenti che paghi senza nemmeno saperlo di aver dichiarato come ricorrenti.</p>
-        <a href="/analisi.php" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
+        <a href="/analisi" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
       </div>
     </div>
   </div>
@@ -448,7 +448,7 @@ seo_jsonld(['@graph' => [
       </div>
     </div>
     <p class="mt-8 text-center text-sm text-muted">
-      Per i dettagli completi, leggi la <a href="/privacy.php" class="text-accent hover:underline">Privacy Policy</a>.
+      Per i dettagli completi, leggi la <a href="/privacy" class="text-accent hover:underline">Privacy Policy</a>.
     </p>
   </div>
 </section>
@@ -557,7 +557,7 @@ seo_jsonld(['@graph' => [
     <p class="text-sm text-muted">
       Usiamo cookie tecnici necessari al funzionamento del sito e, solo con il tuo consenso,
       Google Analytics per capire come viene usata la pagina. Nessun dato viene condiviso con terzi a scopo pubblicitario.
-      <a href="/privacy.php" class="text-accent hover:underline">Maggiori informazioni</a>.
+      <a href="/privacy" class="text-accent hover:underline">Maggiori informazioni</a>.
     </p>
     <div class="flex flex-shrink-0 gap-2">
       <button onclick="declineCookies()" class="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">Rifiuta</button>

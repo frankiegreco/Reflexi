@@ -25,34 +25,34 @@
       <div>
         <div class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Funzionalità</div>
         <ul class="space-y-2 text-sm">
-          <li><a href="/mutui.php" class="text-gray-600 hover:text-accent">Mutui</a></li>
-          <li><a href="/investimenti.php" class="text-gray-600 hover:text-accent">Investimenti</a></li>
-          <li><a href="/budget.php" class="text-gray-600 hover:text-accent">Budget</a></li>
-          <li><a href="/analisi.php" class="text-gray-600 hover:text-accent">Analisi predittiva</a></li>
-          <li><a href="/previsioni.php" class="text-gray-600 hover:text-accent">Previsioni</a></li>
-          <li><a href="/simulazione-trading.php" class="text-gray-600 hover:text-accent">Simulazione trading</a></li>
-          <li><a href="/fire-pensione.php" class="text-gray-600 hover:text-accent">FIRE e pensione</a></li>
-          <li><a href="/obiettivi.php" class="text-gray-600 hover:text-accent">Obiettivi</a></li>
-          <li><a href="/abbonamenti.php" class="text-gray-600 hover:text-accent">Abbonamenti</a></li>
-          <li><a href="/patrimonio.php" class="text-gray-600 hover:text-accent">Patrimonio e report</a></li>
+          <li><a href="/mutui" class="text-gray-600 hover:text-accent">Mutui</a></li>
+          <li><a href="/investimenti" class="text-gray-600 hover:text-accent">Investimenti</a></li>
+          <li><a href="/budget" class="text-gray-600 hover:text-accent">Budget</a></li>
+          <li><a href="/analisi" class="text-gray-600 hover:text-accent">Analisi predittiva</a></li>
+          <li><a href="/previsioni" class="text-gray-600 hover:text-accent">Previsioni</a></li>
+          <li><a href="/simulazione-trading" class="text-gray-600 hover:text-accent">Simulazione trading</a></li>
+          <li><a href="/fire-pensione" class="text-gray-600 hover:text-accent">FIRE e pensione</a></li>
+          <li><a href="/obiettivi" class="text-gray-600 hover:text-accent">Obiettivi</a></li>
+          <li><a href="/abbonamenti" class="text-gray-600 hover:text-accent">Abbonamenti</a></li>
+          <li><a href="/patrimonio" class="text-gray-600 hover:text-accent">Patrimonio e report</a></li>
         </ul>
       </div>
 
       <div>
         <div class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Strumenti e risorse</div>
         <ul class="space-y-2 text-sm">
-          <li><a href="/mercati.php" class="text-gray-600 hover:text-accent">Mercati</a></li>
-          <li><a href="/calcolatori.php" class="text-gray-600 hover:text-accent">Calcolatori gratuiti</a></li>
+          <li><a href="/mercati" class="text-gray-600 hover:text-accent">Mercati</a></li>
+          <li><a href="/calcolatori" class="text-gray-600 hover:text-accent">Calcolatori gratuiti</a></li>
           <li><a href="/news" class="text-gray-600 hover:text-accent">News</a></li>
-          <li><a href="/piani.php" class="text-gray-600 hover:text-accent">Piani e prezzi</a></li>
+          <li><a href="/piani" class="text-gray-600 hover:text-accent">Piani e prezzi</a></li>
         </ul>
       </div>
 
       <div>
         <div class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Azienda</div>
         <ul class="space-y-2 text-sm">
-          <li><a href="/about.php" class="text-gray-600 hover:text-accent">Chi siamo</a></li>
-          <li><a href="/faq.php" class="text-gray-600 hover:text-accent">FAQ</a></li>
+          <li><a href="/about" class="text-gray-600 hover:text-accent">Chi siamo</a></li>
+          <li><a href="/faq" class="text-gray-600 hover:text-accent">FAQ</a></li>
           <li><a href="mailto:info@reflexi.it" class="text-gray-600 hover:text-accent">Contatti</a></li>
         </ul>
       </div>
@@ -60,9 +60,9 @@
       <div>
         <div class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Legale</div>
         <ul class="space-y-2 text-sm">
-          <li><a href="/privacy.php" class="text-gray-600 hover:text-accent">Privacy Policy</a></li>
-          <li><a href="/termini.php" class="text-gray-600 hover:text-accent">Termini di Servizio</a></li>
-          <li><a href="/cancella-account.php" class="text-gray-600 hover:text-accent">Cancella account</a></li>
+          <li><a href="/privacy" class="text-gray-600 hover:text-accent">Privacy Policy</a></li>
+          <li><a href="/termini" class="text-gray-600 hover:text-accent">Termini di Servizio</a></li>
+          <li><a href="/cancella-account" class="text-gray-600 hover:text-accent">Cancella account</a></li>
         </ul>
       </div>
 

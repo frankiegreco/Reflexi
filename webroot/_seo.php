@@ -15,7 +15,7 @@ function seo_jsonld(array $data): void
 
 /**
  * Breadcrumb a partire dalla home (aggiunta in automatico).
- * $crumbs = [[nome, percorso], ...], es. [['Calcolatori', '/calcolatori.php'], ['Inflazione', '/calcolatore-inflazione.php']].
+ * $crumbs = [[nome, percorso], ...], es. [['Calcolatori', '/calcolatori'], ['Inflazione', '/calcolatore-inflazione']].
  */
 function seo_breadcrumb(array $crumbs): void
 {
@@ -46,7 +46,7 @@ function seo_software_application(): array
         'name' => $name,
         'price' => $price,
         'priceCurrency' => 'EUR',
-        'url' => SEO_BASE_URL . '/piani.php',
+        'url' => SEO_BASE_URL . '/piani',
         'priceSpecification' => [
             '@type' => 'UnitPriceSpecification',
             'price' => $price,
