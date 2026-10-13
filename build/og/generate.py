@@ -2,6 +2,7 @@
 """Genera le immagini di anteprima social (og:image) in webroot/og/.
 
 Uso, dalla root del progetto:  python3 build/og/generate.py
+Solo alcune pagine o articoli:   python3 build/og/generate.py /mutui news/<slug>
 
 Pagine: titolo = H1 della pagina pubblicata (letto da https://reflexi.it),
 etichetta ed emoji da PAGES qui sotto. Articoli News: seo_title, categoria
@@ -10,7 +11,7 @@ articolo (senza immagine, la pagina usa og-image.png generica: vedi
 seo_og_image() in webroot/_seo.php). Come build-css.sh, usa Docker: questa
 VPS non ha Node, il rendering gira nel container ufficiale di Playwright.
 """
-import html, json, os, re, subprocess, urllib.request
+import html, json, os, re, subprocess, sys, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BASE = 'https://reflexi.it'
@@ -18,7 +19,7 @@ PLAYWRIGHT_IMAGE = 'mcr.microsoft.com/playwright:v1.48.0-jammy'
 
 # percorso -> (etichetta, emoji, riga in basso)
 PAGES = {
-    '/mutui': ('Mutui', '🏠', 'Funzionalità'),
+    '/mutui': ('Mutui', '🏠', 'Funzionalità · Rientro anticipato e risparmio netto'),
     '/investimenti': ('Investimenti', '📈', 'Funzionalità'),
     '/budget': ('Budget', '🎯', 'Funzionalità'),
     '/analisi': ('Analisi predittiva', '🔮', 'Funzionalità'),
@@ -71,6 +72,13 @@ for line in rows.strip().splitlines():
     slug, title, category, emoji = line.split('\t')
     items.append({'out': f'news/{slug}.jpg', 'kicker': CATEGORIES.get(category, category), 'emoji': emoji,
                   'foot': 'Guide di finanza personale', 'title': title})
+
+# Filtro facoltativo da riga di comando: percorsi di pagina (/mutui) o news/<slug>.
+only = {a.strip('/') for a in sys.argv[1:]}
+if only:
+    items = [it for it in items if it['out'][:-4] in only]
+    if not items:
+        sys.exit('Nessuna pagina o articolo corrisponde a: ' + ' '.join(sys.argv[1:]))
 
 with open(os.path.join(ROOT, 'build/og/items.json'), 'w') as f:
     json.dump(items, f, ensure_ascii=False, indent=1)

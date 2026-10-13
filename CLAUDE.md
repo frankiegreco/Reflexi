@@ -58,7 +58,8 @@ analisi predittiva) e `docs/ROADMAP.md` per lo stato del progetto.
   `.php`. Un file nuovo `webroot/x.php` funziona da solo come `/x`. I file
   che iniziano con `_` (parziali da includere) rispondono 404 se aperti.
 - **Immagini di anteprima social** (`webroot/og/`): generate da
-  `python3 build/og/generate.py` (Playwright in Docker). Va rilanciato dopo
+  `python3 build/og/generate.py` (Playwright in Docker; con argomenti, es.
+  `/mutui` o `news/<slug>`, rigenera solo quelle). Va rilanciato dopo
   una pagina o un articolo nuovo; nel frattempo `seo_og_image()` usa
   l'immagine generica. Per una pagina nuova aggiungere etichetta ed emoji in
   `PAGES` dentro lo script.
