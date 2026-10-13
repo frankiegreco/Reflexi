@@ -35,6 +35,8 @@ function seo_organization(): array
         'url' => SEO_BASE_URL . '/',
         'logo' => SEO_BASE_URL . '/favicon.svg',
         'email' => 'info@reflexi.it',
+        // Profili ufficiali, gli stessi linkati nel footer.
+        'sameAs' => ['https://www.linkedin.com/company/reflexi-it/'],
     ];
 }
 
