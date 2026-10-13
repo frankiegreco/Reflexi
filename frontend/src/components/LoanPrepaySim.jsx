@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Check } from 'lucide-react';
 import { Chart } from 'react-chartjs-2';
 import StatCard from './StatCard';
 import { euro, formatDate, todayISO } from '../lib/format';
+import { apiSend, apiDelete } from '../api';
+import { useData } from '../context/DataContext';
 import { simulatePrepayment, FREQUENCIES } from '../lib/loanPrepay';
 
 const FREQ_LABEL = { mensile: 'Ogni mese', trimestrale: 'Ogni 3 mesi', semestrale: 'Ogni 6 mesi', annuale: 'Ogni anno' };
@@ -29,9 +31,58 @@ function months(n) {
   return [y && `${y} ${y === 1 ? 'anno' : 'anni'}`, m && `${m} ${m === 1 ? 'mese' : 'mesi'}`].filter(Boolean).join(' e ') || '0 mesi';
 }
 
-export default function LoanPrepaySim({ loanId, schedule, ownershipPct }) {
+export default function LoanPrepaySim({ loan, schedule, prepayments, ownershipPct, onRegistered }) {
+  const loanId = loan.id;
+  const { activeAccounts, expenseCategories } = useData();
   const [plan, setPlan] = useState(() => loadPlan(loanId));
   const [showTable, setShowTable] = useState(false);
+  const [reg, setReg] = useState(null);
+  const [regError, setRegError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Apre il modulo di registrazione, eventualmente precompilato da un versamento simulato.
+  function openRegister(date = todayISO(), amount = '') {
+    setRegError('');
+    setReg({
+      date: date > todayISO() ? todayISO() : date,
+      amount,
+      mode: plan.mode,
+      create_transaction: activeAccounts.length > 0,
+      account_id: loan.account_id || activeAccounts[0]?.id || '',
+      category_id: loan.category_id || expenseCategories[0]?.id || '',
+    });
+  }
+
+  async function register(e) {
+    e.preventDefault();
+    setRegError('');
+    setSaving(true);
+    try {
+      await apiSend('loan_prepayments.php', 'POST', {
+        loan_id: loanId,
+        payment_date: reg.date,
+        amount: parseFloat(reg.amount),
+        mode: reg.mode,
+        create_transaction: reg.create_transaction,
+        account_id: reg.account_id,
+        category_id: reg.category_id,
+      });
+      // Il versamento e' ora nel piano reale: lo tolgo dalle ipotesi se veniva da li'.
+      setPlan((p) => ({ ...p, oneOff: p.oneOff.filter((o) => !(o.date === reg.date && parseFloat(o.amount) === parseFloat(reg.amount))) }));
+      setReg(null);
+      await onRegistered();
+    } catch (err) { setRegError(err.message); }
+    setSaving(false);
+  }
+
+  async function removePrepayment(p) {
+    if (!confirm(`Eliminare il versamento di ${euro(p.amount)} del ${formatDate(p.payment_date)}? Il piano del mutuo verrà ricalcolato.`)) return;
+    const deleteTx = p.transaction_id ? confirm("Eliminare anche l'uscita registrata sul conto per questo versamento? Annulla = la transazione resta.") : false;
+    try {
+      await apiDelete(`loan_prepayments.php?id=${p.id}&delete_transaction=${deleteTx ? 1 : 0}`);
+      await onRegistered();
+    } catch (err) { alert(err.message); }
+  }
 
   useEffect(() => { setPlan(loadPlan(loanId)); }, [loanId]);
   useEffect(() => {
@@ -72,10 +123,89 @@ export default function LoanPrepaySim({ loanId, schedule, ownershipPct }) {
   return (
     <div className="space-y-4">
       <div className="card p-4">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h6 className="text-sm font-semibold">Versamenti registrati</h6>
+          {!reg && <button type="button" className="btn-outline" onClick={() => openRegister()}><Plus size={14} /> Registra versamento</button>}
+        </div>
+        {prepayments.length === 0 && !reg && (
+          <p className="text-xs text-muted">Nessun versamento registrato. Quando ne fai uno, registralo qui: riduce il debito residuo e il piano del mutuo viene ricalcolato.</p>
+        )}
+        {prepayments.length > 0 && (
+          <div className="space-y-1.5">
+            {prepayments.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                <span>
+                  {formatDate(p.payment_date)} — <span className="font-mono">{euro(p.amount)}</span>
+                  <span className="ml-2 text-xs text-muted">riduce {p.mode === 'rata' ? 'la rata' : 'la durata'}{p.transaction_id ? ' · uscita registrata' : ''}</span>
+                </span>
+                <button type="button" className="text-muted hover:text-red-600" onClick={() => removePrepayment(p)} aria-label="Elimina versamento">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {reg && (
+          <form onSubmit={register} className="mt-3 rounded-xl border border-border p-3">
+            {regError && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{regError}</div>}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div>
+                <label className="field-label">Data del versamento</label>
+                <input type="date" className="field" required max={todayISO()} value={reg.date} onChange={(e) => setReg((r) => ({ ...r, date: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Importo versato (€)</label>
+                <input type="number" min="0.01" step="0.01" className="field" required value={reg.amount} onChange={(e) => setReg((r) => ({ ...r, amount: e.target.value }))} />
+              </div>
+              <div>
+                <label className="field-label">Riduce</label>
+                <select className="field" value={reg.mode} onChange={(e) => setReg((r) => ({ ...r, mode: e.target.value }))}>
+                  <option value="durata">La durata (rata invariata)</option>
+                  <option value="rata">La rata (scadenza invariata)</option>
+                </select>
+              </div>
+            </div>
+            <label className="mt-3 flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={reg.create_transaction} disabled={!activeAccounts.length} onChange={(e) => setReg((r) => ({ ...r, create_transaction: e.target.checked }))} />
+              Registra anche l'uscita sul conto
+            </label>
+            {reg.create_transaction && (
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div>
+                  <label className="field-label">Conto</label>
+                  <select className="field" value={reg.account_id} onChange={(e) => setReg((r) => ({ ...r, account_id: e.target.value }))}>
+                    {activeAccounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Categoria</label>
+                  <select className="field" value={reg.category_id} onChange={(e) => setReg((r) => ({ ...r, category_id: e.target.value }))}>
+                    {expenseCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                {ownershipPct < 100 && parseFloat(reg.amount) > 0 && (
+                  <p className="text-xs text-muted sm:col-span-2">Uscita sul conto: la tua quota ({ownershipPct}%), {euro(parseFloat(reg.amount) * ownershipPct / 100)}.</p>
+                )}
+              </div>
+            )}
+            <p className="mt-3 text-xs text-muted">
+              Il debito residuo, il piano e il patrimonio netto vengono ricalcolati
+              {loan.recurring_id ? ", e la rata ricorrente collegata si aggiorna (importo e data di fine)" : ''}.
+            </p>
+            <div className="mt-3 flex justify-end gap-2">
+              <button type="button" className="btn-outline" onClick={() => setReg(null)}>Annulla</button>
+              <button type="submit" className="btn bg-loan text-white hover:brightness-95" disabled={saving}><Check size={14} /> Registra</button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      <div className="card p-4">
         <h6 className="mb-1 text-sm font-semibold">Simulazione rientro anticipato</h6>
         <p className="mb-4 text-xs text-muted">
           Ipotizza versamenti volontari in conto capitale e guarda quanto risparmi di interessi. Il calcolo parte dal residuo
-          di oggi e usa il tasso del piano mese per mese. Ogni versamento viene imputato alla prima rata successiva alla sua data.
+          di oggi (già al netto dei versamenti registrati) e usa il tasso del piano mese per mese. Ogni versamento riduce il
+          debito dalla sua data: la rata successiva paga già gli interessi sul residuo più basso.
         </p>
 
         <div className="mb-4">
@@ -131,6 +261,11 @@ export default function LoanPrepaySim({ loanId, schedule, ownershipPct }) {
                     {i === 0 && <label className="field-label">Importo (€)</label>}
                     <input type="number" min="0" step="100" className="field" value={o.amount} onChange={(e) => setOne(i, { amount: e.target.value })} />
                   </div>
+                  <button type="button" className="btn-outline mb-0.5 px-2 py-1 text-xs" disabled={!o.date || o.date > today || !(parseFloat(o.amount) > 0)}
+                    title={o.date > today ? 'Si possono registrare solo versamenti già fatti' : 'Registra come versamento reale'}
+                    onClick={() => openRegister(o.date, o.amount)}>
+                    Registra
+                  </button>
                   <button type="button" className="mb-2 text-muted hover:text-red-600" onClick={() => removeOne(i)} aria-label="Rimuovi versamento">
                     <Trash2 size={15} />
                   </button>

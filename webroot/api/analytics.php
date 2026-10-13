@@ -207,6 +207,12 @@ foreach ($loanStmt->fetchAll() as $ln) {
     $rata = loan_monthly_payment((float)$ln['principal'], (float)$ln['annual_rate'], (int)$ln['duration_years']);
     $personalRata = $rata * (float)$ln['ownership_pct'] / 100;
     $endDate = (new DateTime($ln['start_date']))->modify('+' . ((int)$ln['duration_years'] * 12) . ' months')->format('Y-m-d');
+    if (loan_load_prepayments((int)$ln['id'])) {
+        // Versamenti volontari: rata e scadenza vanno lette dal piano ricalcolato.
+        $sum = loan_summary($ln);
+        $personalRata = $sum['personal_monthly_payment'];
+        $endDate = $sum['end_date'];
+    }
     $rules[] = ['type' => 'uscita', 'monthly_amount' => $personalRata, 'start_date' => $ln['start_date'], 'end_date' => $endDate];
 }
 

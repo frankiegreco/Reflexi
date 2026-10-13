@@ -24,84 +24,100 @@ function nper(balance, ratePct, payment) {
 const FREQ_MONTHS = { mensile: 1, trimestrale: 3, semestrale: 6, annuale: 12 };
 export const FREQUENCIES = Object.keys(FREQ_MONTHS);
 
+function addMonths(iso, n) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1 + n, 1));
+  const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate();
+  dt.setUTCDate(Math.min(d, last));
+  return dt.toISOString().slice(0, 10);
+}
+
 /**
- * Versamenti volontari per ciascuna rata futura: ognuno viene abbinato alla
- * prima rata con data >= della data del versamento (la banca lo imputa li').
- * I versamenti periodici partono dalla prima rata >= start e si ripetono ogni
- * N rate, fino a end (inclusa) se indicata.
+ * Versamenti volontari per ciascuna rata futura, con la stessa regola del
+ * backend (simulate_amortization): un versamento riduce il capitale dalla sua
+ * data, quindi si somma alla rata con data <= della sua. Quelli precedenti alla
+ * prima rata futura (indice -1) riducono subito il residuo di partenza.
+ * I periodici partono da start e si ripetono ogni N mesi, fino a end se indicata.
  */
 function prepaymentsByRow(rows, { recurring, oneOff }) {
   const extra = new Array(rows.length).fill(0);
-  const rowFor = (date) => rows.findIndex((r) => r.date >= date);
+  let initial = 0;
+  const add = (date, amount) => {
+    let k = -1;
+    while (k + 1 < rows.length && rows[k + 1].date <= date) k++;
+    if (k < 0) initial += amount;
+    else extra[k] += amount;
+  };
 
   for (const p of oneOff) {
     const amount = parseFloat(p.amount);
-    if (!p.date || !(amount > 0)) continue;
-    const k = rowFor(p.date);
-    if (k >= 0) extra[k] += amount;
+    if (p.date && amount > 0) add(p.date, amount);
   }
 
   const amount = parseFloat(recurring.amount);
-  if (recurring.enabled && amount > 0 && recurring.start) {
+  if (recurring.enabled && amount > 0 && recurring.start && rows.length) {
     const step = FREQ_MONTHS[recurring.frequency] || 12;
-    const first = rowFor(recurring.start);
-    if (first >= 0) {
-      for (let k = first; k < rows.length; k += step) {
-        if (recurring.end && rows[k].date > recurring.end) break;
-        extra[k] += amount;
-      }
+    const lastDate = rows[rows.length - 1].date;
+    for (let i = 0; ; i++) {
+      const date = addMonths(recurring.start, i * step);
+      if (date > lastDate || (recurring.end && date > recurring.end)) break;
+      add(date, amount);
     }
   }
-  return extra;
+  return { initial, extra };
 }
 
 /**
  * Proietta il piano dalle rate future di $schedule (data > today), partendo dal
- * residuo dell'ultima rata gia' scaduta.
+ * residuo e dalla rata del piano del backend (che comprendono gia' i
+ * versamenti registrati).
  * mode = 'durata': la rata resta uguale e il mutuo finisce prima.
  * mode = 'rata':   la scadenza resta uguale e la rata viene ricalcolata in calo.
  * Un cambio di tasso ricalcola la rata sui mesi residui (in modalita' durata,
  * su quelli gia' accorciati), come fanno le banche.
  */
-function project(schedule, today, extraByRow, mode) {
+function project(schedule, today, { initial, extra }, mode) {
   const past = schedule.filter((r) => r.date <= today);
   const rows = schedule.slice(past.length);
-  let balance = past.length ? past[past.length - 1].balance_after : null;
-  if (balance === null) balance = rows.length ? rows[0].balance_after + rows[0].principal_portion : 0;
+  if (!rows.length) return [];
+  let balance = past.length ? past[past.length - 1].balance_after : rows[0].balance_after + rows[0].principal_portion + (rows[0].extra || 0);
 
   let remaining = rows.length;
-  let rate = rows.length ? rows[0].rate_used : 0;
-  let payment = pmt(balance, rate, remaining);
+  let rate = rows[0].rate_used;
+  let payment = rows[0].payment;
   const out = [];
 
-  for (let k = 0; k < rows.length && balance > 0.005; k++) {
+  const applyExtra = (amount) => {
+    const e = Math.min(amount, balance);
+    balance -= e;
+    if (balance < 0.005) balance = 0;
+    else if (e > 0) {
+      if (mode === 'rata') payment = pmt(balance, rate, remaining);
+      else remaining = Math.min(remaining, nper(balance, rate, payment));
+    }
+    return e;
+  };
+  const initialApplied = applyExtra(initial);
+
+  for (let k = 0; k < rows.length && remaining > 0 && balance > 0.005; k++) {
     const r = rows[k];
     if (r.rate_used !== rate) {
       rate = r.rate_used;
       payment = pmt(balance, rate, remaining);
     }
     const interest = balance * rate / 100 / 12;
-    const due = Math.min(payment, balance + interest);
-    const principal = due - interest;
+    const principal = remaining === 1 ? balance : Math.min(balance, payment - interest);
     balance -= principal;
     remaining -= 1;
-
-    const extra = Math.min(extraByRow[k] || 0, Math.max(0, balance));
-    balance -= extra;
-    if (balance < 0.005) balance = 0;
-
-    if (extra > 0 && balance > 0) {
-      if (mode === 'rata') payment = pmt(balance, rate, remaining);
-      else remaining = Math.min(remaining, nper(balance, rate, payment));
-    }
+    const e = applyExtra(extra[k] || 0) + (k === 0 ? initialApplied : 0);
 
     out.push({
       date: r.date,
       rate_used: rate,
-      payment: due,
+      payment: principal + interest,
       principal_portion: principal,
       interest_portion: interest,
-      extra,
+      extra: e,
       balance_after: balance,
     });
   }
@@ -110,17 +126,18 @@ function project(schedule, today, extraByRow, mode) {
 
 export function simulatePrepayment(schedule, today, plan, mode, penaltyPct = 0) {
   const future = schedule.filter((r) => r.date > today);
-  const extra = prepaymentsByRow(future, plan);
-  const base = project(schedule, today, new Array(future.length).fill(0), mode);
-  const sim = project(schedule, today, extra, mode);
+  const base = project(schedule, today, { initial: 0, extra: [] }, mode);
+  const prep = prepaymentsByRow(future, plan);
+  const sim = project(schedule, today, prep, mode);
 
   const sum = (rows, key) => rows.reduce((s, r) => s + r[key], 0);
   const totalExtra = sum(sim, 'extra');
   const interestBase = sum(base, 'interest_portion');
   const interestSim = sum(sim, 'interest_portion');
   const penalty = totalExtra * (parseFloat(penaltyPct) || 0) / 100;
+  // Rata dopo il primo versamento: se cade prima della prima rata futura, e' gia' la prima.
   const firstWithExtra = sim.findIndex((r) => r.extra > 0);
-  const nextRow = firstWithExtra >= 0 ? sim[firstWithExtra + 1] : null;
+  const nextRow = firstWithExtra < 0 ? null : (prep.initial > 0 ? sim[0] : sim[firstWithExtra + 1]);
 
   return {
     base,

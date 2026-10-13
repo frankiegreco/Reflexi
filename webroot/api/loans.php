@@ -19,7 +19,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'schedule') {
     // Piano completo fino a scadenza: i mesi gia' trascorsi usano i tassi
     // storici reali, quelli futuri assumono costante l'ultimo tasso noto
     // (o eventuali variazioni gia' inserite con data futura).
-    $schedule = simulate_amortization((float)$loan['principal'], $rateHistory, $loan['start_date'], $n, '9999-12-31');
+    $prepayments = loan_load_prepayments((int)$loan['id']);
+    $schedule = simulate_amortization((float)$loan['principal'], $rateHistory, $loan['start_date'], $n, '9999-12-31', $prepayments);
     $summary = loan_summary($loan);
     $actual = loan_actual_breakdown($loan);
 
@@ -33,7 +34,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'schedule') {
     $payoff = null;
     if (!empty($_GET['payoff_date'])) {
         $k = loan_elapsed_months($loan['start_date'], $_GET['payoff_date']);
-        $k = max(0, min($k, $n));
+        $k = max(0, min($k, count($schedule)));
         $residual = $k > 0 ? $schedule[$k - 1]['balance_after'] : (float)$loan['principal'];
         $interestPaidSoFar = array_sum(array_column(array_slice($schedule, 0, $k), 'interest_portion'));
         $interestIfCompleted = array_sum(array_column($schedule, 'interest_portion'));
@@ -46,7 +47,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'schedule') {
         ];
     }
 
-    respond(['loan' => $loan, 'summary' => $summary, 'actual' => $actual, 'schedule' => $schedule, 'payoff_simulation' => $payoff]);
+    respond(['loan' => $loan, 'summary' => $summary, 'actual' => $actual, 'schedule' => $schedule, 'prepayments' => $prepayments, 'payoff_simulation' => $payoff]);
 }
 
 switch (method()) {
@@ -156,7 +157,10 @@ switch (method()) {
             $loanStmt = db()->prepare("SELECT * FROM loans WHERE id = :id AND user_id = :uid");
             $loanStmt->execute(['id' => $in['id'], 'uid' => $uid]);
             $updatedLoan = $loanStmt->fetch();
-            if ($updatedLoan && $updatedLoan['recurring_id']) {
+            if ($updatedLoan && $updatedLoan['recurring_id'] && loan_load_prepayments((int)$updatedLoan['id'])) {
+                // Con versamenti volontari la rata e la scadenza dipendono dal piano, non dalla formula iniziale.
+                loan_sync_recurring_with_plan($updatedLoan);
+            } elseif ($updatedLoan && $updatedLoan['recurring_id']) {
                 $rata = loan_monthly_payment((float)$updatedLoan['principal'], (float)$updatedLoan['annual_rate'], (int)$updatedLoan['duration_years']);
                 $personalRata = $rata * (float)$updatedLoan['ownership_pct'] / 100;
                 db()->prepare("UPDATE recurring_transactions SET amount = :amount WHERE id = :rid AND user_id = :uid")

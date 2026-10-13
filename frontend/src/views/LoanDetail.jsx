@@ -37,11 +37,12 @@ export default function LoanDetail({ loanId, onClose, onChanged, onEdit }) {
   if (!loanId || !data) return null;
   const { loan, summary, actual, schedule } = data;
   const isVariabile = loan.rate_type === 'variabile';
+  const hasPrepayments = (data.prepayments || []).length > 0;
 
   const tabs = [
     { id: 'andamento', label: 'Andamento' },
     isVariabile && { id: 'tasso', label: 'Storico tasso', count: rates.length },
-    loan.status !== 'estinto' && { id: 'rientro', label: 'Rientro anticipato' },
+    loan.status !== 'estinto' && { id: 'rientro', label: 'Rientro anticipato', count: (data.prepayments || []).length },
     { id: 'estinzione', label: 'Estinzione anticipata' },
     { id: 'piano', label: 'Piano di ammortamento' },
   ].filter(Boolean);
@@ -219,7 +220,8 @@ export default function LoanDetail({ loanId, onClose, onChanged, onEdit }) {
       )}
 
       {activeTab === 'rientro' && (
-        <div className="mb-4"><LoanPrepaySim loanId={loanId} schedule={schedule} ownershipPct={summary.ownership_pct} /></div>
+        <div className="mb-4"><LoanPrepaySim loan={loan} schedule={schedule} prepayments={data.prepayments || []} ownershipPct={summary.ownership_pct}
+          onRegistered={async () => { await load(); onChanged(); }} /></div>
       )}
 
       {activeTab === 'estinzione' && (
@@ -262,7 +264,9 @@ export default function LoanDetail({ loanId, onClose, onChanged, onEdit }) {
                       <th className="px-4 py-2">#</th><th className="px-4 py-2">Data</th>
                       {isVariabile && <th className="px-4 py-2 text-right">Tasso</th>}
                       <th className="px-4 py-2 text-right">Quota capitale</th><th className="px-4 py-2 text-right">Quota interessi</th>
-                      <th className="px-4 py-2 text-right">Rata</th><th className="px-4 py-2 text-right">Residuo</th><th className="px-4 py-2">Stato</th>
+                      <th className="px-4 py-2 text-right">Rata</th>
+                      {hasPrepayments && <th className="px-4 py-2 text-right">Versamento</th>}
+                      <th className="px-4 py-2 text-right">Residuo</th><th className="px-4 py-2">Stato</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -274,6 +278,7 @@ export default function LoanDetail({ loanId, onClose, onChanged, onEdit }) {
                         <td className="px-4 py-2 text-right font-mono">{euro(r.principal_portion)}</td>
                         <td className="px-4 py-2 text-right font-mono">{euro(r.interest_portion)}</td>
                         <td className="px-4 py-2 text-right font-mono">{euro(r.payment)}</td>
+                        {hasPrepayments && <td className="px-4 py-2 text-right font-mono text-emerald-700">{r.extra > 0 ? euro(r.extra) : ''}</td>}
                         <td className="px-4 py-2 text-right font-mono">{euro(r.balance_after)}</td>
                         <td className="px-4 py-2">
                           {r.paid === null ? <span className="text-xs text-muted">N/D</span> :

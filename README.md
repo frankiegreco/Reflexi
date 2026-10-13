@@ -183,10 +183,20 @@ metodo di ammortamento "alla francese" (rata costante, lo standard italiano):
   confronta il piano con e senza versamenti: interessi risparmiati, nuova
   data di fine o nuova rata, eventuale penale (%) e grafico del residuo. Il
   calcolo parte dal residuo di oggi e usa il tasso del piano mese per mese
-  (comprese variazioni future già inserite); ogni versamento è imputato alla
-  prima rata successiva alla sua data. Gira tutto nel browser
+  (comprese variazioni future già inserite); ogni versamento vale come
+  riduzione del debito dalla sua data (la rata successiva paga già gli
+  interessi sul residuo ridotto). Gira tutto nel browser
   (`frontend/src/lib/loanPrepay.js`) e lo scenario resta salvato solo nel
   browser, non nel database
+- **versamenti registrati** (stessa scheda, "Registra versamento" o il
+  pulsante "Registra" accanto a un versamento sporadico simulato): un
+  versamento già fatto (data non futura, importo inferiore al residuo) entra
+  nel piano reale del mutuo (tabella `loan_prepayments`, migrazione 048) e
+  riduce durata o rata a scelta. Residuo, scadenza, rata, patrimonio netto e
+  proiezioni si ricalcolano; la rata ricorrente collegata viene riallineata
+  (importo e data di fine). Facoltativamente registra anche l'uscita sul
+  conto, per la sola quota di proprietà. Eliminando il versamento il piano
+  torna com'era (e, se richiesto, viene eliminata anche l'uscita)
 
 Se spunti "Crea automaticamente la rata mensile come transazione ricorrente",
 la rata calcolata viene registrata anche come ricorrenza mensile nel conto che
@@ -522,6 +532,7 @@ reflexi/
         ├── transactions.php      CRUD transazioni con filtri
         ├── recurring.php         CRUD ricorrenze + generazione automatica
         ├── loans.php             CRUD mutui + piano di ammortamento + simulazione estinzione
+        ├── loan_prepayments.php  versamenti volontari in conto capitale (riducono durata o rata del piano)
         ├── reference_rates.php   tassi mutuo di riferimento per il comparatore
         ├── instruments.php       CRUD strumenti finanziari (ticker, nome, tipo, valuta, aliquota fiscale)
         ├── instrument_search.php ricerca ticker
