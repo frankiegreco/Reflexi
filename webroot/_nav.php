@@ -16,7 +16,7 @@ function navlink($href, $key, $label, $active) {
 // pubblica) e "Strumenti" (gli strumenti gratuiti), separate di proposito;
 // poi le pagine del sito.
 $featureItems = [
-    ['/mutui', 'mutui', 'Mutui', 'Ammortamento ed estinzione anticipata'],
+    ['/mutui', 'mutui', 'Mutui', 'Ammortamento e rientro anticipato'],
     ['/investimenti', 'investimenti', 'Investimenti', 'Portafoglio con quotazioni reali'],
     ['/budget', 'budget', 'Budget', 'Limiti per categoria e avvisi'],
     ['/analisi', 'analisi', 'Analisi predittiva', 'Proiezioni e simulazione Monte Carlo'],

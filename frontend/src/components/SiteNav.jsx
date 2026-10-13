@@ -6,7 +6,7 @@ import { Menu, X, ChevronDown } from 'lucide-react';
 // se cambi le voci lì, aggiornale anche qui. Due tendine: "Funzionalità" (le
 // funzioni dell'app) e "Strumenti" (gli strumenti gratuiti), poi le pagine del sito.
 const FEATURE_ITEMS = [
-  ['/mutui', 'Mutui', 'Ammortamento ed estinzione anticipata'],
+  ['/mutui', 'Mutui', 'Ammortamento e rientro anticipato'],
   ['/investimenti', 'Investimenti', 'Portafoglio con quotazioni reali'],
   ['/budget', 'Budget', 'Limiti per categoria e avvisi'],
   ['/analisi', 'Analisi predittiva', 'Proiezioni e simulazione Monte Carlo'],

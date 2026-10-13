@@ -261,7 +261,7 @@ seo_jsonld(['@graph' => [
       <div>
         <span class="mb-3 inline-block rounded-full bg-loan/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-loan">Mutui</span>
         <h3 class="mb-3 text-xl font-bold">Il piano di ammortamento vero, non un promemoria</h3>
-        <p class="mb-4 text-muted">Rata calcolata col metodo francese, simulazione di estinzione anticipata, e — se il mutuo è
+        <p class="mb-4 text-muted">Rata calcolata col metodo francese, simulazione di rientro ed estinzione anticipata, e — se il mutuo è
           cointestato — la tua quota reale su capitale e interessi, non l'importo totale che confonde i conti.</p>
         <a href="/mutui" class="text-sm font-semibold text-accent hover:underline">Scopri di più →</a>
       </div>

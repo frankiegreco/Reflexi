@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestione mutuo e piano di ammortamento — Reflexi</title>
-<meta name="description" content="Piano di ammortamento reale, simulazione di estinzione anticipata e quota per mutui cointestati: il tuo mutuo, collegato al resto delle tue finanze.">
+<meta name="description" content="Piano di ammortamento reale, rientro anticipato con versamenti extra, risparmio netto al netto della detrazione fiscale e quota per mutui cointestati.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/mutui">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://reflexi.it/mutui">
 <meta property="og:site_name" content="Reflexi">
 <meta property="og:title" content="Gestione mutuo e piano di ammortamento — Reflexi">
-<meta property="og:description" content="Piano di ammortamento reale, simulazione di estinzione anticipata e quota per mutui cointestati: il tuo mutuo, collegato al resto delle tue finanze.">
+<meta property="og:description" content="Piano di ammortamento reale, rientro anticipato con versamenti extra, risparmio netto al netto della detrazione fiscale e quota per mutui cointestati.">
 <meta property="og:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -21,7 +21,7 @@
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Gestione mutuo e piano di ammortamento — Reflexi">
-<meta name="twitter:description" content="Piano di ammortamento reale, simulazione di estinzione anticipata e quota per mutui cointestati: il tuo mutuo, collegato al resto delle tue finanze.">
+<meta name="twitter:description" content="Piano di ammortamento reale, rientro anticipato con versamenti extra, risparmio netto al netto della detrazione fiscale e quota per mutui cointestati.">
 <meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -46,7 +46,7 @@ include '_nav.php';
     <div>
       <span class="mb-4 inline-block rounded-full bg-loan/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-loan">Mutui</span>
       <h1 class="mb-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Il piano di ammortamento vero, non un promemoria</h1>
-      <p class="mb-6 text-lg text-muted">Rata calcolata col metodo francese, simulazione di estinzione anticipata, e — se il mutuo è cointestato — la tua quota reale su capitale e interessi, non l'importo totale che confonde i conti.</p>
+      <p class="mb-6 text-lg text-muted">Rata calcolata col metodo francese, simulazione di rientro ed estinzione anticipata con il risparmio netto al netto della detrazione fiscale, e — se il mutuo è cointestato — la tua quota reale su capitale e interessi, non l'importo totale che confonde i conti.</p>
       <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-accent/30 transition hover:bg-accentDark">Prova gratis</a>
     </div>
     <div class="flex justify-center">
@@ -75,6 +75,13 @@ include '_nav.php';
               <div class="text-[8px] font-semibold uppercase text-accent">Simulazione estinzione anticipata</div>
               <div class="mt-1 text-[9px] text-gray-700">Estinguendo oggi risparmi <span class="font-bold">€ 8.240</span> di interessi</div>
             </div>
+            <div class="mt-2 rounded-lg border border-border bg-white p-2">
+              <div class="text-[8px] font-semibold uppercase text-loan">Rientro anticipato</div>
+              <div class="mt-1 text-[9px] text-gray-700">Versi <span class="font-bold">€ 10.000</span>: finisci 2 anni prima</div>
+              <div class="mt-1 flex justify-between text-[9px]"><span class="text-muted">Interessi risparmiati</span><span class="font-mono">€ 9.343</span></div>
+              <div class="flex justify-between text-[9px]"><span class="text-muted">Detrazione persa</span><span class="font-mono">− € 1.631</span></div>
+              <div class="mt-0.5 flex justify-between border-t border-border pt-0.5 text-[9px] font-bold"><span>Risparmio netto</span><span class="font-mono text-income">€ 7.712</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -97,6 +104,18 @@ include '_nav.php';
       </div>
       <div class="flex gap-3">
         <span class="mt-1 text-income">✓</span>
+        <div><span class="font-semibold">Simulazione di rientro anticipato</span><p class="text-sm text-muted">Ipotizzi versamenti extra in conto capitale, sporadici (una data e un importo) o fissi nel tempo (ogni mese, trimestre, semestre o anno), e scegli se usarli per accorciare la durata o abbassare la rata. Vedi subito nuova scadenza o nuova rata e il grafico del debito con e senza versamenti.</p></div>
+      </div>
+      <div class="flex gap-3">
+        <span class="mt-1 text-income">✓</span>
+        <div><span class="font-semibold">Risparmio netto, detrazione fiscale inclusa</span><p class="text-sm text-muted">Meno interessi significa anche meno detrazione IRPEF del 19%: Reflexi la sottrae anno per anno, rispettando il tetto di 4.000 € di interessi, insieme all'eventuale penale. Il dettaglio del calcolo è sempre visibile.</p></div>
+      </div>
+      <div class="flex gap-3">
+        <span class="mt-1 text-income">✓</span>
+        <div><span class="font-semibold">Versamenti registrati nel piano reale</span><p class="text-sm text-muted">Quando il versamento lo fai davvero, lo registri con un clic: debito residuo, piano, patrimonio netto e rata ricorrente si ricalcolano, e se vuoi l'uscita finisce anche sul tuo conto.</p></div>
+      </div>
+      <div class="flex gap-3">
+        <span class="mt-1 text-income">✓</span>
         <div><span class="font-semibold">Quota di proprietà per mutui cointestati</span><p class="text-sm text-muted">Se il mutuo è al 50% con il tuo partner, vedi la <em>tua</em> quota reale di debito e interessi — non l'importo totale che confonderebbe il resto dei tuoi conti.</p></div>
       </div>
       <div class="flex gap-3">
@@ -107,6 +126,39 @@ include '_nav.php';
         <span class="mt-1 text-income">✓</span>
         <div><span class="font-semibold">Collegato al resto delle tue finanze</span><p class="text-sm text-muted">Il mutuo pesa sul tuo budget mensile e sul patrimonio netto insieme a tutto il resto — non è un calcolatore isolato.</p></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ESEMPIO RIENTRO ANTICIPATO -->
+<section class="border-t border-border px-6 py-16">
+  <div class="mx-auto max-w-3xl">
+    <h2 class="mb-3 text-center text-2xl font-bold">Rientro anticipato: quanto risparmi davvero</h2>
+    <p class="mx-auto mb-8 max-w-2xl text-center text-muted">Un esempio calcolato con il simulatore di Reflexi: mutuo prima casa da 150.000 € al 3,5% in 25 anni, dopo 5 anni (debito residuo circa 129.500 €, rata 750,94 €). Versi una volta 10.000 €.</p>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div class="rounded-2xl border border-border bg-white p-6">
+        <h3 class="mb-1 text-base font-bold">Riduci la durata</h3>
+        <p class="mb-4 text-sm text-muted">La rata resta 750,94 €, il mutuo finisce 2 anni e 1 mese prima.</p>
+        <div class="space-y-1.5 text-sm">
+          <div class="flex justify-between"><span class="text-muted">Interessi risparmiati</span><span class="font-mono">€ 9.343</span></div>
+          <div class="flex justify-between"><span class="text-muted">Detrazione IRPEF persa</span><span class="font-mono">− € 1.631</span></div>
+          <div class="flex justify-between border-t border-border pt-1.5 font-semibold"><span>Risparmio netto</span><span class="font-mono text-income">€ 7.712</span></div>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-border bg-white p-6">
+        <h3 class="mb-1 text-base font-bold">Riduci la rata</h3>
+        <p class="mb-4 text-sm text-muted">La scadenza resta uguale, la rata scende a 692,77 € (−58 € al mese).</p>
+        <div class="space-y-1.5 text-sm">
+          <div class="flex justify-between"><span class="text-muted">Interessi risparmiati</span><span class="font-mono">€ 3.901</span></div>
+          <div class="flex justify-between"><span class="text-muted">Detrazione IRPEF persa</span><span class="font-mono">− € 600</span></div>
+          <div class="flex justify-between border-t border-border pt-1.5 font-semibold"><span>Risparmio netto</span><span class="font-mono text-income">€ 3.301</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-8 space-y-3 text-sm text-muted">
+      <p><span class="font-semibold text-gray-900">Perché ridurre la durata fa risparmiare di più?</span> Con la rata invariata il debito scende più in fretta, e su un debito più basso maturano meno interessi. Ridurre la rata, invece, libera liquidità ogni mese: dipende da cosa ti serve.</p>
+      <p><span class="font-semibold text-gray-900">Perché la detrazione persa non è sempre il 19% del risparmio?</span> La detrazione si calcola solo sui primi 4.000 € di interessi pagati ogni anno. Se oggi ne paghi di più, la parte di interessi risparmiata sopra il tetto non ti fa perdere nulla. Reflexi fa il conto anno per anno, contando anche gli interessi già pagati nell'anno in corso.</p>
+      <p class="text-xs">Esempio indicativo: la detrazione spetta solo per il mutuo sull'abitazione principale e nei limiti dell'IRPEF dovuta. Nel simulatore puoi cambiare percentuale e tetto, disattivarla o aggiungere una penale.</p>
     </div>
   </div>
 </section>

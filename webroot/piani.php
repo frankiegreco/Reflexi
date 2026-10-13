@@ -81,7 +81,7 @@ seo_jsonld(seo_software_application());
   <div class="mt-16">
     <h2 class="mb-8 text-center text-2xl font-bold">Tutto incluso, in entrambi i piani</h2>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div class="flex gap-3"><span class="mt-0.5 text-income">✓</span><span class="text-sm text-gray-700"><strong>Mutui</strong> — piano di ammortamento, estinzione anticipata, quote di proprietà</span></div>
+      <div class="flex gap-3"><span class="mt-0.5 text-income">✓</span><span class="text-sm text-gray-700"><strong>Mutui</strong> — piano di ammortamento, rientro ed estinzione anticipata, quote di proprietà</span></div>
       <div class="flex gap-3"><span class="mt-0.5 text-income">✓</span><span class="text-sm text-gray-700"><strong>Investimenti</strong> — quotazioni live, PAC automatici, storico prezzi, tassazione plusvalenze</span></div>
       <div class="flex gap-3"><span class="mt-0.5 text-income">✓</span><span class="text-sm text-gray-700"><strong>Budget con rollover</strong> — limiti per categoria che si riportano al mese successivo</span></div>
       <div class="flex gap-3"><span class="mt-0.5 text-income">✓</span><span class="text-sm text-gray-700"><strong>Analisi predittiva</strong> — simulazione Monte Carlo, rilevamento abbonamenti dimenticati</span></div>

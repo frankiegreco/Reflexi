@@ -89,6 +89,9 @@ function faq_category($title, $items) {
     ['Come calcola la rata Reflexi?', 'Con il metodo di ammortamento francese (il più comune in Italia), a rata costante: cambia solo la proporzione tra quota capitale e quota interessi nel tempo.'],
     ['Cosa succede se il mutuo è cointestato?', 'Indichi la percentuale di tua proprietà (es. 50%) e Reflexi calcola sempre la tua quota reale di debito residuo e interessi — non l\'importo totale, che confonderebbe il resto dei tuoi conti.'],
     ['Cosa significa "simulazione estinzione anticipata"?', 'Una stima di quanto risparmieresti in interessi se estinguessi il mutuo oggi (o a una data futura), rispetto a continuare a pagarlo fino alla scadenza naturale.'],
+    ['Posso simulare un rientro anticipato con versamenti extra?', 'Sì. Nel dettaglio del mutuo, scheda "Rientro anticipato", ipotizzi versamenti in conto capitale sporadici o periodici (ogni mese, trimestre, semestre o anno) e scegli se usarli per ridurre la durata o la rata. Reflexi confronta il piano con e senza versamenti: interessi risparmiati, nuova scadenza o nuova rata.'],
+    ['Il risparmio tiene conto della detrazione fiscale sugli interessi?', 'Sì. Pagando meno interessi si perde parte della detrazione IRPEF del 19% (su massimo 4.000 € di interessi l\'anno per il mutuo prima casa): Reflexi la calcola anno per anno e la sottrae, insieme all\'eventuale penale, per mostrarti il risparmio netto. Percentuale e tetto sono modificabili, e la detrazione si può disattivare.'],
+    ['Come registro un versamento che ho fatto davvero?', 'Dalla stessa scheda, con "Registra versamento" (o "Registra" accanto a un versamento simulato). Il debito residuo, il piano di ammortamento, il patrimonio netto e la rata ricorrente collegata si aggiornano; se vuoi, l\'uscita viene registrata anche sul conto.'],
 ]); ?>
 
 <?php faq_category('Investimenti', [
