@@ -124,7 +124,35 @@ function project(schedule, today, { initial, extra }, mode) {
   return out;
 }
 
-export function simulatePrepayment(schedule, today, plan, mode, penaltyPct = 0) {
+/**
+ * Detrazione IRPEF sugli interessi passivi (mutuo abitazione principale): pct%
+ * degli interessi pagati in ciascun anno solare, fino a cap euro di interessi
+ * l'anno per mutuo (19% su max 4.000 euro). Pagando meno interessi si perde
+ * parte della detrazione: il risparmio reale e' la differenza al netto di questa.
+ * Gli interessi gia' pagati nell'anno in corso contano per il tetto annuo.
+ */
+function taxByYear(base, sim, paidThisYear, thisYear, { pct, cap }) {
+  const years = {};
+  const add = (rows, key) => rows.forEach((r) => {
+    const y = r.date.slice(0, 4);
+    years[y] ??= { year: y, interestBase: 0, interestSim: 0 };
+    years[y][key] += r.interest_portion;
+  });
+  add(base, 'interestBase');
+  add(sim, 'interestSim');
+  const rate = (parseFloat(pct) || 0) / 100;
+  const limit = parseFloat(cap) > 0 ? parseFloat(cap) : Infinity;
+  return Object.values(years).sort((a, b) => a.year.localeCompare(b.year)).map((y) => {
+    const already = y.year === thisYear ? paidThisYear : 0;
+    // Solo la parte di tetto non ancora usata dagli interessi gia' pagati quest'anno.
+    const deductible = (i) => Math.max(0, Math.min(i + already, limit) - Math.min(already, limit));
+    const deductionBase = deductible(y.interestBase) * rate;
+    const deductionSim = deductible(y.interestSim) * rate;
+    return { ...y, deductionBase, deductionSim, deductionLost: deductionBase - deductionSim };
+  });
+}
+
+export function simulatePrepayment(schedule, today, plan, mode, penaltyPct = 0, tax = null) {
   const future = schedule.filter((r) => r.date > today);
   const base = project(schedule, today, { initial: 0, extra: [] }, mode);
   const prep = prepaymentsByRow(future, plan);
@@ -135,6 +163,11 @@ export function simulatePrepayment(schedule, today, plan, mode, penaltyPct = 0) 
   const interestBase = sum(base, 'interest_portion');
   const interestSim = sum(sim, 'interest_portion');
   const penalty = totalExtra * (parseFloat(penaltyPct) || 0) / 100;
+  const thisYear = today.slice(0, 4);
+  const paidThisYear = schedule.filter((r) => r.date <= today && r.date.startsWith(thisYear)).reduce((s, r) => s + r.interest_portion, 0);
+  const years = taxByYear(base, sim, paidThisYear, thisYear, tax && tax.enabled ? tax : { pct: 0, cap: 0 });
+  const deductionLost = years.reduce((s, y) => s + y.deductionLost, 0);
+
   // Rata dopo il primo versamento: se cade prima della prima rata futura, e' gia' la prima.
   const firstWithExtra = sim.findIndex((r) => r.extra > 0);
   const nextRow = firstWithExtra < 0 ? null : (prep.initial > 0 ? sim[0] : sim[firstWithExtra + 1]);
@@ -147,7 +180,11 @@ export function simulatePrepayment(schedule, today, plan, mode, penaltyPct = 0) 
     interestSim,
     interestSaved: interestBase - interestSim,
     penalty,
-    netSaving: interestBase - interestSim - penalty,
+    years,
+    deductionBase: years.reduce((s, y) => s + y.deductionBase, 0),
+    deductionSim: years.reduce((s, y) => s + y.deductionSim, 0),
+    deductionLost,
+    netSaving: interestBase - interestSim - deductionLost - penalty,
     monthsBase: base.length,
     monthsSim: sim.length,
     endBase: base.length ? base[base.length - 1].date : null,

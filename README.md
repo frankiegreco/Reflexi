@@ -181,7 +181,12 @@ metodo di ammortamento "alla francese" (rata costante, lo standard italiano):
   annuale, data di inizio e fine facoltativa), e scegli se usarli per ridurre
   la **durata** (rata invariata) o la **rata** (scadenza invariata). L'app
   confronta il piano con e senza versamenti: interessi risparmiati, nuova
-  data di fine o nuova rata, eventuale penale (%) e grafico del residuo. Il
+  data di fine o nuova rata, eventuale penale (%) e grafico del residuo.
+  Il **risparmio netto** sottrae agli interessi risparmiati la detrazione
+  IRPEF persa (di default 19% degli interessi pagati nell'anno solare, su
+  massimo 4.000 € l'anno per mutuo, contando gli interessi già pagati
+  nell'anno in corso; disattivabile per mutui non prima casa) e la penale,
+  con dettaglio del calcolo e tabella anno per anno. Il
   calcolo parte dal residuo di oggi e usa il tasso del piano mese per mese
   (comprese variazioni future già inserite); ogni versamento vale come
   riduzione del debito dalla sua data (la rata successiva paga già gli

@@ -12,6 +12,7 @@ const FREQ_LABEL = { mensile: 'Ogni mese', trimestrale: 'Ogni 3 mesi', semestral
 const emptyPlan = () => ({
   mode: 'durata',
   penalty: '0',
+  tax: { enabled: true, pct: '19', cap: '4000' },
   recurring: { enabled: false, amount: '', frequency: 'annuale', start: todayISO(), end: '' },
   oneOff: [{ date: todayISO(), amount: '' }],
 });
@@ -21,7 +22,7 @@ const storageKey = (loanId) => `reflexi.prepay.${loanId}`;
 function loadPlan(loanId) {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey(loanId)));
-    if (saved && saved.recurring && Array.isArray(saved.oneOff)) return saved;
+    if (saved && saved.recurring && Array.isArray(saved.oneOff)) return { ...emptyPlan(), ...saved };
   } catch { /* storage non disponibile */ }
   return emptyPlan();
 }
@@ -36,6 +37,7 @@ export default function LoanPrepaySim({ loan, schedule, prepayments, ownershipPc
   const { activeAccounts, expenseCategories } = useData();
   const [plan, setPlan] = useState(() => loadPlan(loanId));
   const [showTable, setShowTable] = useState(false);
+  const [showYears, setShowYears] = useState(false);
   const [reg, setReg] = useState(null);
   const [regError, setRegError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -91,10 +93,11 @@ export default function LoanPrepaySim({ loan, schedule, prepayments, ownershipPc
 
   const today = todayISO();
   const res = useMemo(
-    () => simulatePrepayment(schedule, today, { recurring: plan.recurring, oneOff: plan.oneOff }, plan.mode, plan.penalty),
+    () => simulatePrepayment(schedule, today, { recurring: plan.recurring, oneOff: plan.oneOff }, plan.mode, plan.penalty, plan.tax),
     [schedule, today, plan],
   );
 
+  const setTax = (patch) => setPlan((p) => ({ ...p, tax: { ...p.tax, ...patch } }));
   const setRec = (patch) => setPlan((p) => ({ ...p, recurring: { ...p.recurring, ...patch } }));
   const setOne = (i, patch) => setPlan((p) => ({ ...p, oneOff: p.oneOff.map((o, j) => (j === i ? { ...o, ...patch } : o)) }));
   const addOne = () => setPlan((p) => ({ ...p, oneOff: [...p.oneOff, { date: today, amount: '' }] }));
@@ -276,6 +279,27 @@ export default function LoanPrepaySim({ loan, schedule, prepayments, ownershipPc
           </div>
         </div>
 
+        <div className="mt-4 rounded-xl border border-border p-3">
+          <label className="mb-2 flex items-center gap-2 text-sm font-medium">
+            <input type="checkbox" checked={plan.tax.enabled} onChange={(e) => setTax({ enabled: e.target.checked })} />
+            Detrazione IRPEF sugli interessi (mutuo abitazione principale)
+          </label>
+          <div className={`flex flex-wrap items-end gap-3 ${plan.tax.enabled ? '' : 'pointer-events-none opacity-50'}`}>
+            <div>
+              <label className="field-label">Detrazione (%)</label>
+              <input type="number" min="0" max="100" step="1" className="field w-24" value={plan.tax.pct} onChange={(e) => setTax({ pct: e.target.value })} />
+            </div>
+            <div>
+              <label className="field-label">Tetto interessi annuo (€)</label>
+              <input type="number" min="0" step="100" className="field w-32" value={plan.tax.cap} onChange={(e) => setTax({ cap: e.target.value })} />
+            </div>
+            <p className="max-w-md text-xs text-muted">
+              Standard: 19% degli interessi pagati nell'anno, su massimo 4.000 € di interessi per mutuo (da dividere tra i cointestatari).
+              Pagando meno interessi si perde parte della detrazione: il risparmio netto ne tiene conto.
+            </p>
+          </div>
+        </div>
+
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>
             <label className="field-label">Penale su estinzione parziale (%)</label>
@@ -300,10 +324,76 @@ export default function LoanPrepaySim({ loan, schedule, prepayments, ownershipPc
               <StatCard label="Rata dopo il 1° versamento" value={euro(res.paymentAfterFirst ?? res.paymentLast)}
                 hint={`Oggi ${euro(res.paymentNow)} · ultima ${euro(res.paymentLast)}`} />
             )}
-            <StatCard label={res.penalty > 0 ? 'Risparmio netto penale' : 'Rate rimanenti'}
-              value={res.penalty > 0 ? euro(res.netSaving) : `${res.monthsSim} su ${res.monthsBase}`}
-              valueClass={res.penalty > 0 && res.netSaving < 0 ? 'text-red-600' : ''}
-              hint={res.penalty > 0 ? `Penale ${euro(res.penalty)}` : undefined} />
+            <StatCard label="Risparmio netto" value={euro(res.netSaving)}
+              valueClass={res.netSaving < 0 ? 'text-red-600' : 'text-emerald-600'}
+              hint={[
+                res.deductionLost > 0 && `detrazione persa ${euro(res.deductionLost)}`,
+                res.penalty > 0 && `penale ${euro(res.penalty)}`,
+                ownershipPct < 100 && `tua quota ${euro(res.netSaving * ownershipPct / 100)}`,
+              ].filter(Boolean).join(' · ') || undefined} />
+          </div>
+
+          <div className="card p-4">
+            <h6 className="mb-3 text-sm font-semibold">Dettaglio del calcolo</h6>
+            <div className="max-w-xl space-y-1 text-sm">
+              {[
+                ['Interessi da pagare senza versamenti', res.interestBase],
+                ['Interessi da pagare con i versamenti', -res.interestSim],
+                ['= Interessi risparmiati', res.interestSaved, 'border-t border-border pt-1 font-semibold'],
+                plan.tax.enabled && [`− Detrazione IRPEF persa (${plan.tax.pct}% su max ${euro(plan.tax.cap)}/anno)`, -res.deductionLost],
+                res.penalty > 0 && [`− Penale (${plan.penalty}% dei versamenti)`, -res.penalty],
+                ['= Risparmio netto', res.netSaving, 'border-t border-border pt-1 font-semibold text-emerald-700'],
+                ownershipPct < 100 && [`Tua quota (${ownershipPct}%)`, res.netSaving * ownershipPct / 100, 'text-muted'],
+              ].filter(Boolean).map(([label, value, cls = '']) => (
+                <div key={label} className={`flex justify-between gap-4 ${cls}`}>
+                  <span>{label}</span><span className="font-mono">{euro(value)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 grid max-w-xl grid-cols-1 gap-1 text-xs text-muted sm:grid-cols-2">
+              <span>Risparmio netto ogni 1.000 € versati: <b className="font-mono">{euro(res.netSaving / res.totalExtra * 1000)}</b></span>
+              {plan.tax.enabled && <span>Detrazione totale: {euro(res.deductionBase)} → {euro(res.deductionSim)}</span>}
+            </div>
+            {plan.tax.enabled && (
+              <p className="mt-3 text-xs text-muted">
+                La detrazione spetta solo per il mutuo sull'abitazione principale e solo fino all'IRPEF che devi pagare (se ne paghi poca,
+                ne recuperi meno e il risparmio netto reale è più alto). Si recupera l'anno dopo con il 730: qui è attribuita all'anno
+                degli interessi. Dal 2025, con redditi oltre 75.000 € c'è un tetto complessivo alle detrazioni: verifica il tuo caso.
+              </p>
+            )}
+
+            <button className="mt-3 text-sm font-medium text-accent hover:underline" onClick={() => setShowYears((v) => !v)}>
+              {showYears ? '▲ Nascondi' : '▼ Mostra'} il dettaglio anno per anno
+            </button>
+            {showYears && (
+              <div className="mt-2 max-h-96 overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-white">
+                    <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                      <th className="px-2 py-2">Anno</th>
+                      <th className="px-2 py-2 text-right">Interessi senza</th><th className="px-2 py-2 text-right">Interessi con</th>
+                      {plan.tax.enabled && <><th className="px-2 py-2 text-right">Detraz. senza</th><th className="px-2 py-2 text-right">Detraz. con</th></>}
+                      <th className="px-2 py-2 text-right">Risparmio netto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {res.years.map((y) => (
+                      <tr key={y.year} className="border-t border-border">
+                        <td className="px-2 py-1.5">{y.year}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{euro(y.interestBase)}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{euro(y.interestSim)}</td>
+                        {plan.tax.enabled && <>
+                          <td className="px-2 py-1.5 text-right font-mono">{euro(y.deductionBase)}</td>
+                          <td className="px-2 py-1.5 text-right font-mono">{euro(y.deductionSim)}</td>
+                        </>}
+                        <td className="px-2 py-1.5 text-right font-mono">{euro(y.interestBase - y.interestSim - y.deductionLost)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="mt-2 text-xs text-muted">Il risparmio per anno non comprende la penale, che si paga al momento del versamento.</p>
+              </div>
+            )}
           </div>
           {res.monthsSim < res.monthsBase && plan.mode === 'rata' && (
             <div className="text-xs text-muted">Con questi versamenti il debito si estingue già il {formatDate(res.endSim)}.</div>
