@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mercati — Andamenti di azioni, ETF e crypto | Reflexi</title>
+<title>Mercati: andamento di azioni, ETF e crypto — Reflexi</title>
 <meta name="description" content="Quotazioni di ETF, azioni e crypto: i titoli più seguiti, i movimenti più forti del giorno e il grafico storico di ogni ticker. Gratis, senza registrazione.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/mercati">
@@ -11,7 +11,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/mercati">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Mercati — Andamenti di azioni, ETF e crypto | Reflexi">
+<meta property="og:title" content="Mercati: andamento di azioni, ETF e crypto — Reflexi">
 <meta property="og:description" content="Quotazioni live di ETF, azioni e crypto: watchlist dei titoli più seguiti, i movimenti più forti della giornata e il grafico storico di qualsiasi ticker tu cerchi.">
 <meta property="og:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <meta property="og:image:width" content="1200">
@@ -20,7 +20,7 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Mercati — Andamenti di azioni, ETF e crypto | Reflexi">
+<meta name="twitter:title" content="Mercati: andamento di azioni, ETF e crypto — Reflexi">
 <meta name="twitter:description" content="Quotazioni live di ETF, azioni e crypto: watchlist, top mover del giorno e grafico storico di qualsiasi ticker tu cerchi.">
 <meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">

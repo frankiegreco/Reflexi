@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Termini di Servizio — Reflexi</title>
-<meta name="description" content="Termini e condizioni d'uso del servizio Reflexi.">
+<title>Termini di Servizio di Reflexi: condizioni d'uso dell'app</title>
+<meta name="description" content="Termini e condizioni d'uso di Reflexi: account, limiti di responsabilità, il servizio non è consulenza finanziaria, dati, sospensione e legge applicabile.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/termini">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/termini">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Termini di Servizio — Reflexi">
-<meta property="og:description" content="Termini e condizioni d'uso del servizio Reflexi.">
+<meta property="og:title" content="Termini di Servizio di Reflexi: condizioni d'uso dell'app">
+<meta property="og:description" content="Termini e condizioni d'uso di Reflexi: account, limiti di responsabilità, il servizio non è consulenza finanziaria, dati, sospensione e legge applicabile.">
 <meta property="og:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,8 +20,8 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Termini di Servizio — Reflexi">
-<meta name="twitter:description" content="Termini e condizioni d'uso del servizio Reflexi.">
+<meta name="twitter:title" content="Termini di Servizio di Reflexi: condizioni d'uso dell'app">
+<meta name="twitter:description" content="Termini e condizioni d'uso di Reflexi: account, limiti di responsabilità, il servizio non è consulenza finanziaria, dati, sospensione e legge applicabile.">
 <meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <?php seo_breadcrumb([['Termini di Servizio', '/termini']]); ?>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">

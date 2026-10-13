@@ -41,15 +41,35 @@ $stmt->bindValue('offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $articles = $stmt->fetchAll();
 
+// Title (<= 60 caratteri) e description (110-160)
+// delle pagine di categoria.
+$categoryDescriptions = [
+    'mutui' => 'Guide sul mutuo con esempi e tabelle: TAN e TAEG, tasso fisso o variabile, surroga, rientro anticipato, detrazione degli interessi e spese.',
+    'investimenti' => 'Guide sugli investimenti con esempi numerici: ETF, PAC, interesse composto, diversificazione, tassazione, dividendi, rischio e costi.',
+    'budget' => 'Guide al budget personale e familiare con esempi: regola 50/30/20, fondo di emergenza, metodo delle buste, abbonamenti e spese fisse.',
+    'pianificazione' => 'Guide di pianificazione finanziaria con tabelle: FIRE, pensione e fondi pensione, TFR, patrimonio netto, inflazione e assicurazioni.',
+];
+
+$categoryTitles = [
+    'mutui' => 'Guide sul mutuo: tassi, rata, surroga e rientro — Reflexi',
+    'investimenti' => 'Guide agli investimenti: ETF, PAC e tasse — Reflexi',
+    'budget' => 'Guide al budget: risparmio e spese sotto controllo — Reflexi',
+    'pianificazione' => 'Pianificazione finanziaria: FIRE e pensione — Reflexi',
+];
+
 $pageTitle = $categoria !== ''
-    ? ($categoryLabels[$categoria] . ': guide e news — Reflexi')
+    ? ($categoryTitles[$categoria] ?? $categoryLabels[$categoria] . ': guide e news — Reflexi')
     : 'News e guide di finanza personale — Reflexi';
 if ($page > 1) {
     $pageTitle .= " (pagina {$page})";
 }
 $pageDescription = $categoria !== ''
-    ? "Articoli su {$categoryLabels[$categoria]}: guide pratiche di finanza personale scritte da Reflexi."
+    ? ($categoryDescriptions[$categoria] ?? "Guide su {$categoryLabels[$categoria]} di Reflexi.")
     : 'Guide pratiche di finanza personale su mutui, investimenti, budget e pianificazione: spiegazioni chiare, esempi concreti e calcolatori gratuiti.';
+// Pagine 2+ con description propria: identica alla pagina 1 risulterebbe duplicata.
+if ($page > 1) {
+    $pageDescription = "Pagina {$page}. " . $pageDescription;
+}
 // Ogni pagina della paginazione si auto-canonicalizza (include ?page=N se >1):
 // puntare tutte le pagine al canonical di pagina 1 farebbe perdere agli
 // articoli presenti solo in pagina 2+ il loro segnale di indicizzazione.

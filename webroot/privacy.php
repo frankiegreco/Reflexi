@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Privacy Policy — Reflexi</title>
-<meta name="description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari.">
+<title>Privacy Policy di Reflexi: come trattiamo i tuoi dati</title>
+<meta name="description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari: quali dati, perché, con chi li condividiamo, per quanto tempo, cookie e diritti GDPR.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/privacy">
 <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/privacy">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Privacy Policy — Reflexi">
-<meta property="og:description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari.">
+<meta property="og:title" content="Privacy Policy di Reflexi: come trattiamo i tuoi dati">
+<meta property="og:description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari: quali dati, perché, con chi li condividiamo, per quanto tempo, cookie e diritti GDPR.">
 <meta property="og:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,8 +20,8 @@
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Privacy Policy — Reflexi">
-<meta name="twitter:description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari.">
+<meta name="twitter:title" content="Privacy Policy di Reflexi: come trattiamo i tuoi dati">
+<meta name="twitter:description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari: quali dati, perché, con chi li condividiamo, per quanto tempo, cookie e diritti GDPR.">
 <meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <?php seo_breadcrumb([['Privacy Policy', '/privacy']]); ?>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
