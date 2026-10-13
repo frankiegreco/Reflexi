@@ -23,6 +23,7 @@
 <meta name="twitter:title" content="Privacy Policy — Reflexi">
 <meta name="twitter:description" content="Come Reflexi raccoglie, usa e protegge i tuoi dati personali e finanziari.">
 <meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
+<?php seo_breadcrumb([['Privacy Policy', '/privacy']]); ?>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">

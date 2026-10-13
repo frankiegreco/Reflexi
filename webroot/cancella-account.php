@@ -24,6 +24,7 @@
 <meta name="twitter:title" content="Cancellazione account — Reflexi">
 <meta name="twitter:description" content="Come cancellare definitivamente il tuo account Reflexi e tutti i dati collegati, dall'app in modo immediato oppure con una richiesta via email.">
 <meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
+<?php seo_breadcrumb([['Cancellazione account', '/cancella-account']]); ?>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/inter-v20-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/site.css?v=<?= filemtime(__DIR__ . '/css/site.css') ?>">
