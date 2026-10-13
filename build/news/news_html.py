@@ -48,20 +48,24 @@ def euro(v, decimals=0):
     return s.replace(',', '#').replace('.', ',').replace('#', '.')
 
 
-def table(title, header, rows, note=None, highlight_last=False):
+def table(title, header, rows, note=None, highlight_last=False, numeric=None):
     """header: lista di intestazioni. rows: liste di celle (stringhe HTML).
     La prima colonna e' l'etichetta, le altre sono numeri allineati a destra e
     mai spezzati su due righe: con molte colonne la tabella scorre in
     orizzontale sul telefono. Con 4 colonne togli l'unita' dalle celle e
     mettila nel titolo (es. "(importi in euro)"), altrimenti non entra in 390px.
-    highlight_last: ultima riga in grassetto (es. un totale)."""
+    highlight_last: ultima riga in grassetto (es. un totale).
+    numeric: indici delle colonne numeriche (default: tutte tranne la prima);
+    le colonne di testo vanno a capo e restano allineate a sinistra."""
+    if numeric is None:
+        numeric = set(range(1, len(header)))
     th = ''.join(
-        f'<th class="px-3 py-2 font-semibold sm:px-4 sm:py-2.5{" text-right" if i else ""}">{h}</th>' for i, h in enumerate(header))
+        f'<th class="px-3 py-2 font-semibold sm:px-4 sm:py-2.5{" text-right" if i in numeric else ""}">{h}</th>' for i, h in enumerate(header))
     body = ''
     for r, row in enumerate(rows):
         bold = ' font-semibold text-gray-900' if highlight_last and r == len(rows) - 1 else ''
         cells = ''.join(
-            f'<td class="px-3 py-2 sm:px-4 sm:py-2.5{" whitespace-nowrap text-right font-mono" if i else ""}{bold}">{c}</td>' for i, c in enumerate(row))
+            f'<td class="px-3 py-2 sm:px-4 sm:py-2.5{" whitespace-nowrap text-right font-mono" if i in numeric else ""}{bold}">{c}</td>' for i, c in enumerate(row))
         body += f'<tr class="border-t border-border">{cells}</tr>'
     out = (f'<figure class="my-6"><figcaption class="mb-2 text-sm font-semibold text-gray-900">{title}</figcaption>'
            f'<div class="overflow-x-auto rounded-xl border border-border bg-white">'
@@ -81,7 +85,7 @@ def bars(title, items, note=None, fmt=lambda v: euro(v)):
     for label, value, color in items:
         width = max(1.0, value / top * 100)
         rows += (f'<div><div class="mb-1 flex justify-between gap-3 text-sm"><span class="text-gray-700">{label}</span>'
-                 f'<span class="font-mono text-gray-900">{fmt(value)}</span></div>'
+                 f'<span class="whitespace-nowrap font-mono text-gray-900">{fmt(value)}</span></div>'
                  f'<div class="h-2.5 rounded-full bg-gray-100"><div class="h-2.5 rounded-full {BAR_COLORS[color]}" style="width:{width:.1f}%"></div></div></div>')
     out = (f'<figure class="my-6 rounded-xl border border-border bg-white p-5">'
            f'<figcaption class="mb-4 text-sm font-semibold text-gray-900">{title}</figcaption>'
