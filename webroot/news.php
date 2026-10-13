@@ -55,13 +55,6 @@ $pageDescription = $categoria !== ''
 // articoli presenti solo in pagina 2+ il loro segnale di indicizzazione.
 $canonicalParams = array_filter(['categoria' => $categoria ?: null, 'page' => $page > 1 ? $page : null]);
 $canonicalUrl = 'https://reflexi.it/news' . (!empty($canonicalParams) ? '?' . http_build_query($canonicalParams) : '');
-
-function news_fmt_date(string $datetime): string
-{
-    $months = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
-    $ts = strtotime($datetime);
-    return (int) date('j', $ts) . ' ' . $months[(int) date('n', $ts) - 1] . ' ' . date('Y', $ts);
-}
 ?>
 <!DOCTYPE html>
 <html lang="it">

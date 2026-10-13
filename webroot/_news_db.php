@@ -26,6 +26,14 @@ function news_db(): PDO
     return $pdo;
 }
 
+// Data in italiano per le pagine News, es. "13 ottobre 2026".
+function news_fmt_date(string $datetime): string
+{
+    $months = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+    $ts = strtotime($datetime);
+    return (int) date('j', $ts) . ' ' . $months[(int) date('n', $ts) - 1] . ' ' . date('Y', $ts);
+}
+
 // Recupera un set scelto a mano di articoli News (slug -> titolo/estratto/emoji),
 // usato dalle pagine calcolatore per linkare gli approfondimenti pertinenti.
 // Filtra su stato/data come le altre query pubbliche e preserva l'ordine di

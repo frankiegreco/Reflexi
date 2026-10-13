@@ -87,24 +87,33 @@ $titleTag = mb_strlen($seoTitle) + 10 <= 60 ? $seoTitle . ' — Reflexi' : $seoT
 <meta name="twitter:description" content="<?= htmlspecialchars($article['meta_description']) ?>">
 <meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image('news/' . $article['slug']); ?>">
 
-<script type="application/ld+json">
-<?= json_encode([
-    '@context' => 'https://schema.org',
+<?php
+require_once __DIR__ . '/_seo.php';
+// Article: le date devono coincidere con quelle mostrate sotto il titolo,
+// autore ed editore sono l'organizzazione (stesso @id delle altre pagine).
+$org = seo_organization();
+seo_jsonld([
     '@type' => 'Article',
     'headline' => $article['title'],
     'description' => $article['meta_description'],
-    'image' => seo_og_image('news/' . $article['slug']),
+    'image' => [
+        '@type' => 'ImageObject',
+        'url' => seo_og_image('news/' . $article['slug']),
+        'width' => 1200,
+        'height' => 630,
+    ],
     'datePublished' => date('c', strtotime($article['published_at'])),
     'dateModified' => date('c', strtotime($article['updated_at'])),
-    'author' => ['@type' => 'Organization', 'name' => 'Reflexi', 'url' => 'https://reflexi.it/'],
-    'publisher' => ['@type' => 'Organization', 'name' => 'Reflexi', 'url' => 'https://reflexi.it/', 'logo' => ['@type' => 'ImageObject', 'url' => 'https://reflexi.it/favicon.svg']],
+    'author' => $org,
+    'publisher' => $org,
     'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $canonicalUrl],
+    'url' => $canonicalUrl,
     'inLanguage' => 'it-IT',
     'articleSection' => $categoryLabels[$article['category']] ?? $article['category'],
-], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
-</script>
-<?php
-require_once __DIR__ . '/_seo.php';
+    // Spazio prima di ogni tag: celle e paragrafi adiacenti non si fondono in una parola.
+    'wordCount' => count(preg_split('/\s+/u', trim(strip_tags(str_replace('<', ' <', $article['body']))), -1, PREG_SPLIT_NO_EMPTY)),
+    'isAccessibleForFree' => true,
+]);
 seo_breadcrumb([
     ['News', '/news'],
     [$categoryLabels[$article['category']] ?? $article['category'], '/news?categoria=' . $article['category']],
@@ -136,6 +145,15 @@ seo_breadcrumb([
   <span class="mb-2 block text-xs font-semibold uppercase tracking-wide text-accent"><?= htmlspecialchars($categoryLabels[$article['category']] ?? $article['category']) ?></span>
   <h1 class="mx-auto mb-3 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl"><?= htmlspecialchars($article['title']) ?></h1>
   <p class="mx-auto max-w-xl text-lg text-muted"><?= htmlspecialchars($article['excerpt']) ?></p>
+  <?php
+  // Date visibili: Google le confronta con datePublished/dateModified del JSON-LD.
+  $published = news_fmt_date($article['published_at']);
+  $modified = news_fmt_date($article['updated_at']);
+  ?>
+  <p class="mt-4 text-sm text-muted">
+    Pubblicato il <time datetime="<?= date('c', strtotime($article['published_at'])) ?>"><?= $published ?></time><?php if ($modified !== $published): ?>
+    · Aggiornato il <time datetime="<?= date('c', strtotime($article['updated_at'])) ?>"><?= $modified ?></time><?php endif; ?>
+  </p>
 </section>
 
 <main class="mx-auto max-w-3xl px-6 py-8">
