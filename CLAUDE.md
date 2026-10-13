@@ -63,6 +63,13 @@ analisi predittiva) e `docs/ROADMAP.md` per lo stato del progetto.
   una pagina o un articolo nuovo; nel frattempo `seo_og_image()` usa
   l'immagine generica. Per una pagina nuova aggiungere etichetta ed emoji in
   `PAGES` dentro lo script.
+- **Corpo degli articoli News**: HTML nel campo `body`, senza JavaScript.
+  Gli helper in `build/news/news_html.py` generano testo, tabelle di esempio
+  (`table()`) e grafici a barre in puro HTML/CSS (`bars()`) con le classi già
+  in `safelist`. Ogni articolo, soprattutto se tratta numeri, deve avere
+  almeno una tabella o un grafico, con valori calcolati da script (es.
+  `build/news/rientro_anticipato_mutuo.py`). Verificare a 390px di larghezza:
+  le tabelle a 4 colonne entrano solo senza unità nelle celle.
 - **"Mettilo in pratica"** in `news-articolo.php`: collegamenti dall'articolo
   alla funzione e ai calcolatori pertinenti, scelti con regole sullo slug
   (`$practiceRules`) e predefiniti per categoria.

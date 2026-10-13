@@ -25,3 +25,4 @@ frontend/dist_incoming/
 
 # Elenco intermedio generato da build/og/generate.py
 build/og/items.json
+__pycache__/
