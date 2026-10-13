@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import StatCard from '../components/StatCard';
 import ProgressBar from '../components/ProgressBar';
 import Tabs from '../components/Tabs';
+import LoanPrepaySim from '../components/LoanPrepaySim';
 import { apiGet, apiSend, apiDelete } from '../api';
 import { euro, formatDate, todayISO } from '../lib/format';
 
@@ -40,6 +41,7 @@ export default function LoanDetail({ loanId, onClose, onChanged, onEdit }) {
   const tabs = [
     { id: 'andamento', label: 'Andamento' },
     isVariabile && { id: 'tasso', label: 'Storico tasso', count: rates.length },
+    loan.status !== 'estinto' && { id: 'rientro', label: 'Rientro anticipato' },
     { id: 'estinzione', label: 'Estinzione anticipata' },
     { id: 'piano', label: 'Piano di ammortamento' },
   ].filter(Boolean);
@@ -214,6 +216,10 @@ export default function LoanDetail({ loanId, onClose, onChanged, onEdit }) {
             />
           </div>
         </div>
+      )}
+
+      {activeTab === 'rientro' && (
+        <div className="mb-4"><LoanPrepaySim loanId={loanId} schedule={schedule} ownershipPct={summary.ownership_pct} /></div>
       )}
 
       {activeTab === 'estinzione' && (

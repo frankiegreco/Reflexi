@@ -175,6 +175,18 @@ metodo di ammortamento "alla francese" (rata costante, lo standard italiano):
   ti mostra quanto capitale dovresti versare per estinguere e quanti
   interessi risparmieresti rispetto a proseguire fino alla scadenza naturale
 - un bottone per segnare il mutuo come effettivamente estinto a una certa data
+- **simulazione di rientro anticipato** (scheda "Rientro anticipato"):
+  ipotizzi versamenti volontari in conto capitale, sporadici (data + importo)
+  e/o periodici fissi (importo, frequenza mensile/trimestrale/semestrale/
+  annuale, data di inizio e fine facoltativa), e scegli se usarli per ridurre
+  la **durata** (rata invariata) o la **rata** (scadenza invariata). L'app
+  confronta il piano con e senza versamenti: interessi risparmiati, nuova
+  data di fine o nuova rata, eventuale penale (%) e grafico del residuo. Il
+  calcolo parte dal residuo di oggi e usa il tasso del piano mese per mese
+  (comprese variazioni future già inserite); ogni versamento è imputato alla
+  prima rata successiva alla sua data. Gira tutto nel browser
+  (`frontend/src/lib/loanPrepay.js`) e lo scenario resta salvato solo nel
+  browser, non nel database
 
 Se spunti "Crea automaticamente la rata mensile come transazione ricorrente",
 la rata calcolata viene registrata anche come ricorrenza mensile nel conto che
