@@ -59,7 +59,7 @@ include '_nav.php';
               <div class="text-[8px] uppercase text-muted">Strategia growth · valore totale</div>
               <div class="font-mono text-lg font-semibold">€ 10.842,30</div>
               <div class="text-[9px] font-semibold text-income">+8,42% dall'inizio</div>
-              <svg viewBox="0 0 200 50" class="mt-2 h-12 w-full"><polyline fill="none" stroke="#10b981" stroke-width="2" points="0,40 20,38 40,42 60,33 80,35 100,27 120,30 140,20 160,22 180,12 200,10"/></svg>
+              <svg aria-hidden="true" viewBox="0 0 200 50" class="mt-2 h-12 w-full"><polyline fill="none" stroke="#10b981" stroke-width="2" points="0,40 20,38 40,42 60,33 80,35 100,27 120,30 140,20 160,22 180,12 200,10"/></svg>
             </div>
             <div class="mt-2 grid grid-cols-2 gap-2">
             <div class="rounded-lg border border-border bg-white p-2">

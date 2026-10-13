@@ -59,7 +59,7 @@ function faq_category($title, $items) {
         echo '<details class="group card overflow-hidden p-0">
             <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold">
                 ' . $q . '
-                <svg class="faq-chevron h-4 w-4 flex-shrink-0 text-muted transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg aria-hidden="true" class="faq-chevron h-4 w-4 flex-shrink-0 text-muted transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </summary>
             <div class="border-t border-border px-5 py-4 text-sm text-gray-700">' . $a . '</div>
         </details>';

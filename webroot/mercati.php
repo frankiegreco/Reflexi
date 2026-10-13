@@ -55,7 +55,7 @@ include '_nav.php';
 
     <!-- Ricerca -->
     <div class="relative mb-8">
-      <svg class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg aria-hidden="true" class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="mkt-search-input" type="text" autocomplete="off" placeholder="Cerca un ticker o un nome — es. Apple, VWCE, Bitcoin"
         class="w-full rounded-xl border border-border bg-white py-3.5 pl-11 pr-4 text-sm text-gray-900 placeholder:text-muted outline-none transition focus:border-accent">
       <div id="mkt-search-results" class="absolute left-0 right-0 top-full z-20 mt-2 hidden max-h-72 overflow-y-auto rounded-xl border border-border bg-white shadow-2xl"></div>
@@ -187,7 +187,7 @@ function sparklineSVG(prices) {
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
   const color = changeColor(prices[prices.length - 1] - prices[0]);
-  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5"/></svg>`;
+  return `<svg aria-hidden="true" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5"/></svg>`;
 }
 
 function marketRow(i, rank) {
@@ -324,7 +324,7 @@ function renderChart(points) {
   }).join('');
 
   svgBox.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" class="h-full w-full" preserveAspectRatio="none" id="mkt-svg-el">
+    <svg viewBox="0 0 ${W} ${H}" class="h-full w-full" preserveAspectRatio="none" id="mkt-svg-el" role="img" aria-label="Andamento del prezzo: minimo ${fmtPrice(min, points[0].currency)}, massimo ${fmtPrice(max, points[0].currency)}">
       <defs>
         <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>

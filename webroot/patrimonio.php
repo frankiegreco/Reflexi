@@ -59,7 +59,7 @@ include '_nav.php';
               <div class="text-[8px] uppercase text-muted">Patrimonio netto</div>
               <div class="font-mono text-lg font-semibold">€ 148.320</div>
               <div class="text-[9px] font-semibold text-income">+€ 9.410 negli ultimi 12 mesi</div>
-              <svg viewBox="0 0 200 50" class="mt-2 h-12 w-full"><polyline fill="none" stroke="#4f46e5" stroke-width="2" points="0,42 18,40 36,38 54,39 72,34 90,31 108,30 126,26 144,23 162,22 180,16 200,12"/></svg>
+              <svg aria-hidden="true" viewBox="0 0 200 50" class="mt-2 h-12 w-full"><polyline fill="none" stroke="#4f46e5" stroke-width="2" points="0,42 18,40 36,38 54,39 72,34 90,31 108,30 126,26 144,23 162,22 180,16 200,12"/></svg>
             </div>
             <div class="mt-2 rounded-xl border border-border bg-white px-3 py-1.5">
               <div class="flex items-center justify-between border-b border-border py-1.5 text-[9px] last:border-0"><span class="text-gray-700">Conti e liquidità</span><span class="font-mono font-semibold text-income">€ 24.300</span></div><div class="flex items-center justify-between border-b border-border py-1.5 text-[9px] last:border-0"><span class="text-gray-700">Investimenti</span><span class="font-mono font-semibold text-income">€ 41.870</span></div><div class="flex items-center justify-between border-b border-border py-1.5 text-[9px] last:border-0"><span class="text-gray-700">Immobili</span><span class="font-mono font-semibold text-income">€ 210.000</span></div><div class="flex items-center justify-between border-b border-border py-1.5 text-[9px] last:border-0"><span class="text-gray-700">Mutui residui</span><span class="font-mono font-semibold text-expense">−€ 127.850</span></div>

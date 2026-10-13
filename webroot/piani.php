@@ -99,21 +99,21 @@ seo_jsonld(seo_software_application());
       <details class="group rounded-xl border border-border bg-white p-0">
         <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold">
           Cosa succede dopo il periodo di prova?
-          <svg class="h-4 w-4 flex-shrink-0 text-muted transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg aria-hidden="true" class="h-4 w-4 flex-shrink-0 text-muted transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </summary>
         <div class="border-t border-border px-5 py-4 text-sm text-gray-700">Puoi scegliere il piano mensile o annuale dal tuo Profilo. Se non scegli nulla, l'accesso si blocca fino a quando non attivi un abbonamento — i tuoi dati restano al sicuro e intatti.</div>
       </details>
       <details class="group rounded-xl border border-border bg-white p-0">
         <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold">
           Posso annullare quando voglio?
-          <svg class="h-4 w-4 flex-shrink-0 text-muted transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg aria-hidden="true" class="h-4 w-4 flex-shrink-0 text-muted transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </summary>
         <div class="border-t border-border px-5 py-4 text-sm text-gray-700">Sì, in autonomia dal Profilo tramite il portale sicuro di Stripe — nessuna email da scrivere, nessun vincolo minimo.</div>
       </details>
       <details class="group rounded-xl border border-border bg-white p-0">
         <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold">
           Posso passare da mensile ad annuale (o viceversa)?
-          <svg class="h-4 w-4 flex-shrink-0 text-muted transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg aria-hidden="true" class="h-4 w-4 flex-shrink-0 text-muted transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </summary>
         <div class="border-t border-border px-5 py-4 text-sm text-gray-700">Sì, dal portale di gestione abbonamento nel tuo Profilo.</div>
       </details>

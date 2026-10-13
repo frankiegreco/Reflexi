@@ -87,7 +87,7 @@ function navdropdown($id, $label, $items, $active, $currentPath, $cols = 1, $com
     return <<<HTML
       <div class="nav-dropdown group relative" id="{$id}">
         <button type="button" onclick="toggleNavDropdown(event, '{$id}')" class="flex items-center gap-1 whitespace-nowrap {$btnCls}" aria-haspopup="true" aria-expanded="false">
-          {$label} <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition group-hover:rotate-180 group-[.is-open]:rotate-180"><polyline points="6 9 12 15 18 9"/></svg>
+          {$label} <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition group-hover:rotate-180 group-[.is-open]:rotate-180"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="invisible absolute left-1/2 top-full z-50 -translate-x-1/2 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 group-[.is-open]:visible group-[.is-open]:opacity-100">
           <div class="{$widthCls} rounded-xl border border-border bg-white p-2 shadow-lg">{$links}</div>
@@ -99,7 +99,7 @@ HTML;
 <header class="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-md">
   <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
     <a href="/" class="flex flex-shrink-0 items-center gap-2.5">
-      <img src="/favicon.svg" alt="Reflexi" class="h-9 w-9 rounded-xl">
+      <img src="/favicon.svg" alt="" class="h-9 w-9 rounded-xl">
       <span class="text-lg font-bold tracking-tight">Reflexi</span>
     </a>
     <nav class="hidden items-center gap-5 text-sm font-medium lg:flex">
@@ -113,7 +113,7 @@ HTML;
         Accedi
       </a>
       <button type="button" onclick="openMobileNav()" class="-mr-1 flex h-10 w-10 items-center justify-center text-gray-700 lg:hidden" aria-label="Apri il menu" aria-controls="mobile-nav-overlay" aria-expanded="false" id="mobile-nav-toggle">
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
       </button>
     </div>
   </div>
@@ -129,11 +129,11 @@ HTML;
   <div class="flex h-full max-h-full flex-col bg-bg">
     <div class="flex flex-shrink-0 items-center justify-between border-b border-border bg-white px-6 py-4">
       <a href="/" class="flex items-center gap-2.5">
-        <img src="/favicon.svg" alt="Reflexi" class="h-9 w-9 rounded-xl">
+        <img src="/favicon.svg" alt="" class="h-9 w-9 rounded-xl">
         <span class="text-lg font-bold tracking-tight">Reflexi</span>
       </a>
       <button type="button" onclick="closeMobileNav()" class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-700" aria-label="Chiudi il menu">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
     <nav class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">

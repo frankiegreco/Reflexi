@@ -73,7 +73,7 @@ seo_calculator('Calcolatore di rendimento (ROI)', '/calcolatore-rendimento', 'Ca
         <div class="text-[10px] uppercase text-muted">Iniziale</div>
         <div class="font-mono text-lg font-semibold" id="roi-visual-initial">—</div>
       </div>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0 text-accent"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0 text-accent"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       <div class="rounded-xl border-2 border-accent bg-accentSoft px-6 py-4 text-center">
         <div class="text-[10px] uppercase text-accent">Finale</div>
         <div class="font-mono text-lg font-bold text-accent" id="roi-visual-final">—</div>

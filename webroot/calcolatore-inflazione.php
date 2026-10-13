@@ -73,7 +73,7 @@ seo_calculator('Calcolatore inflazione', '/calcolatore-inflazione', 'Scopri quan
         <div class="text-[10px] uppercase text-muted">Oggi</div>
         <div id="inf-visual-today" class="font-mono text-lg font-semibold">—</div>
       </div>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0 text-expense"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0 text-expense"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       <div class="rounded-xl border-2 border-expense bg-expense/5 px-6 py-4 text-center">
         <div class="text-[10px] uppercase text-expense">Potere d'acquisto futuro</div>
         <div id="inf-out" class="font-mono text-lg font-bold text-expense">—</div>

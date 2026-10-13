@@ -215,7 +215,7 @@ seo_jsonld(['@graph' => [
       <p class="text-center text-sm font-semibold uppercase tracking-wide text-muted">
         3 app diverse, 3 abbonamenti, zero collegamento tra i tuoi dati
       </p>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
       <div class="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-accent to-accentDark px-6 py-4 text-white shadow-lg shadow-accent/30 sm:px-8">
         <img src="/favicon.svg" alt="" class="h-10 w-10 flex-shrink-0 rounded-xl">
         <div class="text-left">
@@ -505,7 +505,7 @@ seo_jsonld(['@graph' => [
 
 <!-- INTERMEZZO -->
 <div class="flex justify-center px-6 pt-16" aria-hidden="true">
-  <svg width="131" height="95" viewBox="0 0 131 95" xmlns="http://www.w3.org/2000/svg">
+  <svg aria-hidden="true" width="131" height="95" viewBox="0 0 131 95" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="midRingL" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#4f46e5"/>
