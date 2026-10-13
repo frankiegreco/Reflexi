@@ -59,13 +59,15 @@ def table(title, header, rows, note=None, highlight_last=False, numeric=None):
     le colonne di testo vanno a capo e restano allineate a sinistra."""
     if numeric is None:
         numeric = set(range(1, len(header)))
+    # Tabelle solo testo: celle allineate in alto, le righe vanno a capo in modo diverso.
+    valign = '' if numeric else ' align-top'
     th = ''.join(
         f'<th class="px-3 py-2 font-semibold sm:px-4 sm:py-2.5{" text-right" if i in numeric else ""}">{h}</th>' for i, h in enumerate(header))
     body = ''
     for r, row in enumerate(rows):
         bold = ' font-semibold text-gray-900' if highlight_last and r == len(rows) - 1 else ''
         cells = ''.join(
-            f'<td class="px-3 py-2 sm:px-4 sm:py-2.5{" whitespace-nowrap text-right font-mono" if i in numeric else ""}{bold}">{c}</td>' for i, c in enumerate(row))
+            f'<td class="px-3 py-2 sm:px-4 sm:py-2.5{valign}{" whitespace-nowrap text-right font-mono" if i in numeric else ""}{bold}">{c}</td>' for i, c in enumerate(row))
         body += f'<tr class="border-t border-border">{cells}</tr>'
     out = (f'<figure class="my-6"><figcaption class="mb-2 text-sm font-semibold text-gray-900">{title}</figcaption>'
            f'<div class="overflow-x-auto rounded-xl border border-border bg-white">'

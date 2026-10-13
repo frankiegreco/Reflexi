@@ -74,11 +74,13 @@ VISUALS['metodo-delle-buste-budget-digitale'] = [
 VISUALS['tracciare-spese-manualmente-vs-collegamento-bancario'] = [
     ('senza collegare nulla a nessuno', table(
         'Inserimento manuale o collegamento automatico',
-        ['', 'A mano', 'Collegamento bancario'],
-        [['Tempo richiesto', 'Pochi secondi a spesa', 'Quasi nullo'],
-         ['Consapevolezza', 'Alta: ogni spesa è una scelta', 'Bassa: le spese scorrono in un elenco'],
-         ['Accesso ai dati', 'Nessuno oltre a te', 'Un servizio terzo vede ogni movimento'],
-         ['Completezza', 'Dipende dalla costanza', 'Tutto il conto, in automatico']],
+        ['', 'A mano', 'Collegamento'],
+        [['Tempo', 'Secondi per spesa', 'Quasi zero'],
+         ['Consapevolezza', 'Alta', 'Bassa'],
+         ['Chi vede i dati', 'Solo tu', 'Anche un servizio terzo'],
+         ['Completezza', 'Dipende da te', 'Automatica']],
+        note='Collegamento: accesso al conto tramite open banking (PSD2). '
+             'Inserire a mano ogni spesa trasforma un pagamento in una scelta consapevole.',
         numeric=set())),
 ]
 

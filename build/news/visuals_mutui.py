@@ -115,7 +115,35 @@ VISUALS['loan-to-value-ltv-mutuo-quanto-puoi-finanziare'] = [
              'Un margine negativo vuol dire che la casa vale meno del debito. Per semplicità il debito è quello iniziale.')),
 ]
 
-# ---------- spese accessorie (qualitativa: gli importi dipendono troppo dal caso) ----------
+# ---------- spese accessorie ----------
+def spese_table(price=200000, loan=160000, rendita=700):
+    """Stima per scenario. Da privato (persona fisica, prezzo-valore): registro 2% (prima casa) o 9%
+    sul valore catastale = rendita x 1,05 x 110 (prima casa) o x 120, minimo 1.000 euro, piu' ipotecaria
+    e catastale fisse di 50 euro l'una. Da impresa: IVA 4% sul prezzo piu' tre imposte fisse da 200 euro.
+    Imposta sostitutiva sul mutuo 0,25% (prima casa) o 2%. Notaio, perizia, istruttoria: stime."""
+    notaio, bank, agency = 2500 + 1800, 300 + 800, price * 0.03 * 1.22
+    cols = [('prima', max(1000, rendita * 115.5 * 0.02) + 100, loan * 0.0025),
+            ('seconda', max(1000, rendita * 126 * 0.09) + 100, loan * 0.02),
+            ('impresa', price * 0.04 + 600, loan * 0.0025)]
+    no_ag = [imp + notaio + s + bank for _, imp, s in cols]
+    with_ag = [t + agency for t in no_ag]
+    return table(
+        'Esempio: casa da 200.000 euro con mutuo da 160.000 (importi in euro)',
+        ['', 'Prima casa da privato', 'Seconda casa da privato', 'Prima casa da impresa'],
+        [['Imposte sull\'acquisto'] + [e(imp) for _, imp, _ in cols],
+         ['Notaio, due atti'] + [e(notaio)] * 3,
+         ['Imposta sul mutuo'] + [e(s) for _, _, s in cols],
+         ['Perizia e istruttoria'] + [e(bank)] * 3,
+         ['Totale senza agenzia'] + [e(t) for t in no_ag],
+         ['in % del prezzo'] + [pct(t / price * 100) for t in no_ag],
+         ['Con agenzia (3% + IVA)'] + [e(t) for t in with_ag],
+         ['in % del prezzo'] + [pct(t / price * 100) for t in with_ag]],
+        note='Stima indicativa. Da privato le imposte si pagano sul valore catastale (qui con una rendita di 700 euro), '
+             'non sul prezzo: per questo la prima casa costa molto meno. Da impresa si paga l\'IVA sul prezzo (4% prima casa). '
+             'Notaio: atto di compravendita e atto di mutuo. Notaio, perizia e istruttoria variano: chiedi sempre i preventivi.')
+
+
+
 VISUALS['spese-notarili-accessorie-mutuo-costo-reale-acquisto-casa'] = [
     ('Un\'ultima voce, se coinvolta un\'agenzia', table(
         'Le spese accessorie in sintesi',
@@ -127,6 +155,7 @@ VISUALS['spese-notarili-accessorie-mutuo-costo-reale-acquisto-casa'] = [
          ['Agenzia immobiliare', 'Percentuale sul prezzo, da contrattare prima']],
         note='Chiedi un preventivo scritto al notaio e il dettaglio delle spese alla banca prima di firmare il preliminare.',
         numeric=set())),
+    ('con forti variazioni in base a prima/seconda casa', spese_table()),
 ]
 
 # ---------- under 36 ----------

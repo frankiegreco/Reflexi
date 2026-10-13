@@ -21,7 +21,7 @@ module.exports = {
     'py-2.5', 'rounded-full', 'rounded-xl', 'space-y-3', 'text-[11px]',
     'text-left', 'text-muted', 'text-right', 'text-sm', 'text-xs',
     'tracking-wide', 'uppercase', 'w-full', 'px-3', 'py-2', 'sm:px-4',
-    'sm:py-2.5', 'whitespace-nowrap', 'text-[13px]', 'sm:text-sm',
+    'sm:py-2.5', 'whitespace-nowrap', 'text-[13px]', 'sm:text-sm', 'align-top',
   ],
   theme: {
     extend: {
