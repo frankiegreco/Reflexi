@@ -59,8 +59,9 @@ analisi predittiva) e `docs/ROADMAP.md` per lo stato del progetto.
   che iniziano con `_` (parziali da includere) rispondono 404 se aperti.
 - **Immagini di anteprima social** (`webroot/og/`): generate da
   `python3 build/og/generate.py` (Playwright in Docker; con argomenti, es.
-  `/mutui` o `news/<slug>`, rigenera solo quelle). Va rilanciato dopo
-  una pagina o un articolo nuovo; nel frattempo `seo_og_image()` usa
+  `/mutui`, `news/<slug>` o `'news/*'`, rigenera solo quelle). Va rilanciato
+  dopo una pagina o un articolo nuovo, e quando un articolo riceve la sua
+  prima tabella o grafico (etichetta "Con tabelle ed esempi"); nel frattempo `seo_og_image()` usa
   l'immagine generica. Per una pagina nuova aggiungere etichetta ed emoji in
   `PAGES` dentro lo script.
 - **Corpo degli articoli News**: HTML nel campo `body`, senza JavaScript.

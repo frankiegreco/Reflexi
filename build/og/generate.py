@@ -3,6 +3,9 @@
 
 Uso, dalla root del progetto:  python3 build/og/generate.py
 Solo alcune pagine o articoli:   python3 build/og/generate.py /mutui news/<slug>
+Tutti gli articoli News:         python3 build/og/generate.py 'news/*'
+Gli articoli con tabelle o grafici (<figure> nel corpo) hanno l'etichetta
+"Con tabelle ed esempi" accanto alla categoria.
 
 Pagine: titolo = H1 della pagina pubblicata (letto da https://reflexi.it),
 etichetta ed emoji da PAGES qui sotto. Articoli News: seo_title, categoria
@@ -65,18 +68,20 @@ items = [{'out': path.lstrip('/') + '.jpg', 'kicker': k, 'emoji': e, 'foot': f, 
 rows = subprocess.run(
     ['docker', 'exec', '-e', 'MYSQL_PWD=' + env('DB_PASSWORD'), 'finanze_db', 'mariadb', '-u' + env('DB_USER'),
      '--default-character-set=utf8mb4', '-B', '-N', env('DB_NAME'), '-e',
-     "SELECT slug, COALESCE(seo_title, title), category, cover_emoji FROM news_articles "
+     "SELECT slug, COALESCE(seo_title, title), category, cover_emoji, body LIKE '%<figure%' FROM news_articles "
      "WHERE status = 'pubblicato' AND published_at <= NOW()"],
     check=True, capture_output=True, text=True).stdout
 for line in rows.strip().splitlines():
-    slug, title, category, emoji = line.split('\t')
+    slug, title, category, emoji, has_figures = line.split('\t')
     items.append({'out': f'news/{slug}.jpg', 'kicker': CATEGORIES.get(category, category), 'emoji': emoji,
-                  'foot': 'Guide di finanza personale', 'title': title})
+                  'foot': 'Guide di finanza personale', 'title': title,
+                  'badge': '📊 Con tabelle ed esempi' if has_figures == '1' else ''})
 
-# Filtro facoltativo da riga di comando: percorsi di pagina (/mutui) o news/<slug>.
+# Filtro facoltativo da riga di comando: percorsi di pagina (/mutui), news/<slug> o news/* per tutti.
 only = {a.strip('/') for a in sys.argv[1:]}
 if only:
-    items = [it for it in items if it['out'][:-4] in only]
+    items = [it for it in items if it['out'][:-4] in only
+             or any(o.endswith('/*') and it['out'].startswith(o[:-1]) for o in only)]
     if not items:
         sys.exit('Nessuna pagina o articolo corrisponde a: ' + ' '.join(sys.argv[1:]))
 

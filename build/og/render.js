@@ -23,8 +23,11 @@ body { width: 1200px; height: 630px; overflow: hidden; font-family: Inter, sans-
 .wrap { position: absolute; inset: 72px 80px 64px 80px; display: flex; flex-direction: column; }
 .brand { display: flex; align-items: center; gap: 16px; font-size: 34px; font-weight: 800; letter-spacing: -0.5px; }
 .brand svg { width: 58px; height: 58px; border-radius: 14px; }
-.kicker { margin-top: 48px; align-self: flex-start; padding: 8px 20px; border-radius: 999px; background: rgba(255,255,255,.16);
+.tags { margin-top: 48px; display: flex; align-items: center; gap: 14px; }
+.kicker { padding: 8px 20px; border-radius: 999px; background: rgba(255,255,255,.16);
   font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+.badge { padding: 6px 18px; border-radius: 999px; border: 2px solid rgba(255,255,255,.4);
+  font-size: 22px; font-weight: 600; }
 .title { margin-top: 26px; max-width: 820px; font-weight: 800; line-height: 1.12; letter-spacing: -1.5px; }
 .foot { margin-top: auto; font-size: 24px; color: rgba(255,255,255,.75); font-weight: 500; }
 .emoji { position: absolute; right: 90px; top: 50%; transform: translateY(-50%); width: 220px; height: 220px; border-radius: 50%;
@@ -33,7 +36,7 @@ body { width: 1200px; height: 630px; overflow: hidden; font-family: Inter, sans-
 <div class="c1"></div><div class="c2"></div>
 <div class="wrap">
   <div class="brand">${logo}<span>reflexi</span></div>
-  <div class="kicker">${esc(it.kicker)}</div>
+  <div class="tags"><div class="kicker">${esc(it.kicker)}</div>${it.badge ? `<div class="badge">${esc(it.badge)}</div>` : ''}</div>
   <div class="title" style="font-size:${titleSize(it.title)}px">${esc(it.title)}</div>
   <div class="foot">reflexi.it · ${esc(it.foot)}</div>
 </div>
