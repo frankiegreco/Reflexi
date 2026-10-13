@@ -36,7 +36,7 @@ seo_breadcrumb([['Mutui', '/mutui']]);
 <?php
 $active = 'mutui';
 require_once __DIR__ . '/_news_db.php';
-$relatedArticles = news_related(['ammortamento-alla-francese-guida-mutuo-rata-costante', 'estinzione-anticipata-mutuo-quando-conviene', 'mutuo-tasso-fisso-o-variabile-come-scegliere']);
+$relatedArticles = news_related(['ammortamento-alla-francese-guida-mutuo-rata-costante', 'rientro-anticipato-mutuo-ridurre-durata-o-rata', 'estinzione-anticipata-mutuo-quando-conviene']);
 include '_nav.php';
 ?>
 
