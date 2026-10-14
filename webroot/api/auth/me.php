@@ -50,7 +50,7 @@ $profileCols = db_has_column('users', 'first_name') ? ', first_name, last_name, 
 $stmt = db()->prepare("SELECT id, email, name, is_admin, digest_frequency, subscription_status, trial_ends_at, subscription_current_period_end, stripe_subscription_id{$cancelAtCol}{$planCol}{$profileCols} FROM users WHERE id = :id");
 $stmt->execute(['id' => $uid]);
 $user = $stmt->fetch();
-if (!$user) respond_error('Utente non trovato', 404);
+if (!$user) respond_error('Sessione non più valida', 401); // utente eliminato con la sessione aperta
 
 $trialDaysLeft = null;
 if ($user['subscription_status'] === 'trialing' && $user['trial_ends_at']) {

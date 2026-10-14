@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Users, BadgeCheck, CreditCard, Hourglass, UserPlus, ArrowLeft, LogIn, Timer, Clock, Globe, ChevronRight, ShieldAlert, Pencil, MailCheck, KeyRound, CalendarClock } from 'lucide-react';
+import { Users, BadgeCheck, CreditCard, Hourglass, UserPlus, ArrowLeft, LogIn, Timer, Clock, Globe, ChevronRight, ShieldAlert, Pencil, MailCheck, KeyRound, CalendarClock, Trash2 } from 'lucide-react';
 import { apiGet, apiSend } from '../api';
 import Modal from '../components/Modal';
+import { useAuth } from '../context/AuthContext';
 import { day, dayTime, duration, device } from '../lib/admin';
 import StatCard from '../components/StatCard';
 
@@ -205,10 +206,64 @@ function UserActions({ user, onDone }) {
   );
 }
 
-function UserDetail({ id, onBack }) {
+function DeleteUserModal({ user, onClose, onDeleted }) {
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const matches = confirmEmail.trim().toLowerCase() === user.email;
+
+  async function remove(e) {
+    e.preventDefault();
+    setError(''); setDeleting(true);
+    try {
+      const res = await apiSend(`admin_users.php?id=${user.id}&action=delete`, 'POST', { confirm_email: confirmEmail });
+      onDeleted(res.message);
+    } catch (err) {
+      setError(err.message);
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Elimina utente"
+      footer={(
+        <>
+          <button type="button" className="btn-outline" onClick={onClose}>Annulla</button>
+          <button type="submit" form="admin-delete-user" className="btn-accent bg-expense hover:bg-red-600" disabled={!matches || deleting}>
+            {deleting ? 'Eliminazione...' : 'Elimina definitivamente'}
+          </button>
+        </>
+      )}
+    >
+      <form id="admin-delete-user" onSubmit={remove} className="space-y-3 text-sm">
+        {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-red-600">{error}</div>}
+        <p>
+          Stai per eliminare <span className="font-semibold">{user.name || user.email}</span> e tutti i suoi dati
+          (conti, transazioni, mutui, investimenti, storico accessi). L'operazione non si può annullare.
+        </p>
+        {user.has_subscription && (
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
+            L'utente ha un abbonamento: viene annullato subito su Stripe, senza rimborso della parte non usata.
+          </p>
+        )}
+        <div>
+          <label className="field-label" htmlFor="adm-delete-confirm">Per confermare scrivi l'email dell'utente</label>
+          <input id="adm-delete-confirm" className="field" autoComplete="off" placeholder={user.email}
+            value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} />
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function UserDetail({ id, onBack, currentUserId }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [notice, setNotice] = useState(null); // { type: 'ok' | 'warning' | 'error', text }
 
   useEffect(() => {
@@ -288,6 +343,10 @@ function UserDetail({ id, onBack }) {
         />
       </div>
 
+      {deleting && (
+        <DeleteUserModal user={u} onClose={() => setDeleting(false)} onDeleted={(message) => onBack(message)} />
+      )}
+
       <h2 className="mb-3 text-sm font-bold text-gray-800">Accessi</h2>
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
@@ -323,6 +382,20 @@ function UserDetail({ id, onBack }) {
         Una sessione senza logout risulta scaduta dopo 24 minuti di inattività; la sua durata arriva fino all'ultima
         attività registrata. Storico conservato per 180 giorni.
       </p>
+
+      <div className="card mt-6 border-expense/30 p-5">
+        <h2 className="mb-1 text-sm font-bold text-expense">Elimina utente</h2>
+        {u.is_admin || u.id === currentUserId ? (
+          <p className="text-sm text-muted">Gli account admin non si eliminano da qui (solo via SQL; il tuo dal Profilo).</p>
+        ) : (
+          <>
+            <p className="mb-3 text-sm text-muted">Cancella definitivamente l'account e tutti i suoi dati; se c'è un abbonamento viene annullato su Stripe.</p>
+            <button className="btn-outline-danger flex items-center gap-1.5" onClick={() => { setNotice(null); setDeleting(true); }}>
+              <Trash2 size={16} /> Elimina utente
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -333,6 +406,8 @@ export default function AdminUsers() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+  const [listNotice, setListNotice] = useState('');
+  const { user: me } = useAuth();
 
   // Si ricarica a ogni ritorno dal dettaglio, dove i dati possono essere cambiati.
   useEffect(() => {
@@ -340,7 +415,15 @@ export default function AdminUsers() {
     apiGet('admin_users.php').then(setData).catch((e) => setError(e.message));
   }, [selectedId]);
 
-  if (selectedId) return <UserDetail id={selectedId} onBack={() => setSelectedId(null)} />;
+  if (selectedId) {
+    return (
+      <UserDetail
+        id={selectedId}
+        currentUserId={me?.id}
+        onBack={(message) => { setListNotice(typeof message === 'string' ? message : ''); setSelectedId(null); }}
+      />
+    );
+  }
   if (error) return <div className="text-expense">{error}</div>;
   if (!data) return <div className="text-muted">Caricamento...</div>;
 
@@ -369,6 +452,8 @@ export default function AdminUsers() {
           />
         </div>
       </div>
+
+      {listNotice && <div className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{listNotice}</div>}
 
       <div className="mb-4 rounded-xl border border-accent/20 bg-accentSoft px-4 py-3 text-sm text-gray-700">
         Area riservata agli amministratori. Qui ci sono solo i dati dell'account e degli accessi: nessun dato

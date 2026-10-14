@@ -133,7 +133,16 @@ Nessuna suite di test automatizzati nel repo (né PHP né JS) al momento — ver
   via SQL (migrazione 041), mai da API. `admin_users.php` espone l'elenco
   utenti con i soli dati di account: non deve mai leggere tabelle dati
   finanziari (conti, transazioni, ...). Lato frontend la voce "Admin · Utenti"
-  in `Sidebar.jsx` appare solo se `user.is_admin`.
+  in `Sidebar.jsx` appare solo se `user.is_admin`. Scritture admin nello
+  stesso file: PUT `?id=N` (anagrafica, email allineata su Stripe) e POST
+  `?id=N&action=` (verify_email, send_password_reset, set_trial_end, delete),
+  ognuna registrata nel log di sicurezza. Mai `is_admin` né lo stato
+  dell'abbonamento da API; gli admin non si eliminano dall'area admin.
+- **Eliminazione utente**: sempre via `delete_user_account()` in
+  `lib_user_delete.php` (usata da `auth/delete_account.php` e dall'admin):
+  annulla prima gli abbonamenti Stripe aperti e, se Stripe non risponde, non
+  elimina. Un utente eliminato con la sessione ancora aperta riceve 401 da
+  `require_auth()` e torna al login.
 - **Storico accessi** (`user_sessions`, migrazione 042): una riga per login
   (IP, user agent), `last_seen_at` aggiornato da `touch_login_session()`
   dentro `require_auth()` (max 1 scrittura/minuto), `ended_at` al logout.

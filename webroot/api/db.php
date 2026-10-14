@@ -131,6 +131,11 @@ function require_auth(): int
     if (!$uid) {
         respond_error('Non autenticato', 401);
     }
+    // Utente eliminato (dall'area admin) con la sessione ancora aperta: 401,
+    // il frontend torna al login invece di mostrare il Paywall.
+    $exists = db()->prepare("SELECT 1 FROM users WHERE id = :id");
+    $exists->execute(['id' => $uid]);
+    if (!$exists->fetchColumn()) respond_error('Sessione non più valida', 401);
     touch_login_session($uid);
     // Trial scaduto / abbonamento non valido: 402, il frontend mostra il Paywall.
     // Restano aperti solo gli endpoint che servono per pagare o uscire.

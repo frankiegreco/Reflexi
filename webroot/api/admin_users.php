@@ -10,7 +10,7 @@ require __DIR__ . '/db.php';
 //
 // Scritture (vedi admin_update_user e admin_user_action più sotto):
 // PUT ?id=N modifica i dati anagrafici; POST ?id=N&action=... per verifica
-// email, link di reset password e fine della prova. Il flag is_admin non si
+// email, link di reset password, fine della prova ed eliminazione. Il flag is_admin non si
 // tocca da qui (solo via SQL), lo stato dell'abbonamento lo governa Stripe.
 // Ogni modifica finisce nel log di sicurezza con l'admin che l'ha fatta.
 
@@ -126,7 +126,7 @@ function admin_update_user(int $adminId, int $id): void
     respond(['user' => admin_user_row(admin_load_user($id)), 'message' => 'Dati aggiornati.', 'warning' => $warning]);
 }
 
-/** POST ?id=N&action=verify_email|send_password_reset|set_trial_end */
+/** POST ?id=N&action=verify_email|send_password_reset|set_trial_end|delete */
 function admin_user_action(int $adminId, int $id, string $action): void
 {
     $u = admin_load_user($id);
@@ -164,6 +164,21 @@ function admin_user_action(int $adminId, int $id, string $action): void
             ->execute(['ends' => $endsAt, 'id' => $id]);
         log_event('info', 'admin_user_updated', "Admin #{$adminId} ha impostato la fine della prova al {$date} (prima: " . ($u['trial_ends_at'] ?? 'nessuna') . ", stato: {$u['subscription_status']})", $id);
         respond(['user' => admin_user_row(admin_load_user($id)), 'message' => 'Fine della prova aggiornata.']);
+    }
+
+    if ($action === 'delete') {
+        // Gli admin (compreso sé stessi) si tolgono solo via SQL, come il flag.
+        if ($id === $adminId) respond_error('Non puoi eliminare il tuo account da qui: usa il Profilo.');
+        if ((int)$u['is_admin'] === 1) respond_error('Gli account admin non si eliminano dall\'area admin.');
+        // Conferma digitando l'email, ricontrollata qui oltre che nel browser.
+        if (strtolower(trim((string)($in['confirm_email'] ?? ''))) !== $u['email']) {
+            respond_error('Per confermare scrivi esattamente l\'email dell\'utente');
+        }
+        require_once __DIR__ . '/lib_user_delete.php';
+        if (!delete_user_account($id, 'admin_user_deleted', "Account eliminato dall'admin #{$adminId}")) {
+            respond_error('Non è stato possibile annullare l\'abbonamento su Stripe, quindi l\'utente non è stato eliminato. Dettagli nel log; riprova tra qualche minuto.', 502);
+        }
+        respond(['ok' => true, 'message' => "Utente {$u['email']} eliminato definitivamente."]);
     }
 
     respond_error('Azione non valida');
