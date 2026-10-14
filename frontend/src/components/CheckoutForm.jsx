@@ -8,7 +8,7 @@ const PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 let stripeInstance = null;
 function getStripe() {
   if (!stripeInstance) {
-    stripeInstance = window.Stripe(PUBLISHABLE_KEY, { betas: ['custom_checkout_payment_form_1'] });
+    stripeInstance = window.Stripe(PUBLISHABLE_KEY);
   }
   return stripeInstance;
 }
