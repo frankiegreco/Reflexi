@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     stripe_subscription_id VARCHAR(64) DEFAULT NULL,
     subscription_current_period_end DATETIME DEFAULT NULL,
     past_due_since DATETIME DEFAULT NULL,
+    subscription_cancel_at DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

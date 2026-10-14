@@ -11,7 +11,10 @@ if (method() !== 'POST') respond_error('Metodo non supportato', 405);
 $in = json_input();
 $plan = ($in['plan'] ?? 'mensile') === 'annuale' ? 'annuale' : 'mensile';
 $priceId = stripe_price_id($plan);
-if (!$priceId) respond_error('Configurazione Stripe mancante lato server', 500);
+if (!$priceId) {
+    log_event('error', 'stripe_error', "Checkout: STRIPE_PRICE per il piano {$plan} non configurato", $uid);
+    respond_error(STRIPE_USER_ERROR, 500);
+}
 
 $stmt = db()->prepare("SELECT email, stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at FROM users WHERE id = :id");
 $stmt->execute(['id' => $uid]);
@@ -20,7 +23,8 @@ $user = $stmt->fetch();
 // Un abbonamento già in corso (anche in prova) si gestisce dal portale: un
 // secondo checkout creerebbe un secondo abbonamento con doppio addebito.
 if ($user['stripe_subscription_id'] && in_array($user['subscription_status'], ['trialing', 'active', 'past_due'], true)) {
-    respond_error('Hai già un abbonamento attivo: gestiscilo da "Gestisci abbonamento"', 409);
+    // code: il frontend apre il portale invece di mostrare solo l'errore.
+    respond(['error' => 'Hai già un abbonamento attivo: ti portiamo al portale per gestirlo, senza nuovi addebiti.', 'code' => 'subscription_exists'], 409);
 }
 
 try {
@@ -72,5 +76,6 @@ try {
 
     respond(['url' => $session->url]);
 } catch (\Exception $e) {
-    respond_error('Errore Stripe: ' . $e->getMessage(), 500);
+    log_stripe_error("Checkout piano {$plan}", $e, $uid);
+    respond_error(STRIPE_USER_ERROR, 500);
 }

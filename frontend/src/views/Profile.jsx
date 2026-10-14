@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { apiSend } from '../api';
@@ -9,6 +9,12 @@ import { usePricing, planLabels, PRICE_UNAVAILABLE } from '../lib/pricing';
 // gestisce solo dal sito web.
 const isNative = Capacitor.isNativePlatform();
 
+// "2026-11-30 10:00:00" (DATETIME dal server) -> "30 novembre 2026"
+function formatDate(value) {
+  const d = new Date(String(value).replace(' ', 'T'));
+  return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 export default function Profile() {
   const { user, setUser, logout } = useAuth();
   const [name, setName] = useState(user?.name || '');
@@ -18,6 +24,8 @@ export default function Profile() {
   const [subLoading, setSubLoading] = useState(false);
   const [subError, setSubError] = useState('');
   const [clientSecret, setClientSecret] = useState(null);
+  // Blocca un secondo click prima che il re-render disabiliti il pulsante.
+  const subBusy = useRef(false);
   const prices = planLabels(usePricing({ enabled: !isNative }));
   const monthlyLabel = prices.monthly ? `${prices.monthly}/mese` : PRICE_UNAVAILABLE;
   const annualLabel = prices.annual
@@ -45,29 +53,43 @@ export default function Profile() {
   }
 
   async function subscribe(plan) {
+    if (subBusy.current) return;
+    subBusy.current = true;
     setSubLoading(true); setSubError('');
     try {
       const res = await apiSend('stripe_checkout.php', 'POST', { plan });
       if (res.client_secret) {
         setClientSecret(res.client_secret);
         setSubLoading(false);
+        subBusy.current = false;
       } else {
         window.location.href = res.url;
       }
     } catch (err) {
+      subBusy.current = false;
+      // Abbonamento già esistente: niente secondo checkout, si va al portale.
+      if (err.code === 'subscription_exists') {
+        setSubError(err.message);
+        openBillingPortal({ keepMessage: true });
+        return;
+      }
       setSubError(err.message);
       setSubLoading(false);
     }
   }
 
-  async function openBillingPortal() {
-    setSubLoading(true); setSubError('');
+  async function openBillingPortal({ keepMessage = false } = {}) {
+    if (subBusy.current) return;
+    subBusy.current = true;
+    setSubLoading(true);
+    if (!keepMessage) setSubError('');
     try {
       const res = await apiSend('stripe_portal.php', 'POST', {});
       window.location.href = res.url;
     } catch (err) {
       setSubError(err.message);
       setSubLoading(false);
+      subBusy.current = false;
     }
   }
 
@@ -123,12 +145,22 @@ export default function Profile() {
         <h6 className="mb-3 text-sm font-semibold">Abbonamento</h6>
         {subError && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{subError}</div>}
 
-        {user?.subscription_status === 'trialing' && user.has_subscription && (
+        {user?.subscription_cancel_at && ['trialing', 'active', 'past_due'].includes(user.subscription_status) && user.has_subscription && (
+          <>
+            <p className="mb-3 text-sm text-muted">
+              Abbonamento <span className="font-semibold text-expense">annullato</span>: resta attivo fino al <span className="font-semibold text-gray-900">{formatDate(user.subscription_cancel_at)}</span>.
+              {!isNative && ' Puoi riattivarlo da "Gestisci abbonamento".'}
+            </p>
+            {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
+          </>
+        )}
+
+        {!user?.subscription_cancel_at && user?.subscription_status === 'trialing' && user.has_subscription && (
           <>
             <p className="mb-3 text-sm text-muted">
               Abbonamento <span className="font-semibold text-income">attivato</span> — la prova gratuita continua: <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span> prima del primo addebito.
             </p>
-            {!isNative && <button onClick={openBillingPortal} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
+            {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
           </>
         )}
 
@@ -146,13 +178,13 @@ export default function Profile() {
           </>
         )}
 
-        {(user?.subscription_status === 'active' || user?.subscription_status === 'past_due') && (
+        {!user?.subscription_cancel_at && (user?.subscription_status === 'active' || user?.subscription_status === 'past_due') && (
           <>
             <p className="mb-3 text-sm text-muted">
               Abbonamento <span className="font-semibold text-income">attivo</span>
               {user.subscription_status === 'past_due' && <span className="font-semibold text-expense"> — pagamento in ritardo</span>}.
             </p>
-            {!isNative && <button onClick={openBillingPortal} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
+            {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
           </>
         )}
 

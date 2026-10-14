@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { apiSend } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -14,9 +14,13 @@ export default function Paywall() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [clientSecret, setClientSecret] = useState(null);
+  // Blocca un secondo click prima che il re-render disabiliti il pulsante.
+  const busy = useRef(false);
   const prices = planLabels(usePricing({ enabled: !isNative }));
 
   async function subscribe(plan) {
+    if (busy.current) return;
+    busy.current = true;
     setLoading(true);
     setError('');
     try {
@@ -24,12 +28,25 @@ export default function Paywall() {
       if (res.client_secret) {
         setClientSecret(res.client_secret);
         setLoading(false);
+        busy.current = false;
       } else {
         window.location.href = res.url;
       }
     } catch (err) {
       setError(err.message);
+      // Abbonamento già esistente (es. pagamento in ritardo): niente secondo
+      // checkout, si va al portale per aggiornare il metodo di pagamento.
+      if (err.code === 'subscription_exists') {
+        try {
+          const portal = await apiSend('stripe_portal.php', 'POST', {});
+          window.location.href = portal.url;
+          return;
+        } catch (portalErr) {
+          setError(portalErr.message);
+        }
+      }
       setLoading(false);
+      busy.current = false;
     }
   }
 

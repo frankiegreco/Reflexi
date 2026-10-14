@@ -21,5 +21,6 @@ try {
     ]);
     respond(['url' => $session->url]);
 } catch (\Exception $e) {
-    respond_error('Errore Stripe: ' . $e->getMessage(), 500);
+    log_stripe_error('Portale', $e, $uid);
+    respond_error(STRIPE_USER_ERROR, 500);
 }
