@@ -16,6 +16,17 @@ if (!$priceId) {
     respond_error(STRIPE_USER_ERROR, 500);
 }
 
+// Prezzo configurato ma inutilizzabile (archiviato, non ricorrente, intervallo
+// sbagliato, ID inesistente): niente checkout destinato a fallire su Stripe.
+// Stessa verifica, con la stessa cache, di api/pricing.php; se Stripe non è
+// raggiungibile available resta true e si prova comunque.
+require __DIR__ . '/../_pricing.php';
+$pricingKey = $plan === 'annuale' ? 'annual' : 'monthly';
+if ((reflexi_pricing()['available'][$pricingKey] ?? true) === false) {
+    log_event('error', 'stripe_error', "Checkout: prezzo del piano {$plan} ({$priceId}) non utilizzabile, vedi cli/check_stripe_env.php", $uid);
+    respond(['error' => 'Questo piano non è disponibile al momento. Riprova più tardi o scrivi a info@reflexi.it.', 'code' => 'plan_unavailable'], 503);
+}
+
 // code: il frontend apre il portale invece di mostrare solo l'errore.
 const CHECKOUT_SUBSCRIPTION_EXISTS = ['error' => 'Hai già un abbonamento attivo: ti portiamo al portale per gestirlo, senza nuovi addebiti.', 'code' => 'subscription_exists'];
 

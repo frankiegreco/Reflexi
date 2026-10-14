@@ -7,6 +7,10 @@ $tax = $pricing['tax_behavior'];
 $monthly = $pricing['monthly'];
 $annual = $pricing['annual'];
 $monthsSaved = $pricing['months_saved'];
+// Piano nascosto solo se il prezzo configurato è sicuramente inutilizzabile
+// (vedi available in _pricing.php); se Stripe non risponde restano entrambi.
+$showMonthly = $pricing['available']['monthly'] ?? true;
+$showAnnual = $pricing['available']['annual'] ?? true;
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -56,8 +60,12 @@ seo_jsonld(seo_software_application());
 </section>
 
 <main class="mx-auto max-w-4xl px-6 py-8">
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+  <?php if (!$showMonthly && !$showAnnual): ?>
+  <p class="text-center text-muted">Gli abbonamenti non sono disponibili in questo momento. Riprova più tardi o scrivi a info@reflexi.it.</p>
+  <?php endif; ?>
+  <div class="<?= $showMonthly && $showAnnual ? 'grid grid-cols-1 gap-6 sm:grid-cols-2' : 'mx-auto grid max-w-md grid-cols-1 gap-6' ?>">
 
+    <?php if ($showMonthly): ?>
     <div class="rounded-2xl border-2 border-border bg-white p-8">
       <div class="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">Mensile</div>
       <div class="mb-1 flex items-baseline gap-1">
@@ -71,7 +79,9 @@ seo_jsonld(seo_software_application());
       <p class="mb-6 text-sm text-muted">Fatturato ogni mese. Annulla quando vuoi.</p>
       <a href="/app/" class="block rounded-xl border-2 border-accent bg-white px-6 py-3 text-center text-sm font-semibold text-accent transition hover:bg-accentSoft">Inizia la prova gratuita</a>
     </div>
+    <?php endif; ?>
 
+    <?php if ($showAnnual): ?>
     <div class="relative rounded-2xl border-2 border-accent bg-accentSoft p-8">
       <?php if ($monthsSaved !== null && $monthsSaved >= 1): ?>
       <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-income px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">Risparmi <?= $monthsSaved ?> <?= $monthsSaved === 1 ? 'mese' : 'mesi' ?></span>
@@ -88,6 +98,7 @@ seo_jsonld(seo_software_application());
       <p class="mb-6 text-sm text-muted"><?php if ($pricing['annual_per_month'] !== null): ?>Circa <?= htmlspecialchars(pricing_format($pricing['annual_per_month'], $annual['currency'], $tax)) ?>/mese, fatturato<?php else: ?>Fatturato<?php endif; ?> una volta l'anno.</p>
       <a href="/app/" class="block rounded-xl bg-accent px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Inizia la prova gratuita</a>
     </div>
+    <?php endif; ?>
 
   </div>
 
