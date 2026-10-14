@@ -23,7 +23,7 @@ RewriteRule ^_ - [R=404,L]
 # (Composer, Dockerfile, config di Apache) e librerie/script non pubblici:
 # vendor/composer/installed.json elencava le versioni esatte dei pacchetti.
 RewriteCond %{ENV:REDIRECT_STATUS} ^$
-RewriteRule ^(vendor|cron)(/|$)|^(composer\.(json|lock)|Dockerfile|[^/]+\.conf)$ - [R=404,L]
+RewriteRule ^(vendor|cron|cli)(/|$)|^(composer\.(json|lock)|Dockerfile|[^/]+\.conf)$ - [R=404,L]
 
 # Home: /index.php -> /. Il controllo su THE_REQUEST (la richiesta originale)
 # evita il loop con il DirectoryIndex, che serve index.php per "/".

@@ -26,3 +26,8 @@ frontend/dist_incoming/
 # Elenco intermedio generato da build/og/generate.py
 build/og/items.json
 __pycache__/
+
+# Backup del go-live Stripe (GO_LIVE_STRIPE.md): dump con dati utenti e .env
+# con le chiavi di test
+backup_*.sql
+.env.test-backup
