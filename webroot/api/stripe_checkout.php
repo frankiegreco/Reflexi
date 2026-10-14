@@ -26,13 +26,34 @@ try {
     }
 
     $appUrl = app_base_url();
-    $session = \Stripe\Checkout\Session::create([
+    $params = [
         'customer' => $customerId,
         'mode' => 'subscription',
         'line_items' => [['price' => $priceId, 'quantity' => 1]],
+        'metadata' => ['reflexi_user_id' => $uid],
+    ];
+
+    // STRIPE_CHECKOUT_UI=form: embedded form di Stripe dentro l'app (risponde
+    // con client_secret). Default "hosted": redirect alla pagina Stripe (url).
+    if (getenv('STRIPE_CHECKOUT_UI') === 'form') {
+        $params += [
+            'ui_mode' => 'form',
+            'return_url' => $appUrl . '/app/?checkout=return&session_id={CHECKOUT_SESSION_ID}',
+            'billing_address_collection' => 'auto',
+            'phone_number_collection' => ['enabled' => false],
+            'automatic_tax' => ['enabled' => false],
+            'payment_method_collection' => 'always',
+            'name_collection' => ['individual' => ['enabled' => true]],
+        ];
+        // Versione API solo per questa chiamata (quella della doc dell'embedded
+        // form); la versione globale dell'account e il webhook restano invariati.
+        $session = \Stripe\Checkout\Session::create($params, ['stripe_version' => '2026-09-30.endive']);
+        respond(['client_secret' => $session->client_secret]);
+    }
+
+    $session = \Stripe\Checkout\Session::create($params + [
         'success_url' => $appUrl . '/app/?checkout=success',
         'cancel_url' => $appUrl . '/app/?checkout=cancel',
-        'metadata' => ['reflexi_user_id' => $uid],
     ]);
 
     respond(['url' => $session->url]);

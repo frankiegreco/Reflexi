@@ -41,6 +41,7 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_PRICE_MONTHLY: ${STRIPE_PRICE_MONTHLY:-}
       STRIPE_PRICE_ANNUAL: ${STRIPE_PRICE_ANNUAL:-}
+      STRIPE_CHECKOUT_UI: ${STRIPE_CHECKOUT_UI:-hosted}
     ports:
       # Solo localhost: l'accesso pubblico reale passa da Caddy (80/443).
       # Docker scrive le sue regole NAT direttamente in iptables e bypassa
