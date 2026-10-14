@@ -34,7 +34,7 @@
 
 <main class="mx-auto max-w-3xl px-6 py-14">
   <h1 class="mb-2 text-3xl font-extrabold">Privacy Policy</h1>
-  <p class="mb-10 text-sm text-muted">Ultimo aggiornamento: 21 luglio 2026</p>
+  <p class="mb-10 text-sm text-muted">Ultimo aggiornamento: 14 ottobre 2026</p>
 
   <div class="prose-sm space-y-8 text-[15px] leading-relaxed text-gray-700">
 
@@ -50,7 +50,8 @@
 
     <section>
       <h2 class="mb-2 text-lg font-bold text-gray-900">2. Quali dati raccogliamo</h2>
-      <p><strong>Dati di account:</strong> email, nome (opzionale), password (conservata come hash crittografico, mai in chiaro).</p>
+      <p><strong>Dati di account:</strong> nome, cognome, email e password (conservata come hash crittografico, mai in chiaro). Sono obbligatori per creare l'account.</p>
+      <p class="mt-2"><strong>Dati facoltativi:</strong> numero di telefono e livello di esperienza in finanza (principiante, intermedio, avanzato), se scegli di indicarli in registrazione o nel tuo profilo. Se arrivi alla registrazione dalla pagina dei prezzi, registriamo anche il piano (mensile o annuale) che avevi scelto. Puoi modificare o cancellare il telefono e il livello di esperienza in qualsiasi momento dal tuo profilo.</p>
       <p class="mt-2"><strong>Dati finanziari che inserisci tu stesso:</strong> conti, transazioni, categorie, mutui, strumenti finanziari e operazioni di investimento, obiettivi di risparmio, immobili. Questi dati esistono nel Servizio solo perché li inserisci volontariamente per usare le funzionalità dell'app — non li raccogliamo da fonti esterne.</p>
       <p class="mt-2"><strong>Dati tecnici:</strong> indirizzo IP (usato per la sicurezza, ad esempio per limitare tentativi di accesso ripetuti), log tecnici del server, cookie (vedi sezione 6).</p>
       <p class="mt-2"><strong>Dati di mercato:</strong> quotazioni finanziarie pubbliche recuperate da fonti terze (Yahoo Finance) per gli strumenti che scegli di monitorare — non sono dati personali tuoi.</p>
@@ -61,6 +62,9 @@
       <ul class="ml-5 list-disc space-y-1">
         <li>Fornire le funzionalità del Servizio che hai richiesto (esecuzione del contratto/servizio)</li>
         <li>Inviarti email necessarie al funzionamento dell'account (verifica email, reset password)</li>
+        <li>Contattarti per assistenza sul tuo account, solo se ci hai lasciato il numero di telefono (consenso, revocabile cancellando il numero dal profilo). Non usiamo il telefono per comunicazioni commerciali e non lo cediamo a terzi</li>
+        <li>Capire a chi è utile il Servizio e migliorarlo, a partire dal livello di esperienza in finanza indicato (consenso, revocabile togliendolo dal profilo)</li>
+        <li>Ricordarti il piano che avevi scelto e mostrartelo in evidenza quando decidi di abbonarti (esecuzione del servizio)</li>
         <li>Inviarti il riepilogo periodico via email, solo se lo attivi tu esplicitamente dal tuo profilo (consenso)</li>
         <li>Proteggere il Servizio da accessi non autorizzati e abusi (legittimo interesse alla sicurezza)</li>
         <li>Analisi statistiche aggregate sul traffico della pagina pubblica, solo se acconsenti al cookie di Google Analytics (consenso)</li>
