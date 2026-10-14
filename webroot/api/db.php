@@ -132,7 +132,83 @@ function require_auth(): int
         respond_error('Non autenticato', 401);
     }
     touch_login_session($uid);
+    // Trial scaduto / abbonamento non valido: 402, il frontend mostra il Paywall.
+    // Restano aperti solo gli endpoint che servono per pagare o uscire.
+    if (!billing_exempt_endpoint() && !user_has_access($uid)) {
+        respond(['error' => 'Abbonamento richiesto', 'code' => 'payment_required'], 402);
+    }
     return $uid;
+}
+
+/**
+ * Endpoint raggiungibili anche senza accesso valido: tutto auth/* (me, logout,
+ * delete_account, ...), checkout e portale Stripe. Il webhook non usa
+ * require_auth (si autentica con la firma Stripe).
+ */
+function billing_exempt_endpoint(): bool
+{
+    $script = str_replace('\\', '/', $_SERVER['SCRIPT_FILENAME'] ?? '');
+    $apiDir = str_replace('\\', '/', __DIR__);
+    if (str_starts_with($script, $apiDir . '/auth/')) return true;
+    return in_array($script, [
+        $apiDir . '/stripe_checkout.php',
+        $apiDir . '/stripe_portal.php',
+        $apiDir . '/stripe_webhook.php',
+    ], true);
+}
+
+/** Giorni di accesso concessi dopo un pagamento fallito (stato past_due). */
+const PAST_DUE_GRACE_DAYS = 7;
+
+/**
+ * True se l'utente ha accesso valido in questo momento:
+ * - abbonamento attivo;
+ * - trial con abbonamento Stripe già attivato (stripe_subscription_id): la fine
+ *   del trial la gestisce Stripe, che ci avvisa via webhook, quindi resta
+ *   valido anche oltre trial_ends_at;
+ * - trial senza abbonamento, finché trial_ends_at non è passato;
+ * - past_due per al massimo PAST_DUE_GRACE_DAYS giorni da past_due_since.
+ */
+function has_active_access(array $user): bool
+{
+    switch ($user['subscription_status']) {
+        case 'active':
+            return true;
+        case 'trialing':
+            if (!empty($user['stripe_subscription_id'])) return true;
+            return $user['trial_ends_at'] && strtotime($user['trial_ends_at']) > time();
+        case 'past_due':
+            $since = $user['past_due_since'] ?? null;
+            return $since && strtotime($since) + PAST_DUE_GRACE_DAYS * 86400 > time();
+        default:
+            return false;
+    }
+}
+
+/**
+ * has_active_access() riletto dal DB. SELECT * di proposito: past_due_since
+ * arriva con la migrazione 059 e il codice deve funzionare anche prima.
+ */
+function user_has_access(int $uid): bool
+{
+    $stmt = db()->prepare("SELECT * FROM users WHERE id = :id");
+    $stmt->execute(['id' => $uid]);
+    $user = $stmt->fetch();
+    return $user ? has_active_access($user) : false;
+}
+
+/** True se la colonna esiste (cache per richiesta). Per codice che precede una migrazione. */
+function db_has_column(string $table, string $column): bool
+{
+    static $cache = [];
+    $key = "$table.$column";
+    if (!isset($cache[$key])) {
+        $stmt = db()->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t AND COLUMN_NAME = :c");
+        $stmt->execute(['t' => $table, 'c' => $column]);
+        $cache[$key] = (int)$stmt->fetchColumn() > 0;
+    }
+    return $cache[$key];
 }
 
 /**

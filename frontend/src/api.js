@@ -15,6 +15,12 @@ function notifyUnauthorized(path) {
   }
 }
 
+// 402 = trial scaduto o abbonamento non valido (require_auth lato PHP):
+// AuthContext mette has_access a false e Gate mostra il Paywall.
+function notifyPaymentRequired() {
+  window.dispatchEvent(new CustomEvent('auth:payment_required'));
+}
+
 async function parseError(res, fallback) {
   const err = await res.json().catch(() => ({ error: fallback }));
   const e = new Error(err.error || fallback);
@@ -25,6 +31,7 @@ async function parseError(res, fallback) {
 export async function apiGet(path) {
   const res = await fetch(`${API}/${path}`);
   if (res.status === 401) notifyUnauthorized(path);
+  if (res.status === 402) notifyPaymentRequired();
   if (!res.ok) throw await parseError(res, 'Errore sconosciuto');
   return res.json();
 }
@@ -36,6 +43,7 @@ export async function apiSend(path, method, body) {
     body: JSON.stringify(body),
   });
   if (res.status === 401) notifyUnauthorized(path);
+  if (res.status === 402) notifyPaymentRequired();
   if (!res.ok) throw await parseError(res, 'Errore sconosciuto');
   return res.json();
 }
@@ -43,6 +51,7 @@ export async function apiSend(path, method, body) {
 export async function apiDelete(path) {
   const res = await fetch(`${API}/${path}`, { method: 'DELETE' });
   if (res.status === 401) notifyUnauthorized(path);
+  if (res.status === 402) notifyPaymentRequired();
   if (!res.ok) throw await parseError(res, "Errore durante l'eliminazione");
   return res.json();
 }

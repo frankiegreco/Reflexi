@@ -56,6 +56,14 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
+  useEffect(() => {
+    function handlePaymentRequired() {
+      setUser((u) => (u ? { ...u, has_access: false } : u));
+    }
+    window.addEventListener('auth:payment_required', handlePaymentRequired);
+    return () => window.removeEventListener('auth:payment_required', handlePaymentRequired);
+  }, []);
+
   const login = useCallback(async (email, password) => {
     const u = await apiSend('auth/login.php', 'POST', { email, password });
     setUser(u);

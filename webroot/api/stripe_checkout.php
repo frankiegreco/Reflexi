@@ -13,7 +13,7 @@ $plan = ($in['plan'] ?? 'mensile') === 'annuale' ? 'annuale' : 'mensile';
 $priceId = stripe_price_id($plan);
 if (!$priceId) respond_error('Configurazione Stripe mancante lato server', 500);
 
-$stmt = db()->prepare("SELECT email, stripe_customer_id FROM users WHERE id = :id");
+$stmt = db()->prepare("SELECT email, stripe_customer_id, trial_ends_at FROM users WHERE id = :id");
 $stmt->execute(['id' => $uid]);
 $user = $stmt->fetch();
 
@@ -32,6 +32,14 @@ try {
         'line_items' => [['price' => $priceId, 'quantity' => 1]],
         'metadata' => ['reflexi_user_id' => $uid],
     ];
+
+    // Chi si abbona durante la prova non perde i giorni rimasti: l'abbonamento
+    // parte in trial fino a trial_ends_at (oggi si paga 0€). Stripe vuole un
+    // trial_end ad almeno 48 ore nel futuro: sotto quella soglia si paga subito.
+    $trialEndTs = $user['trial_ends_at'] ? strtotime($user['trial_ends_at']) : false;
+    if ($trialEndTs && $trialEndTs > time() + 48 * 3600) {
+        $params['subscription_data'] = ['trial_end' => $trialEndTs];
+    }
 
     // STRIPE_CHECKOUT_UI=form: embedded form di Stripe dentro l'app (risponde
     // con client_secret). Default "hosted": redirect alla pagina Stripe (url).
