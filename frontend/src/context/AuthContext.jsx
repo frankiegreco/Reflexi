@@ -3,6 +3,10 @@ import { apiGet, apiSend } from '../api';
 
 const AuthContext = createContext(null);
 
+// Letto una volta al caricamento: l'effetto più sotto ripulisce l'URL, e in
+// StrictMode (dev) verrebbe eseguito due volte.
+const RETURNING_FROM_CHECKOUT = new URLSearchParams(window.location.search).get('checkout') === 'return';
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
@@ -13,6 +17,31 @@ export function AuthProvider({ children }) {
       .then((u) => setUser(u))
       .catch(() => setUser(null))
       .finally(() => setChecking(false));
+  }, []);
+
+  // Ritorno dall'embedded form del Checkout (/app/?checkout=return): il
+  // webhook Stripe che attiva l'abbonamento può arrivare qualche secondo dopo
+  // il redirect, quindi ricarichiamo auth/me.php finché lo stato è "active".
+  useEffect(() => {
+    if (!RETURNING_FROM_CHECKOUT) return;
+    const params = new URLSearchParams(window.location.search);
+    params.delete('checkout');
+    params.delete('session_id');
+    const query = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (query ? `?${query}` : '') + window.location.hash);
+
+    let attempts = 0;
+    const timer = setInterval(async () => {
+      attempts += 1;
+      try {
+        const u = await apiGet('auth/me.php');
+        setUser(u);
+        if (u?.subscription_status === 'active' || attempts >= 10) clearInterval(timer);
+      } catch {
+        clearInterval(timer);
+      }
+    }, 2000);
+    return () => clearInterval(timer);
   }, []);
 
   // Qualsiasi chiamata API (fuori da auth/*) che riceve un 401 significa che

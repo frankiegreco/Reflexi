@@ -1,6 +1,12 @@
 import { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { apiSend } from '../api';
+import CheckoutForm from '../components/CheckoutForm';
+
+// Nell'app nativa niente prezzi né pulsanti d'acquisto: l'abbonamento si
+// gestisce solo dal sito web.
+const isNative = Capacitor.isNativePlatform();
 
 export default function Profile() {
   const { user, setUser, logout } = useAuth();
@@ -10,6 +16,7 @@ export default function Profile() {
   const [digestMsg, setDigestMsg] = useState('');
   const [subLoading, setSubLoading] = useState(false);
   const [subError, setSubError] = useState('');
+  const [clientSecret, setClientSecret] = useState(null);
   const [pwd, setPwd] = useState({ current_password: '', new_password: '', confirm: '' });
   const [pwdMsg, setPwdMsg] = useState('');
   const [pwdErr, setPwdErr] = useState('');
@@ -35,7 +42,12 @@ export default function Profile() {
     setSubLoading(true); setSubError('');
     try {
       const res = await apiSend('stripe_checkout.php', 'POST', { plan });
-      window.location.href = res.url;
+      if (res.client_secret) {
+        setClientSecret(res.client_secret);
+        setSubLoading(false);
+      } else {
+        window.location.href = res.url;
+      }
     } catch (err) {
       setSubError(err.message);
       setSubLoading(false);
@@ -110,10 +122,12 @@ export default function Profile() {
             <p className="mb-3 text-sm text-muted">
               Sei nel periodo di prova gratuito — <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span>.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — 7,99€/mese</button>
-              <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — 79€/anno</button>
-            </div>
+            {!isNative && !clientSecret && (
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — 7,99€/mese</button>
+                <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — 79€/anno</button>
+              </div>
+            )}
           </>
         )}
 
@@ -123,24 +137,36 @@ export default function Profile() {
               Abbonamento <span className="font-semibold text-income">attivo</span>
               {user.subscription_status === 'past_due' && <span className="font-semibold text-expense"> — pagamento in ritardo</span>}.
             </p>
-            <button onClick={openBillingPortal} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>
+            {!isNative && <button onClick={openBillingPortal} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
           </>
         )}
 
         {(user?.subscription_status === 'none' || user?.subscription_status === 'canceled') && (
           <>
             <p className="mb-3 text-sm text-muted">Nessun abbonamento attivo.</p>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Abbonati — 7,99€/mese</button>
-              <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Abbonati — 79€/anno</button>
-            </div>
+            {!isNative && !clientSecret && (
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Abbonati — 7,99€/mese</button>
+                <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Abbonati — 79€/anno</button>
+              </div>
+            )}
           </>
         )}
 
-        <div className="mt-4 flex items-center gap-1.5 border-t border-border pt-3 text-xs text-muted">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Pagamenti gestiti in sicurezza da Stripe — non conserviamo mai i dati della tua carta
-        </div>
+        {!isNative && clientSecret && (
+          <div className="mt-4">
+            <CheckoutForm clientSecret={clientSecret} onCancel={() => setClientSecret(null)} />
+          </div>
+        )}
+
+        {isNative ? (
+          <p className="mt-4 border-t border-border pt-3 text-sm text-muted">Gestisci il tuo abbonamento dal tuo account web.</p>
+        ) : (
+          <div className="mt-4 flex items-center gap-1.5 border-t border-border pt-3 text-xs text-muted">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Pagamenti gestiti in sicurezza da Stripe — non conserviamo mai i dati della tua carta
+          </div>
+        )}
       </div>
 
       <div className="card mb-4 p-5">
