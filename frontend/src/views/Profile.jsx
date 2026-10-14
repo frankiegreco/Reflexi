@@ -17,8 +17,17 @@ function formatDate(value) {
 
 export default function Profile() {
   const { user, setUser, logout } = useAuth();
-  const [name, setName] = useState(user?.name || '');
-  const [nameMsg, setNameMsg] = useState('');
+  // Account creati prima della migrazione 062: nome e cognome ricavati dal
+  // vecchio campo unico "name" (prima parola = nome), da confermare salvando.
+  const legacyName = (user?.name || '').trim().split(/\s+/);
+  const [profile, setProfile] = useState({
+    first_name: user?.first_name ?? legacyName[0] ?? '',
+    last_name: user?.last_name ?? legacyName.slice(1).join(' '),
+    phone: user?.phone || '',
+    finance_experience: user?.finance_experience || '',
+  });
+  const [profileMsg, setProfileMsg] = useState('');
+  const [profileErr, setProfileErr] = useState('');
   const [digest, setDigest] = useState(user?.digest_frequency || 'nessuno');
   const [digestMsg, setDigestMsg] = useState('');
   const [subLoading, setSubLoading] = useState(false);
@@ -96,13 +105,19 @@ export default function Profile() {
     }
   }
 
-  async function saveName(e) {
+  async function saveProfile(e) {
     e.preventDefault();
-    setNameMsg('');
-    const updated = await apiSend('auth/me.php', 'PUT', { name });
-    if (setUser) setUser(updated);
-    setNameMsg('Nome aggiornato.');
+    setProfileMsg(''); setProfileErr('');
+    try {
+      const updated = await apiSend('auth/me.php', 'PUT', { ...profile, finance_experience: profile.finance_experience || null });
+      if (setUser) setUser(updated);
+      setProfileMsg('Dati aggiornati.');
+    } catch (err) {
+      setProfileErr(err.message);
+    }
   }
+
+  const setField = (key) => (e) => setProfile((p) => ({ ...p, [key]: e.target.value }));
 
   async function saveDigest(value) {
     setDigest(value);
@@ -139,11 +154,32 @@ export default function Profile() {
             <div className="card p-5">
               <h6 className="mb-3 text-sm font-semibold">Dati account</h6>
               <p className="mb-3 text-sm text-muted">Email: <span className="font-medium text-gray-900">{user?.email}</span></p>
-              {nameMsg && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{nameMsg}</div>}
-              <form onSubmit={saveName} className="flex items-end gap-2">
-                <div className="flex-1">
-                  <label className="field-label">Nome</label>
-                  <input className="field" value={name} onChange={(e) => setName(e.target.value)} />
+              {profileErr && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{profileErr}</div>}
+              {profileMsg && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{profileMsg}</div>}
+              <form onSubmit={saveProfile} className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="field-label" htmlFor="profile-first-name">Nome</label>
+                    <input id="profile-first-name" className="field" required maxLength={75} autoComplete="given-name" value={profile.first_name} onChange={setField('first_name')} />
+                  </div>
+                  <div>
+                    <label className="field-label" htmlFor="profile-last-name">Cognome</label>
+                    <input id="profile-last-name" className="field" required maxLength={75} autoComplete="family-name" value={profile.last_name} onChange={setField('last_name')} />
+                  </div>
+                  <div>
+                    <label className="field-label" htmlFor="profile-phone">Telefono (facoltativo)</label>
+                    <input id="profile-phone" className="field" type="tel" maxLength={25} autoComplete="tel" pattern="\+?[0-9 .\(\)\/\-]{6,25}"
+                      title="Solo cifre, con + iniziale facoltativo" value={profile.phone} onChange={setField('phone')} />
+                  </div>
+                  <div>
+                    <label className="field-label" htmlFor="profile-experience">Esperienza in finanza</label>
+                    <select id="profile-experience" className="field" value={profile.finance_experience} onChange={setField('finance_experience')}>
+                      <option value="">Non indicata</option>
+                      <option value="principiante">Principiante</option>
+                      <option value="intermedio">Intermedio</option>
+                      <option value="avanzato">Avanzato</option>
+                    </select>
+                  </div>
                 </div>
                 <button className="btn-accent">Salva</button>
               </form>

@@ -21,6 +21,13 @@ function admin_user_row(array $u): array
         'id' => (int)$u['id'],
         'email' => $u['email'],
         'name' => $u['name'],
+        // Dati del modulo di registrazione (migrazioni 061-062): NULL per gli
+        // account creati prima.
+        'first_name' => $u['first_name'] ?? null,
+        'last_name' => $u['last_name'] ?? null,
+        'phone' => $u['phone'] ?? null,
+        'finance_experience' => $u['finance_experience'] ?? null,
+        'preferred_plan' => $u['preferred_plan'] ?? null,
         'is_admin' => (int)$u['is_admin'] === 1,
         'email_verified' => $u['email_verified_at'] !== null,
         'email_verified_at' => $u['email_verified_at'],
@@ -34,13 +41,18 @@ function admin_user_row(array $u): array
     ];
 }
 
-const ADMIN_USER_COLUMNS = "u.id, u.email, u.name, u.is_admin, u.email_verified_at, u.created_at,
-    u.subscription_status, u.trial_ends_at, u.subscription_current_period_end, u.digest_frequency,
-    (SELECT MAX(s.started_at) FROM user_sessions s WHERE s.user_id = u.id) AS last_login_at,
-    (SELECT MAX(s.last_seen_at) FROM user_sessions s WHERE s.user_id = u.id) AS last_seen_at";
+function admin_user_columns(): string
+{
+    $extra = db_has_column('users', 'preferred_plan') ? ', u.preferred_plan' : '';
+    if (db_has_column('users', 'first_name')) $extra .= ', u.first_name, u.last_name, u.phone, u.finance_experience';
+    return "u.id, u.email, u.name, u.is_admin, u.email_verified_at, u.created_at,
+        u.subscription_status, u.trial_ends_at, u.subscription_current_period_end, u.digest_frequency{$extra},
+        (SELECT MAX(s.started_at) FROM user_sessions s WHERE s.user_id = u.id) AS last_login_at,
+        (SELECT MAX(s.last_seen_at) FROM user_sessions s WHERE s.user_id = u.id) AS last_seen_at";
+}
 
 if (isset($_GET['id'])) {
-    $stmt = db()->prepare("SELECT " . ADMIN_USER_COLUMNS . " FROM users u WHERE u.id = :id");
+    $stmt = db()->prepare("SELECT " . admin_user_columns() . " FROM users u WHERE u.id = :id");
     $stmt->execute(['id' => (int)$_GET['id']]);
     $u = $stmt->fetch();
     if (!$u) respond_error('Utente non trovato', 404);
@@ -86,7 +98,7 @@ if (isset($_GET['id'])) {
 }
 
 $users = array_map('admin_user_row', db()->query("
-    SELECT " . ADMIN_USER_COLUMNS . "
+    SELECT " . admin_user_columns() . "
     FROM users u
     ORDER BY u.created_at DESC, u.id DESC
 ")->fetchAll());

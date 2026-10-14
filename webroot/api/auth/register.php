@@ -3,6 +3,7 @@ declare(strict_types=1);
 require __DIR__ . '/../db.php';
 require __DIR__ . '/../lib_mailer.php';
 require __DIR__ . '/../lib_seed.php';
+require __DIR__ . '/../lib_user_profile.php';
 
 if (method() !== 'POST') respond_error('Metodo non supportato', 405);
 
@@ -14,23 +15,14 @@ rate_limit_record('register');
 $in = json_input();
 $email = strtolower(trim($in['email'] ?? ''));
 $password = $in['password'] ?? '';
-$firstName = trim((string)($in['first_name'] ?? ''));
-$lastName = trim((string)($in['last_name'] ?? ''));
-$phone = trim((string)($in['phone'] ?? ''));
-$experience = in_array($in['finance_experience'] ?? null, ['principiante', 'intermedio', 'avanzato'], true) ? $in['finance_experience'] : null;
 // Piano scelto su /piani prima di registrarsi: solo una preferenza, vedi migrazione 061.
 $plan = in_array($in['plan'] ?? null, ['mensile', 'annuale'], true) ? $in['plan'] : null;
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond_error('Email non valida');
 if (strlen($password) < 8) respond_error('La password deve avere almeno 8 caratteri');
-if ($firstName === '' || $lastName === '') respond_error('Inserisci nome e cognome');
-if (mb_strlen($firstName) > 75 || mb_strlen($lastName) > 75) respond_error('Nome e cognome possono avere al massimo 75 caratteri');
-// Telefono facoltativo: cifre con eventuale + iniziale e separatori comuni, 6-15 cifre.
-if ($phone !== '') {
-    if (!preg_match('/^\+?[0-9 .\-\/()]{6,25}$/', $phone)) respond_error('Numero di telefono non valido');
-    $digits = strlen(preg_replace('/\D/', '', $phone));
-    if ($digits < 6 || $digits > 15) respond_error('Numero di telefono non valido');
-}
+[$firstName, $lastName] = profile_names($in['first_name'] ?? null, $in['last_name'] ?? null);
+$phone = profile_phone($in['phone'] ?? null);
+$experience = profile_experience($in['finance_experience'] ?? null);
 $name = $firstName . ' ' . $lastName;
 
 $exists = db()->prepare("SELECT id FROM users WHERE email = :email");
@@ -52,7 +44,7 @@ $userId = (int)db()->lastInsertId();
 $extra = [];
 if ($plan && db_has_column('users', 'preferred_plan')) $extra['preferred_plan'] = $plan;
 if (db_has_column('users', 'first_name')) {
-    $extra += ['first_name' => $firstName, 'last_name' => $lastName, 'phone' => $phone ?: null, 'finance_experience' => $experience];
+    $extra += ['first_name' => $firstName, 'last_name' => $lastName, 'phone' => $phone, 'finance_experience' => $experience];
 }
 if ($extra) {
     $set = implode(', ', array_map(fn($c) => "{$c} = :{$c}", array_keys($extra)));
