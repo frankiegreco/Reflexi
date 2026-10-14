@@ -125,161 +125,171 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-6xl">
       <h4 className="mb-4 text-xl font-bold">Profilo</h4>
 
-      <div className="card mb-4 p-5">
-        <h6 className="mb-3 text-sm font-semibold">Dati account</h6>
-        <p className="mb-3 text-sm text-muted">Email: <span className="font-medium text-gray-900">{user?.email}</span></p>
-        {nameMsg && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{nameMsg}</div>}
-        <form onSubmit={saveName} className="flex items-end gap-2">
-          <div className="flex-1">
-            <label className="field-label">Nome</label>
-            <input className="field" value={name} onChange={(e) => setName(e.target.value)} />
+      {/* Spazio tra le card dato dai contenitori (gap/space-y), non dalle singole
+          card. Da lg due colonne; sotto, una colonna nello stesso ordine. */}
+      <div className="space-y-4">
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <div className="min-w-0 space-y-4">
+            <div className="card p-5">
+              <h6 className="mb-3 text-sm font-semibold">Dati account</h6>
+              <p className="mb-3 text-sm text-muted">Email: <span className="font-medium text-gray-900">{user?.email}</span></p>
+              {nameMsg && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{nameMsg}</div>}
+              <form onSubmit={saveName} className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="field-label">Nome</label>
+                  <input className="field" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <button className="btn-accent">Salva</button>
+              </form>
+            </div>
+
+            <div className="card p-5">
+              <h6 className="mb-3 text-sm font-semibold">Abbonamento</h6>
+              {subError && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{subError}</div>}
+
+              {user?.subscription_cancel_at && ['trialing', 'active', 'past_due'].includes(user.subscription_status) && user.has_subscription && (
+                <>
+                  <p className="mb-3 text-sm text-muted">
+                    Abbonamento <span className="font-semibold text-expense">annullato</span>: resta attivo fino al <span className="font-semibold text-gray-900">{formatDate(user.subscription_cancel_at)}</span>.
+                    {!isNative && ' Puoi riattivarlo da "Gestisci abbonamento".'}
+                  </p>
+                  {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
+                </>
+              )}
+
+              {!user?.subscription_cancel_at && user?.subscription_status === 'trialing' && user.has_subscription && (
+                <>
+                  <p className="mb-3 text-sm text-muted">
+                    Abbonamento <span className="font-semibold text-income">attivato</span> — la prova gratuita continua: <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span> prima del primo addebito.
+                  </p>
+                  {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
+                </>
+              )}
+
+              {user?.subscription_status === 'trialing' && !user.has_subscription && (
+                <>
+                  <p className="mb-3 text-sm text-muted">
+                    Sei nel periodo di prova gratuito — <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span>.
+                  </p>
+                  {!isNative && !clientSecret && (
+                    <div className="flex flex-wrap gap-2">
+                      {prices.showMonthly && <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — {monthlyLabel}</button>}
+                      {prices.showAnnual && <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — {annualLabel}</button>}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {!user?.subscription_cancel_at && (user?.subscription_status === 'active' || user?.subscription_status === 'past_due') && (
+                <>
+                  <p className="mb-3 text-sm text-muted">
+                    Abbonamento <span className="font-semibold text-income">attivo</span>
+                    {user.subscription_status === 'past_due' && <span className="font-semibold text-expense"> — pagamento in ritardo</span>}.
+                  </p>
+                  {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
+                </>
+              )}
+
+              {(user?.subscription_status === 'none' || user?.subscription_status === 'canceled') && (
+                <>
+                  <p className="mb-3 text-sm text-muted">Nessun abbonamento attivo.</p>
+                  {!isNative && !clientSecret && (
+                    <div className="flex flex-wrap gap-2">
+                      {prices.showMonthly && <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Abbonati al mensile — {monthlyLabel}</button>}
+                      {prices.showAnnual && <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Abbonati all'annuale — {annualLabel}</button>}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {!isNative && clientSecret && (
+                <div className="mt-4">
+                  <CheckoutForm clientSecret={clientSecret} onCancel={() => setClientSecret(null)} />
+                </div>
+              )}
+
+              {isNative ? (
+                <p className="mt-4 border-t border-border pt-3 text-sm text-muted">Gestisci il tuo abbonamento dal tuo account web.</p>
+              ) : (
+                <div className="mt-4 flex items-center gap-1.5 border-t border-border pt-3 text-xs text-muted">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Pagamenti gestiti in sicurezza da Stripe — non conserviamo mai i dati della tua carta
+                </div>
+              )}
+            </div>
           </div>
-          <button className="btn-accent">Salva</button>
-        </form>
-      </div>
 
-      <div className="card mb-4 p-5">
-        <h6 className="mb-3 text-sm font-semibold">Abbonamento</h6>
-        {subError && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{subError}</div>}
-
-        {user?.subscription_cancel_at && ['trialing', 'active', 'past_due'].includes(user.subscription_status) && user.has_subscription && (
-          <>
-            <p className="mb-3 text-sm text-muted">
-              Abbonamento <span className="font-semibold text-expense">annullato</span>: resta attivo fino al <span className="font-semibold text-gray-900">{formatDate(user.subscription_cancel_at)}</span>.
-              {!isNative && ' Puoi riattivarlo da "Gestisci abbonamento".'}
-            </p>
-            {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
-          </>
-        )}
-
-        {!user?.subscription_cancel_at && user?.subscription_status === 'trialing' && user.has_subscription && (
-          <>
-            <p className="mb-3 text-sm text-muted">
-              Abbonamento <span className="font-semibold text-income">attivato</span> — la prova gratuita continua: <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span> prima del primo addebito.
-            </p>
-            {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
-          </>
-        )}
-
-        {user?.subscription_status === 'trialing' && !user.has_subscription && (
-          <>
-            <p className="mb-3 text-sm text-muted">
-              Sei nel periodo di prova gratuito — <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span>.
-            </p>
-            {!isNative && !clientSecret && (
+          <div className="min-w-0 space-y-4">
+            <div className="card p-5">
+              <h6 className="mb-1 text-sm font-semibold">Riepilogo periodico via email</h6>
+              <p className="mb-3 text-xs text-muted">Ricevi un'email con quanto hai speso, risparmiato e lo stato dei tuoi mutui, senza dover aprire l'app.</p>
+              {digestMsg && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{digestMsg}</div>}
               <div className="flex flex-wrap gap-2">
-                {prices.showMonthly && <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — {monthlyLabel}</button>}
-                {prices.showAnnual && <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — {annualLabel}</button>}
+                {[['nessuno', 'Disattivato'], ['settimanale', 'Settimanale'], ['mensile', 'Mensile']].map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => saveDigest(value)}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold ${digest === value ? 'bg-accent text-white' : 'border border-border text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-            )}
-          </>
-        )}
+            </div>
 
-        {!user?.subscription_cancel_at && (user?.subscription_status === 'active' || user?.subscription_status === 'past_due') && (
-          <>
-            <p className="mb-3 text-sm text-muted">
-              Abbonamento <span className="font-semibold text-income">attivo</span>
-              {user.subscription_status === 'past_due' && <span className="font-semibold text-expense"> — pagamento in ritardo</span>}.
-            </p>
-            {!isNative && <button onClick={() => openBillingPortal()} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
-          </>
-        )}
-
-        {(user?.subscription_status === 'none' || user?.subscription_status === 'canceled') && (
-          <>
-            <p className="mb-3 text-sm text-muted">Nessun abbonamento attivo.</p>
-            {!isNative && !clientSecret && (
-              <div className="flex flex-wrap gap-2">
-                {prices.showMonthly && <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Abbonati al mensile — {monthlyLabel}</button>}
-                {prices.showAnnual && <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Abbonati all'annuale — {annualLabel}</button>}
-              </div>
-            )}
-          </>
-        )}
-
-        {!isNative && clientSecret && (
-          <div className="mt-4">
-            <CheckoutForm clientSecret={clientSecret} onCancel={() => setClientSecret(null)} />
+            <div className="card p-5">
+              <h6 className="mb-3 text-sm font-semibold">Cambia password</h6>
+              {pwdErr && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{pwdErr}</div>}
+              {pwdMsg && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{pwdMsg}</div>}
+              <form onSubmit={changePassword} className="space-y-3">
+                <div>
+                  <label className="field-label">Password attuale</label>
+                  <input className="field" type="password" required value={pwd.current_password}
+                    onChange={(e) => setPwd((p) => ({ ...p, current_password: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="field-label">Nuova password (min. 8 caratteri)</label>
+                  <input className="field" type="password" required minLength={8} value={pwd.new_password}
+                    onChange={(e) => setPwd((p) => ({ ...p, new_password: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="field-label">Conferma nuova password</label>
+                  <input className="field" type="password" required value={pwd.confirm}
+                    onChange={(e) => setPwd((p) => ({ ...p, confirm: e.target.value }))} />
+                </div>
+                <button className="btn-accent">Aggiorna password</button>
+              </form>
+            </div>
           </div>
-        )}
-
-        {isNative ? (
-          <p className="mt-4 border-t border-border pt-3 text-sm text-muted">Gestisci il tuo abbonamento dal tuo account web.</p>
-        ) : (
-          <div className="mt-4 flex items-center gap-1.5 border-t border-border pt-3 text-xs text-muted">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Pagamenti gestiti in sicurezza da Stripe — non conserviamo mai i dati della tua carta
-          </div>
-        )}
-      </div>
-
-      <div className="card mb-4 p-5">
-        <h6 className="mb-1 text-sm font-semibold">Riepilogo periodico via email</h6>
-        <p className="mb-3 text-xs text-muted">Ricevi un'email con quanto hai speso, risparmiato e lo stato dei tuoi mutui, senza dover aprire l'app.</p>
-        {digestMsg && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{digestMsg}</div>}
-        <div className="flex flex-wrap gap-2">
-          {[['nessuno', 'Disattivato'], ['settimanale', 'Settimanale'], ['mensile', 'Mensile']].map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => saveDigest(value)}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold ${digest === value ? 'bg-accent text-white' : 'border border-border text-gray-700 hover:bg-gray-50'}`}
-            >
-              {label}
-            </button>
-          ))}
         </div>
-      </div>
 
-      <div className="card p-5">
-        <h6 className="mb-3 text-sm font-semibold">Cambia password</h6>
-        {pwdErr && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{pwdErr}</div>}
-        {pwdMsg && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{pwdMsg}</div>}
-        <form onSubmit={changePassword} className="space-y-3">
-          <div>
-            <label className="field-label">Password attuale</label>
-            <input className="field" type="password" required value={pwd.current_password}
-              onChange={(e) => setPwd((p) => ({ ...p, current_password: e.target.value }))} />
-          </div>
-          <div>
-            <label className="field-label">Nuova password (min. 8 caratteri)</label>
-            <input className="field" type="password" required minLength={8} value={pwd.new_password}
-              onChange={(e) => setPwd((p) => ({ ...p, new_password: e.target.value }))} />
-          </div>
-          <div>
-            <label className="field-label">Conferma nuova password</label>
-            <input className="field" type="password" required value={pwd.confirm}
-              onChange={(e) => setPwd((p) => ({ ...p, confirm: e.target.value }))} />
-          </div>
-          <button className="btn-accent">Aggiorna password</button>
-        </form>
-      </div>
-
-      <div className="card mb-4 border-expense/30 p-5">
-        <h6 className="mb-1 text-sm font-semibold text-expense">Elimina account</h6>
-        <p className="mb-3 text-sm text-muted">
-          Cancella definitivamente il tuo account e tutti i dati collegati (conti, transazioni, mutui, investimenti).
-          Questa azione non può essere annullata.
-        </p>
-        {!deleteOpen ? (
-          <button className="btn-outline-danger" onClick={() => setDeleteOpen(true)}>Elimina il mio account</button>
-        ) : (
-          <form onSubmit={handleDeleteAccount} className="space-y-3">
-            {deleteError && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{deleteError}</div>}
-            <div>
-              <label className="field-label">Conferma con la tua password</label>
-              <input className="field" type="password" required value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} />
-            </div>
-            <div className="flex gap-2">
-              <button type="button" className="btn-outline" onClick={() => { setDeleteOpen(false); setDeletePassword(''); setDeleteError(''); }}>Annulla</button>
-              <button type="submit" className="btn-accent bg-expense hover:bg-red-600" disabled={deleting}>
-                {deleting ? 'Eliminazione in corso...' : 'Conferma eliminazione definitiva'}
-              </button>
-            </div>
-          </form>
-        )}
+        <div className="card border-expense/30 p-5">
+          <h6 className="mb-1 text-sm font-semibold text-expense">Elimina account</h6>
+          <p className="mb-3 text-sm text-muted">
+            Cancella definitivamente il tuo account e tutti i dati collegati (conti, transazioni, mutui, investimenti).
+            Questa azione non può essere annullata.
+          </p>
+          {!deleteOpen ? (
+            <button className="btn-outline-danger" onClick={() => setDeleteOpen(true)}>Elimina il mio account</button>
+          ) : (
+            <form onSubmit={handleDeleteAccount} className="space-y-3">
+              {deleteError && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{deleteError}</div>}
+              <div>
+                <label className="field-label">Conferma con la tua password</label>
+                <input className="field" type="password" required value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <button type="button" className="btn-outline" onClick={() => { setDeleteOpen(false); setDeletePassword(''); setDeleteError(''); }}>Annulla</button>
+                <button type="submit" className="btn-accent bg-expense hover:bg-red-600" disabled={deleting}>
+                  {deleting ? 'Eliminazione in corso...' : 'Conferma eliminazione definitiva'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
