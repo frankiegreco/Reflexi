@@ -20,6 +20,7 @@ $plan = in_array($in['plan'] ?? null, ['mensile', 'annuale'], true) ? $in['plan'
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond_error('Email non valida');
 if (strlen($password) < 8) respond_error('La password deve avere almeno 8 caratteri');
+if (array_key_exists('password_confirm', $in) && $in['password_confirm'] !== $password) respond_error('Le due password non coincidono');
 [$firstName, $lastName] = profile_names($in['first_name'] ?? null, $in['last_name'] ?? null);
 $phone = profile_phone($in['phone'] ?? null);
 $experience = profile_experience($in['finance_experience'] ?? null);

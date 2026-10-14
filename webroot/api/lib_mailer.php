@@ -55,3 +55,25 @@ function app_base_url(): string
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     return "{$scheme}://{$host}";
 }
+
+/**
+ * Genera un nuovo link di reimpostazione password per l'utente e lo invia per
+ * email. Usato da "password dimenticata" (valido 1 ora) e dall'area admin
+ * (valido più a lungo: l'utente può leggere l'email ore dopo). Ritorna l'esito
+ * dell'invio.
+ */
+function send_password_reset_email(int $userId, string $email, int $validHours = 1): bool
+{
+    $token = bin2hex(random_bytes(32));
+    $expires = date('Y-m-d H:i:s', strtotime("+{$validHours} hours"));
+    db()->prepare("UPDATE users SET reset_token = :token, reset_token_expires = :expires WHERE id = :id")
+        ->execute(['token' => $token, 'expires' => $expires, 'id' => $userId]);
+
+    $resetUrl = app_base_url() . '/app/?reset_token=' . $token;
+    $validity = $validHours === 1 ? '1 ora' : "{$validHours} ore";
+    return send_email($email, 'Reimposta la password — Le mie finanze', "
+        <p>Hai richiesto di reimpostare la password. Il link è valido {$validity}:</p>
+        <p><a href=\"{$resetUrl}\">Reimposta la password</a></p>
+        <p>Se non hai richiesto tu questa operazione, ignora questa email: la tua password resterà invariata.</p>
+    ");
+}

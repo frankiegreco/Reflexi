@@ -55,6 +55,7 @@ export default function Auth() {
   useEffect(clearModeParam, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -107,10 +108,15 @@ export default function Auth() {
 
   async function handleRegister(e) {
     e.preventDefault();
-    resetMessages(); setLoading(true);
+    resetMessages();
+    if (password !== passwordConfirm) {
+      setError('Le due password non coincidono.');
+      return;
+    }
+    setLoading(true);
     try {
       const res = await register({
-        email, password, plan,
+        email, password, password_confirm: passwordConfirm, plan,
         first_name: firstName, last_name: lastName, phone, finance_experience: experience || null,
       });
       setInfo(res.message);
@@ -221,6 +227,15 @@ export default function Auth() {
           <div>
             <label className="field-label">Password (min. 8 caratteri)</label>
             <input className="field" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="reg-password-confirm">Conferma password</label>
+            <input id="reg-password-confirm" className="field" type="password" required minLength={8} autoComplete="new-password"
+              value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)}
+              aria-invalid={passwordConfirm !== '' && passwordConfirm !== password} />
+            {passwordConfirm !== '' && passwordConfirm !== password && (
+              <p className="mt-1 text-xs text-expense">Le password non coincidono</p>
+            )}
           </div>
           <div>
             <label className="field-label" htmlFor="reg-phone">Telefono (facoltativo)</label>
