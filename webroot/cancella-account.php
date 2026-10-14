@@ -65,6 +65,7 @@
       <li>Tutti i conti, transazioni e categorie</li>
       <li>Mutui, investimenti, obiettivi di risparmio, fondi pensione</li>
       <li>Qualsiasi altro dato collegato al tuo account</li>
+      <li>L'abbonamento, se ne hai uno: viene annullato subito e non riceverai altri addebiti</li>
     </ul>
     <p class="mt-3 text-sm text-muted">
       Per i dettagli completi su come trattiamo i tuoi dati, leggi la

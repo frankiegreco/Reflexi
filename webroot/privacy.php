@@ -90,9 +90,10 @@
       <ul class="ml-5 list-disc space-y-1">
         <li><strong>Dati di account e dati finanziari:</strong> finché il tuo account è attivo.</li>
         <li><strong>Storico degli accessi</strong> (data e ora, indirizzo IP, browser e dispositivo): 180 giorni, poi viene cancellato automaticamente.</li>
+        <li><strong>Tentativi di accesso e registrazione</strong> (indirizzo IP, usato solo per limitare i tentativi ripetuti): 24 ore.</li>
         <li><strong>Log di sicurezza</strong> (ad esempio accessi falliti ed errori del server, che possono contenere indirizzo IP ed email): 90 giorni, poi vengono cancellati automaticamente.</li>
       </ul>
-      <p class="mt-2">Puoi eliminare il tuo account in qualsiasi momento dal <strong>Profilo</strong> dell'app, con "Elimina account" e la conferma della password: la cancellazione è immediata e definitiva e rimuove i dati dell'account, lo storico degli accessi e tutti i dati finanziari. Se non riesci ad accedere, scrivi a <a href="mailto:privacy@reflexi.it" class="text-accent">privacy@reflexi.it</a> dall'indirizzo email dell'account (vedi <a href="/cancella-account" class="text-accent">come cancellare l'account</a>).</p>
+      <p class="mt-2">Puoi eliminare il tuo account in qualsiasi momento dal <strong>Profilo</strong> dell'app, con "Elimina account" e la conferma della password: la cancellazione è immediata e definitiva, rimuove i dati dell'account, lo storico degli accessi e tutti i dati finanziari e annulla subito l'eventuale abbonamento, senza ulteriori addebiti. Se non riesci ad accedere, scrivi a <a href="mailto:privacy@reflexi.it" class="text-accent">privacy@reflexi.it</a> dall'indirizzo email dell'account (vedi <a href="/cancella-account" class="text-accent">come cancellare l'account</a>).</p>
       <p class="mt-2">Dopo la cancellazione restano solo le voci del log di sicurezza fino alla scadenza dei 90 giorni (compresa quella che registra la cancellazione, con la tua email) e i dati di pagamento che Stripe deve conservare per obblighi di legge.</p>
     </section>
 

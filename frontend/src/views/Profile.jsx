@@ -310,6 +310,7 @@ export default function Profile() {
           <h6 className="mb-1 text-sm font-semibold text-expense">Elimina account</h6>
           <p className="mb-3 text-sm text-muted">
             Cancella definitivamente il tuo account e tutti i dati collegati (conti, transazioni, mutui, investimenti).
+            Se hai un abbonamento, viene annullato subito e non riceverai altri addebiti.
             Questa azione non può essere annullata.
           </p>
           {!deleteOpen ? (

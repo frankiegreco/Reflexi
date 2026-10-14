@@ -60,6 +60,28 @@ function stripe_reset_missing_customer(int $uid, string $context, \Throwable $e)
     db()->prepare('UPDATE users SET ' . implode(', ', $set) . ' WHERE id = :id')->execute(['id' => $uid]);
 }
 
+/**
+ * Annulla subito (senza attendere la fine del periodo) ogni abbonamento ancora
+ * aperto del cliente; ritorna gli ID annullati. Un cliente che su Stripe non
+ * esiste più non ha nulla da annullare. Gli altri errori Stripe sono lanciati.
+ */
+function stripe_cancel_open_subscriptions(string $customerId): array
+{
+    try {
+        $subs = \Stripe\Subscription::all(['customer' => $customerId, 'status' => 'all', 'limit' => 100]);
+    } catch (\Exception $e) {
+        if (stripe_is_missing_customer($e)) return [];
+        throw $e;
+    }
+    $canceled = [];
+    foreach ($subs->autoPagingIterator() as $sub) {
+        if (in_array($sub->status, ['canceled', 'incomplete_expired'], true)) continue;
+        $sub->cancel();
+        $canceled[] = $sub->id;
+    }
+    return $canceled;
+}
+
 /** Crea il cliente Stripe dell'utente e lo salva in users.stripe_customer_id. */
 function stripe_create_customer(int $uid, string $email): string
 {

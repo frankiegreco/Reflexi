@@ -293,11 +293,19 @@ function rate_limit_check(string $action, int $maxAttempts, int $windowSeconds):
     }
 }
 
+/** Per quante ore si tengono i tentativi registrati: ben oltre la finestra più lunga usata (1 ora). */
+const RATE_LIMIT_RETENTION_HOURS = 24;
+
 /** Registra un tentativo per l'azione indicata, da chiamare dopo il check. */
 function rate_limit_record(string $action): void
 {
     db()->prepare("INSERT INTO rate_limit_attempts (action, identifier) VALUES (:action, :identifier)")
         ->execute(['action' => $action, 'identifier' => client_ip()]);
+    // Pulizia occasionale (circa 1 scrittura su 100): l'IP non serve oltre la
+    // finestra del limite, e la Privacy Policy dichiara 24 ore.
+    if (random_int(1, 100) === 1) {
+        db()->exec("DELETE FROM rate_limit_attempts WHERE created_at < NOW() - INTERVAL " . RATE_LIMIT_RETENTION_HOURS . " HOUR");
+    }
 }
 if (php_sapi_name() !== 'cli') {
     header('Access-Control-Allow-Origin: *');
