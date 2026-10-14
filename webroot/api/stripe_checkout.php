@@ -36,8 +36,32 @@ const CHECKOUT_SUBSCRIPTION_EXISTS = ['error' => 'Hai già un abbonamento attivo
  * dopo il lock, così una richiesta concorrente appena conclusa (che ha
  * creato il cliente) è già visibile. Niente respond()/exit qui dentro:
  * impedirebbero al finally di rilasciare il lock.
+ *
+ * Se il cliente salvato non esiste più su Stripe ("No such customer", sia nel
+ * controllo anti-doppio-abbonamento sia nella creazione della sessione) lo si
+ * scollega e si riprova una sola volta, con un cliente nuovo.
  */
 function create_checkout(int $uid, string $plan, string $priceId): array
+{
+    try {
+        return try_checkout($uid, $priceId);
+    } catch (\Exception $e) {
+        if (!stripe_is_missing_customer($e)) {
+            log_stripe_error("Checkout piano {$plan}", $e, $uid);
+            return [['error' => STRIPE_USER_ERROR], 500];
+        }
+        stripe_reset_missing_customer($uid, "Checkout piano {$plan}", $e);
+    }
+    try {
+        return try_checkout($uid, $priceId);
+    } catch (\Exception $e) {
+        log_stripe_error("Checkout piano {$plan} (secondo tentativo, cliente ricreato)", $e, $uid);
+        return [['error' => STRIPE_USER_ERROR], 500];
+    }
+}
+
+/** Un tentativo di checkout; gli errori Stripe sono lanciati al chiamante. */
+function try_checkout(int $uid, string $priceId): array
 {
     $stmt = db()->prepare("SELECT email, stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at FROM users WHERE id = :id");
     $stmt->execute(['id' => $uid]);
@@ -49,69 +73,62 @@ function create_checkout(int $uid, string $plan, string $priceId): array
         return [CHECKOUT_SUBSCRIPTION_EXISTS, 409];
     }
 
-    try {
-        $customerId = $user['stripe_customer_id'];
-        if (!$customerId) {
-            $customer = \Stripe\Customer::create(['email' => $user['email'], 'metadata' => ['reflexi_user_id' => $uid]]);
-            $customerId = $customer->id;
-            db()->prepare("UPDATE users SET stripe_customer_id = :cid WHERE id = :id")->execute(['cid' => $customerId, 'id' => $uid]);
-        } else {
-            // Controllo anche su Stripe, non solo sul DB: se il webhook del primo
-            // checkout non è ancora arrivato, il DB non sa dell'abbonamento e un
-            // secondo click ne creerebbe un altro. 'unpaid' qui è past_due.
-            $existing = \Stripe\Subscription::all(['customer' => $customerId, 'status' => 'all', 'limit' => 100]);
-            foreach ($existing->data as $sub) {
-                if (in_array($sub->status, ['trialing', 'active', 'past_due', 'unpaid'], true)) {
-                    log_event('info', 'stripe_checkout_blocked', "Checkout bloccato: il cliente ha già {$sub->id} ({$sub->status})", $uid);
-                    return [CHECKOUT_SUBSCRIPTION_EXISTS, 409];
-                }
+    $customerId = $user['stripe_customer_id'];
+    if (!$customerId) {
+        $customerId = stripe_create_customer($uid, $user['email']);
+    } else {
+        // Controllo anche su Stripe, non solo sul DB: se il webhook del primo
+        // checkout non è ancora arrivato, il DB non sa dell'abbonamento e un
+        // secondo click ne creerebbe un altro. 'unpaid' qui è past_due.
+        $existing = \Stripe\Subscription::all(['customer' => $customerId, 'status' => 'all', 'limit' => 100]);
+        foreach ($existing->data as $sub) {
+            if (in_array($sub->status, ['trialing', 'active', 'past_due', 'unpaid'], true)) {
+                log_event('info', 'stripe_checkout_blocked', "Checkout bloccato: il cliente ha già {$sub->id} ({$sub->status})", $uid);
+                return [CHECKOUT_SUBSCRIPTION_EXISTS, 409];
             }
         }
-
-        $appUrl = app_base_url();
-        $params = [
-            'customer' => $customerId,
-            'mode' => 'subscription',
-            'line_items' => [['price' => $priceId, 'quantity' => 1]],
-            'metadata' => ['reflexi_user_id' => $uid],
-        ];
-
-        // Chi si abbona durante la prova non perde i giorni rimasti: l'abbonamento
-        // parte in trial fino a trial_ends_at (oggi si paga 0€). Stripe vuole un
-        // trial_end ad almeno 48 ore nel futuro: sotto quella soglia si paga subito.
-        $trialEndTs = $user['trial_ends_at'] ? strtotime($user['trial_ends_at']) : false;
-        if ($trialEndTs && $trialEndTs > time() + 48 * 3600) {
-            $params['subscription_data'] = ['trial_end' => $trialEndTs];
-        }
-
-        // STRIPE_CHECKOUT_UI=form: embedded form di Stripe dentro l'app (risponde
-        // con client_secret). Default "hosted": redirect alla pagina Stripe (url).
-        if (getenv('STRIPE_CHECKOUT_UI') === 'form') {
-            $params += [
-                'ui_mode' => 'form',
-                'return_url' => $appUrl . '/app/?checkout=return&session_id={CHECKOUT_SESSION_ID}',
-                'billing_address_collection' => 'auto',
-                'phone_number_collection' => ['enabled' => false],
-                'automatic_tax' => ['enabled' => false],
-                'payment_method_collection' => 'always',
-                'name_collection' => ['individual' => ['enabled' => true]],
-            ];
-            // Versione API solo per questa chiamata (quella della doc dell'embedded
-            // form); la versione globale dell'account e il webhook restano invariati.
-            $session = \Stripe\Checkout\Session::create($params, ['stripe_version' => '2026-09-30.endive']);
-            return [['client_secret' => $session->client_secret], 200];
-        }
-
-        $session = \Stripe\Checkout\Session::create($params + [
-            'success_url' => $appUrl . '/app/?checkout=success',
-            'cancel_url' => $appUrl . '/app/?checkout=cancel',
-        ]);
-
-        return [['url' => $session->url], 200];
-    } catch (\Exception $e) {
-        log_stripe_error("Checkout piano {$plan}", $e, $uid);
-        return [['error' => STRIPE_USER_ERROR], 500];
     }
+
+    $appUrl = app_base_url();
+    $params = [
+        'customer' => $customerId,
+        'mode' => 'subscription',
+        'line_items' => [['price' => $priceId, 'quantity' => 1]],
+        'metadata' => ['reflexi_user_id' => $uid],
+    ];
+
+    // Chi si abbona durante la prova non perde i giorni rimasti: l'abbonamento
+    // parte in trial fino a trial_ends_at (oggi si paga 0€). Stripe vuole un
+    // trial_end ad almeno 48 ore nel futuro: sotto quella soglia si paga subito.
+    $trialEndTs = $user['trial_ends_at'] ? strtotime($user['trial_ends_at']) : false;
+    if ($trialEndTs && $trialEndTs > time() + 48 * 3600) {
+        $params['subscription_data'] = ['trial_end' => $trialEndTs];
+    }
+
+    // STRIPE_CHECKOUT_UI=form: embedded form di Stripe dentro l'app (risponde
+    // con client_secret). Default "hosted": redirect alla pagina Stripe (url).
+    if (getenv('STRIPE_CHECKOUT_UI') === 'form') {
+        $params += [
+            'ui_mode' => 'form',
+            'return_url' => $appUrl . '/app/?checkout=return&session_id={CHECKOUT_SESSION_ID}',
+            'billing_address_collection' => 'auto',
+            'phone_number_collection' => ['enabled' => false],
+            'automatic_tax' => ['enabled' => false],
+            'payment_method_collection' => 'always',
+            'name_collection' => ['individual' => ['enabled' => true]],
+        ];
+        // Versione API solo per questa chiamata (quella della doc dell'embedded
+        // form); la versione globale dell'account e il webhook restano invariati.
+        $session = \Stripe\Checkout\Session::create($params, ['stripe_version' => '2026-09-30.endive']);
+        return [['client_secret' => $session->client_secret], 200];
+    }
+
+    $session = \Stripe\Checkout\Session::create($params + [
+        'success_url' => $appUrl . '/app/?checkout=success',
+        'cancel_url' => $appUrl . '/app/?checkout=cancel',
+    ]);
+
+    return [['url' => $session->url], 200];
 }
 
 // Una richiesta alla volta per utente: due click ravvicinati (o due schede)
