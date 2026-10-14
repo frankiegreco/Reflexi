@@ -74,36 +74,43 @@ export default function Paywall() {
               {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
               <div className="space-y-3">
-                <button
-                  onClick={() => subscribe('mensile')}
-                  disabled={loading}
-                  className="w-full rounded-xl border-2 border-accent bg-white px-4 py-4 text-left transition hover:bg-accentSoft"
-                >
-                  <div className="flex items-baseline justify-between">
-                    <span className="font-semibold">Mensile</span>
-                    {prices.monthly
-                      ? <span className="font-mono text-lg font-bold">{prices.monthly}<span className="text-xs font-normal text-muted">/mese</span></span>
-                      : <span className="text-xs text-muted">{PRICE_UNAVAILABLE}</span>}
-                  </div>
-                </button>
-                <button
-                  onClick={() => subscribe('annuale')}
-                  disabled={loading}
-                  className="relative w-full rounded-xl border-2 border-accent bg-accentSoft px-4 py-4 text-left transition hover:brightness-95"
-                >
-                  {prices.monthsSaved && (
-                    <span className="absolute -top-2.5 right-4 rounded-full bg-income px-2.5 py-0.5 text-[10px] font-bold text-white">
-                      RISPARMI {prices.monthsSaved} {prices.monthsSaved === 1 ? 'MESE' : 'MESI'}
-                    </span>
-                  )}
-                  <div className="flex items-baseline justify-between">
-                    <span className="font-semibold">Annuale</span>
-                    {prices.annual
-                      ? <span className="font-mono text-lg font-bold">{prices.annual}<span className="text-xs font-normal text-muted">/anno</span></span>
-                      : <span className="text-xs text-muted">{PRICE_UNAVAILABLE}</span>}
-                  </div>
-                  {prices.annualPerMonth && <div className="mt-0.5 text-right text-xs text-muted">circa {prices.annualPerMonth}/mese</div>}
-                </button>
+                {!prices.showMonthly && !prices.showAnnual && (
+                  <p className="text-sm text-muted">Gli abbonamenti non sono disponibili in questo momento. Riprova più tardi.</p>
+                )}
+                {prices.showMonthly && (
+                  <button
+                    onClick={() => subscribe('mensile')}
+                    disabled={loading}
+                    className="w-full rounded-xl border-2 border-accent bg-white px-4 py-4 text-left transition hover:bg-accentSoft"
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <span className="font-semibold">Mensile</span>
+                      {prices.monthly
+                        ? <span className="font-mono text-lg font-bold">{prices.monthly}<span className="text-xs font-normal text-muted">/mese</span></span>
+                        : <span className="text-xs text-muted">{PRICE_UNAVAILABLE}</span>}
+                    </div>
+                  </button>
+                )}
+                {prices.showAnnual && (
+                  <button
+                    onClick={() => subscribe('annuale')}
+                    disabled={loading}
+                    className="relative w-full rounded-xl border-2 border-accent bg-accentSoft px-4 py-4 text-left transition hover:brightness-95"
+                  >
+                    {prices.monthsSaved && (
+                      <span className="absolute -top-2.5 right-4 rounded-full bg-income px-2.5 py-0.5 text-[10px] font-bold text-white">
+                        RISPARMI {prices.monthsSaved} {prices.monthsSaved === 1 ? 'MESE' : 'MESI'}
+                      </span>
+                    )}
+                    <div className="flex items-baseline justify-between">
+                      <span className="font-semibold">Annuale</span>
+                      {prices.annual
+                        ? <span className="font-mono text-lg font-bold">{prices.annual}<span className="text-xs font-normal text-muted">/anno</span></span>
+                        : <span className="text-xs text-muted">{PRICE_UNAVAILABLE}</span>}
+                    </div>
+                    {prices.annualPerMonth && <div className="mt-0.5 text-right text-xs text-muted">circa {prices.annualPerMonth}/mese</div>}
+                  </button>
+                )}
               </div>
 
               {loading && <p className="mt-4 text-xs text-muted">Ti stiamo portando al pagamento sicuro...</p>}

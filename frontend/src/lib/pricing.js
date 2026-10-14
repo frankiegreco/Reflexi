@@ -28,8 +28,10 @@ export function formatPlanPrice(amount, currency, taxBehavior) {
   return num + symbol + (taxBehavior === 'exclusive' ? ' + IVA' : '');
 }
 
-// Etichette pronte per Paywall/Profilo: { monthly, annual, annualPerMonth, monthsSaved }.
-// monthly/annual sono null se il prezzo non è disponibile.
+// Etichette pronte per Paywall/Profilo: { monthly, annual, annualPerMonth, monthsSaved,
+// showMonthly, showAnnual }. monthly/annual sono null se il prezzo non è noto.
+// showX è false solo se il backend sa che il prezzo configurato è inutilizzabile
+// (available.x === false): quel piano va nascosto, il checkout fallirebbe.
 export function planLabels(pricing) {
   const tax = pricing?.tax_behavior;
   const m = pricing?.monthly;
@@ -39,5 +41,7 @@ export function planLabels(pricing) {
     annual: a ? formatPlanPrice(a.amount, a.currency, tax) : null,
     annualPerMonth: a && pricing.annual_per_month != null ? formatPlanPrice(pricing.annual_per_month, a.currency, tax) : null,
     monthsSaved: pricing?.months_saved >= 1 ? pricing.months_saved : null,
+    showMonthly: pricing?.available?.monthly !== false,
+    showAnnual: pricing?.available?.annual !== false,
   };
 }

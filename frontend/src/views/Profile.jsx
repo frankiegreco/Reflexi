@@ -171,8 +171,8 @@ export default function Profile() {
             </p>
             {!isNative && !clientSecret && (
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — {monthlyLabel}</button>
-                <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — {annualLabel}</button>
+                {prices.showMonthly && <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — {monthlyLabel}</button>}
+                {prices.showAnnual && <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — {annualLabel}</button>}
               </div>
             )}
           </>
@@ -193,8 +193,8 @@ export default function Profile() {
             <p className="mb-3 text-sm text-muted">Nessun abbonamento attivo.</p>
             {!isNative && !clientSecret && (
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Abbonati al mensile — {monthlyLabel}</button>
-                <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Abbonati all'annuale — {annualLabel}</button>
+                {prices.showMonthly && <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Abbonati al mensile — {monthlyLabel}</button>}
+                {prices.showAnnual && <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Abbonati all'annuale — {annualLabel}</button>}
               </div>
             )}
           </>

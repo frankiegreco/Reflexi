@@ -11,11 +11,10 @@ if (php_sapi_name() !== 'cli') {
     exit;
 }
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../_pricing.php';
 
 $errors = 0;
 $ok = fn(string $msg) => print("  OK      $msg\n");
-$warn = fn(string $msg) => print("  AVVISO  $msg\n");
 $fail = function (string $msg) use (&$errors) {
     $errors++;
     print("  ERRORE  $msg\n");
@@ -55,27 +54,22 @@ if ($whsec === '') {
 
 // Prezzi: esistono, attivi, ricorrenti con l'intervallo giusto, prodotto attivo
 // (un prodotto archiviato blocca il checkout anche se il prezzo è attivo).
-$prices = ['STRIPE_PRICE_MONTHLY' => 'month', 'STRIPE_PRICE_ANNUAL' => 'year'];
+$prices = ['STRIPE_PRICE_MONTHLY' => PRICING_PLAN_INTERVALS['monthly'], 'STRIPE_PRICE_ANNUAL' => PRICING_PLAN_INTERVALS['annual']];
 foreach ($prices as $var => $interval) {
     $id = getenv($var) ?: '';
     if ($id === '') { $fail("$var mancante"); continue; }
-    if ($keyMode === null) { $warn("$var = $id non verificato (chiave API non valida)"); continue; }
+    if ($keyMode === null) { $fail("$var = $id non verificabile (chiave API non valida)"); continue; }
     try {
         $price = \Stripe\Price::retrieve(['id' => $id, 'expand' => ['product']], ['api_key' => $key]);
     } catch (\Throwable $e) {
         $fail("$var = $id: " . $e->getMessage());
         continue;
     }
-    $problems = [];
-    if (!$price->active) $problems[] = 'prezzo archiviato';
-    if (!$price->product->active) $problems[] = 'prodotto archiviato';
-    if ($price->type !== 'recurring') $problems[] = 'non ricorrente';
-    elseif ($price->recurring->interval !== $interval || $price->recurring->interval_count !== 1) {
-        $problems[] = "intervallo {$price->recurring->interval_count} {$price->recurring->interval}, atteso 1 $interval";
-    }
+    // Stessi controlli di _pricing.php (che nasconde il piano), più la modalità.
+    $problems = pricing_price_problems($price, $interval);
     if ($price->livemode !== ($keyMode === 'live')) $problems[] = 'modalità diversa dalla chiave';
     $amount = $price->unit_amount !== null ? number_format($price->unit_amount / 100, 2, ',', '.') . ' ' . strtoupper($price->currency) : 'importo non fisso';
-    $desc = "$var = $id ($amount/$interval, tax_behavior {$price->tax_behavior})";
+    $desc = "$var = $id ($amount/" . ($price->recurring->interval ?? "una tantum") . ", tax_behavior {$price->tax_behavior})";
     $problems ? $fail("$desc: " . implode(', ', $problems)) : $ok($desc);
 }
 

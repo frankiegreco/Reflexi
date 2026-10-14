@@ -7,7 +7,9 @@ declare(strict_types=1);
 //
 // Cache su file per un'ora. Se Stripe non risponde si usa l'ultima cache, anche
 // scaduta; se non c'è nemmeno quella i prezzi sono null e le pagine mostrano
-// "prezzo visibile al checkout" invece di inventare cifre.
+// "prezzo visibile al checkout" invece di inventare cifre. Un prezzo che Stripe
+// restituisce ma non è adatto al piano (archiviato, non ricorrente, intervallo
+// sbagliato) finisce nel log e il piano risulta non disponibile (available).
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -18,7 +20,16 @@ function pricing_cache_file(): string
     return sys_get_temp_dir() . '/reflexi_pricing.json';
 }
 
-function pricing_empty(): array
+const PRICING_PLAN_INTERVALS = ['monthly' => 'month', 'annual' => 'year'];
+
+/**
+ * available: per piano, false se il prezzo configurato è sicuramente
+ * inutilizzabile (archiviato, non ricorrente, intervallo sbagliato, ID
+ * inesistente): il frontend nasconde quel piano invece di far partire un
+ * checkout destinato a fallire. true quando il piano è valido o quando non lo
+ * sappiamo (Stripe non raggiungibile): lì resta "prezzo visibile al checkout".
+ */
+function pricing_empty(bool $available = true): array
 {
     return [
         'monthly' => null,
@@ -27,20 +38,61 @@ function pricing_empty(): array
         'tax_behavior' => null,
         'annual_per_month' => null,
         'months_saved' => null,
+        'available' => ['monthly' => $available, 'annual' => $available],
     ];
 }
 
-/** Un prezzo Stripe ricorrente -> importo in unità (es. 7.99), o null se non utilizzabile. */
-function pricing_from_stripe(\Stripe\Price $price): ?array
+/**
+ * Motivi per cui un prezzo non va bene per il piano con l'intervallo atteso
+ * ('month'|'year'); lista vuota se è utilizzabile. Condivisa con
+ * cli/check_stripe_env.php. Il prodotto va espanso ('expand' => ['product']).
+ */
+function pricing_price_problems(\Stripe\Price $price, string $interval): array
 {
-    if (!$price->active || $price->unit_amount === null) return null;
+    $problems = [];
+    if (!$price->active) $problems[] = 'prezzo archiviato';
+    if ($price->product instanceof \Stripe\Product && !$price->product->active) $problems[] = 'prodotto archiviato';
+    if ($price->type !== 'recurring' || !$price->recurring) {
+        $problems[] = 'non ricorrente';
+    } elseif ($price->recurring->interval !== $interval || $price->recurring->interval_count !== 1) {
+        $problems[] = "intervallo {$price->recurring->interval_count} {$price->recurring->interval}, atteso 1 $interval";
+    }
+    if ($price->unit_amount === null) $problems[] = 'importo non fisso';
+    return $problems;
+}
+
+/** Un prezzo Stripe valido -> importo in unità (es. 7.99) e metadati. */
+function pricing_from_stripe(\Stripe\Price $price): array
+{
     return [
         'amount' => $price->unit_amount / 100,
         'unit_amount' => $price->unit_amount,
         'currency' => $price->currency,
-        'interval' => $price->recurring->interval ?? null,
+        'interval' => $price->recurring->interval,
         'tax_behavior' => $price->tax_behavior,
     ];
+}
+
+/**
+ * Legge e valida un prezzo; null (con anomalia nel log) se non utilizzabile.
+ * Un ID inesistente o di un'altra modalità (InvalidRequest) è un errore di
+ * configurazione, non un guasto temporaneo: piano non disponibile. Gli errori
+ * di rete invece risalgono, così reflexi_pricing() ripiega sulla cache.
+ */
+function pricing_fetch_plan(string $var, string $id, string $interval, string $key): ?array
+{
+    try {
+        $price = \Stripe\Price::retrieve(['id' => $id, 'expand' => ['product']], ['api_key' => $key]);
+    } catch (\Stripe\Exception\InvalidRequestException $e) {
+        error_log("reflexi_pricing: $var = $id non utilizzabile: " . $e->getMessage());
+        return null;
+    }
+    $problems = pricing_price_problems($price, $interval);
+    if ($problems) {
+        error_log("reflexi_pricing: $var = $id non utilizzabile, piano nascosto: " . implode(', ', $problems));
+        return null;
+    }
+    return pricing_from_stripe($price);
 }
 
 function pricing_fetch_from_stripe(string $monthlyId, string $annualId): array
@@ -55,12 +107,13 @@ function pricing_fetch_from_stripe(string $monthlyId, string $annualId): array
     $http->setTimeout(5);
     \Stripe\ApiRequestor::setHttpClient($http);
 
-    $monthly = pricing_from_stripe(\Stripe\Price::retrieve($monthlyId, ['api_key' => $key]));
-    $annual = pricing_from_stripe(\Stripe\Price::retrieve($annualId, ['api_key' => $key]));
+    $monthly = pricing_fetch_plan('STRIPE_PRICE_MONTHLY', $monthlyId, PRICING_PLAN_INTERVALS['monthly'], $key);
+    $annual = pricing_fetch_plan('STRIPE_PRICE_ANNUAL', $annualId, PRICING_PLAN_INTERVALS['annual'], $key);
 
     $data = pricing_empty();
     $data['monthly'] = $monthly;
     $data['annual'] = $annual;
+    $data['available'] = ['monthly' => $monthly !== null, 'annual' => $annual !== null];
     $ref = $monthly ?? $annual;
     if ($ref) {
         $data['currency'] = $ref['currency'];
@@ -85,7 +138,12 @@ function reflexi_pricing(): array
 {
     $monthlyId = getenv('STRIPE_PRICE_MONTHLY') ?: '';
     $annualId = getenv('STRIPE_PRICE_ANNUAL') ?: '';
-    if ($monthlyId === '' || $annualId === '') return pricing_empty();
+    if ($monthlyId === '' || $annualId === '') {
+        // Senza ID il checkout di quel piano fallisce comunque: non disponibile.
+        $data = pricing_empty();
+        $data['available'] = ['monthly' => $monthlyId !== '', 'annual' => $annualId !== ''];
+        return $data;
+    }
 
     $idsKey = $monthlyId . '|' . $annualId;
     $cached = null;
