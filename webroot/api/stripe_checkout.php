@@ -13,9 +13,15 @@ $plan = ($in['plan'] ?? 'mensile') === 'annuale' ? 'annuale' : 'mensile';
 $priceId = stripe_price_id($plan);
 if (!$priceId) respond_error('Configurazione Stripe mancante lato server', 500);
 
-$stmt = db()->prepare("SELECT email, stripe_customer_id, trial_ends_at FROM users WHERE id = :id");
+$stmt = db()->prepare("SELECT email, stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at FROM users WHERE id = :id");
 $stmt->execute(['id' => $uid]);
 $user = $stmt->fetch();
+
+// Un abbonamento già in corso (anche in prova) si gestisce dal portale: un
+// secondo checkout creerebbe un secondo abbonamento con doppio addebito.
+if ($user['stripe_subscription_id'] && in_array($user['subscription_status'], ['trialing', 'active', 'past_due'], true)) {
+    respond_error('Hai già un abbonamento attivo: gestiscilo da "Gestisci abbonamento"', 409);
+}
 
 try {
     $customerId = $user['stripe_customer_id'];

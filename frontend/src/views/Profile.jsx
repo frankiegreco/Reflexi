@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { apiSend } from '../api';
 import CheckoutForm from '../components/CheckoutForm';
+import { usePricing, planLabels, PRICE_UNAVAILABLE } from '../lib/pricing';
 
 // Nell'app nativa niente prezzi né pulsanti d'acquisto: l'abbonamento si
 // gestisce solo dal sito web.
@@ -17,6 +18,11 @@ export default function Profile() {
   const [subLoading, setSubLoading] = useState(false);
   const [subError, setSubError] = useState('');
   const [clientSecret, setClientSecret] = useState(null);
+  const prices = planLabels(usePricing({ enabled: !isNative }));
+  const monthlyLabel = prices.monthly ? `${prices.monthly}/mese` : PRICE_UNAVAILABLE;
+  const annualLabel = prices.annual
+    ? `${prices.annual}/anno${prices.annualPerMonth ? ` (circa ${prices.annualPerMonth}/mese)` : ''}`
+    : PRICE_UNAVAILABLE;
   const [pwd, setPwd] = useState({ current_password: '', new_password: '', confirm: '' });
   const [pwdMsg, setPwdMsg] = useState('');
   const [pwdErr, setPwdErr] = useState('');
@@ -117,15 +123,24 @@ export default function Profile() {
         <h6 className="mb-3 text-sm font-semibold">Abbonamento</h6>
         {subError && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{subError}</div>}
 
-        {user?.subscription_status === 'trialing' && (
+        {user?.subscription_status === 'trialing' && user.has_subscription && (
+          <>
+            <p className="mb-3 text-sm text-muted">
+              Abbonamento <span className="font-semibold text-income">attivato</span> — la prova gratuita continua: <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span> prima del primo addebito.
+            </p>
+            {!isNative && <button onClick={openBillingPortal} disabled={subLoading} className="btn-outline">Gestisci abbonamento</button>}
+          </>
+        )}
+
+        {user?.subscription_status === 'trialing' && !user.has_subscription && (
           <>
             <p className="mb-3 text-sm text-muted">
               Sei nel periodo di prova gratuito — <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span>.
             </p>
             {!isNative && !clientSecret && (
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — 7,99€/mese</button>
-                <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — 79€/anno</button>
+                <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — {monthlyLabel}</button>
+                <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — {annualLabel}</button>
               </div>
             )}
           </>
@@ -146,8 +161,8 @@ export default function Profile() {
             <p className="mb-3 text-sm text-muted">Nessun abbonamento attivo.</p>
             {!isNative && !clientSecret && (
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Abbonati — 7,99€/mese</button>
-                <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Abbonati — 79€/anno</button>
+                <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Abbonati al mensile — {monthlyLabel}</button>
+                <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Abbonati all'annuale — {annualLabel}</button>
               </div>
             )}
           </>

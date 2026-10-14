@@ -1,8 +1,11 @@
 <?php
 // Dati strutturati schema.org (JSON-LD) condivisi dalle pagine del sito
 // pubblico: breadcrumb, organizzazione, app con i prezzi reali. Da includere
-// nel <head>. I prezzi devono restare allineati a piani.php: Google segnala
-// i dati strutturati che non corrispondono a quanto mostrato in pagina.
+// nel <head>. I prezzi arrivano da Stripe (_pricing.php), la stessa fonte di
+// piani.php: Google segnala i dati strutturati che non corrispondono a quanto
+// mostrato in pagina.
+
+require_once __DIR__ . '/_pricing.php';
 
 const SEO_BASE_URL = 'https://reflexi.it';
 
@@ -40,23 +43,27 @@ function seo_organization(): array
     ];
 }
 
-/** L'app con le due offerte di piani.php (prova gratuita di 6 mesi inclusa in entrambe). */
+/**
+ * L'app con le due offerte di piani.php (prova gratuita di 6 mesi inclusa in entrambe).
+ * Prezzi letti da Stripe (_pricing.php); se non disponibili le offerte sono omesse,
+ * mai cifre scritte a mano.
+ */
 function seo_software_application(): array
 {
-    $offer = fn(string $name, string $price, string $unit) => [
+    $offer = fn(string $name, string $price, string $currency, string $unit) => [
         '@type' => 'Offer',
         'name' => $name,
         'price' => $price,
-        'priceCurrency' => 'EUR',
+        'priceCurrency' => $currency,
         'url' => SEO_BASE_URL . '/piani',
         'priceSpecification' => [
             '@type' => 'UnitPriceSpecification',
             'price' => $price,
-            'priceCurrency' => 'EUR',
+            'priceCurrency' => $currency,
             'unitCode' => $unit, // MON = mese, ANN = anno (codici UN/CEFACT)
         ],
     ];
-    return [
+    $app = [
         '@type' => 'SoftwareApplication',
         'name' => 'Reflexi',
         'url' => SEO_BASE_URL . '/',
@@ -65,8 +72,13 @@ function seo_software_application(): array
         'description' => "App di finanza personale che unisce mutuo, investimenti, budget e analisi predittiva in un'unica piattaforma.",
         'inLanguage' => 'it-IT',
         'publisher' => seo_organization(),
-        'offers' => [$offer('Piano mensile', '7.99', 'MON'), $offer('Piano annuale', '79.00', 'ANN')],
     ];
+    $pricing = reflexi_pricing();
+    $offers = [];
+    if ($pricing['monthly']) $offers[] = $offer('Piano mensile', number_format($pricing['monthly']['amount'], 2, '.', ''), strtoupper($pricing['monthly']['currency']), 'MON');
+    if ($pricing['annual']) $offers[] = $offer('Piano annuale', number_format($pricing['annual']['amount'], 2, '.', ''), strtoupper($pricing['annual']['currency']), 'ANN');
+    if ($offers) $app['offers'] = $offers;
+    return $app;
 }
 
 /** Calcolatore gratuito, senza registrazione. */

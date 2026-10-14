@@ -21,7 +21,8 @@ export function AuthProvider({ children }) {
 
   // Ritorno dall'embedded form del Checkout (/app/?checkout=return): il
   // webhook Stripe che attiva l'abbonamento può arrivare qualche secondo dopo
-  // il redirect, quindi ricarichiamo auth/me.php finché lo stato è "active".
+  // il redirect, quindi ricarichiamo auth/me.php finché l'abbonamento compare
+  // (has_subscription: con la prova ancora in corso lo stato resta "trialing").
   useEffect(() => {
     if (!RETURNING_FROM_CHECKOUT) return;
     const params = new URLSearchParams(window.location.search);
@@ -36,7 +37,7 @@ export function AuthProvider({ children }) {
       try {
         const u = await apiGet('auth/me.php');
         setUser(u);
-        if (u?.subscription_status === 'active' || attempts >= 10) clearInterval(timer);
+        if (u?.has_subscription || attempts >= 10) clearInterval(timer);
       } catch {
         clearInterval(timer);
       }

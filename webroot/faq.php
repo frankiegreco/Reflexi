@@ -75,7 +75,7 @@ function faq_category($title, $items) {
 
 <?php faq_category('Iniziare con Reflexi', [
     ['Cos\'è Reflexi?', 'Reflexi è un\'app che mette insieme mutuo, investimenti, budget e spese quotidiane in un unico posto, così hai un quadro reale della tua situazione finanziaria invece di tenerla su strumenti scollegati.'],
-    ['Come funziona il periodo di prova?', 'Alla registrazione parte automaticamente un periodo di prova gratuita di 6 mesi, con accesso completo a tutte le funzionalità. Scaduto il trial, puoi scegliere un piano mensile o annuale per continuare.'],
+    ['Come funziona il periodo di prova?', 'Alla registrazione parte automaticamente un periodo di prova gratuita di 6 mesi (180 giorni), con accesso completo a tutte le funzionalità. Scaduto il trial, puoi scegliere un piano mensile o annuale per continuare.'],
     ['Reflexi tiene davvero i miei soldi?', '<strong>No.</strong> Reflexi non è un istituto di pagamento e non tocca mai un euro reale — traccia solo i numeri che inserisci tu (saldi, transazioni, investimenti). I tuoi soldi restano sempre nella tua banca vera. L\'unico pagamento reale che passa attraverso Reflexi è l\'abbonamento al servizio stesso, gestito interamente da Stripe (un processore di pagamenti certificato), non da noi direttamente.'],
 ]); ?>
 
@@ -122,7 +122,7 @@ function faq_category($title, $items) {
 
 <?php faq_category('Il tuo abbonamento a Reflexi', [
     ['Quanto costa Reflexi dopo il periodo di prova?', 'Puoi scegliere un piano mensile o annuale (con sconto) dal tuo Profilo — i prezzi esatti sono sempre visibili lì prima di confermare.'],
-    ['Come annullo l\'abbonamento?', 'Dal Profilo, premi "Gestisci abbonamento": si apre il portale sicuro di Stripe dove puoi annullare o cambiare piano in autonomia, senza doverci scrivere.'],
+    ['Come annullo l\'abbonamento?', 'Dal Profilo, premi "Gestisci abbonamento": si apre il portale sicuro di Stripe dove puoi annullare l\'abbonamento in autonomia. Per passare da mensile ad annuale (o viceversa) scrivici a <a href="mailto:info@reflexi.it" class="text-accent hover:underline">info@reflexi.it</a>.'],
     ['Cosa succede ai miei dati se l\'abbonamento scade?', 'Restano al sicuro e intatti — semplicemente l\'accesso all\'app si blocca fino a quando non riattivi un abbonamento.'],
 ]); ?>
 

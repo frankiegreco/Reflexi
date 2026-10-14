@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { apiSend } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CheckoutForm from '../components/CheckoutForm';
+import { usePricing, planLabels, PRICE_UNAVAILABLE } from '../lib/pricing';
 
 // Nell'app nativa niente prezzi né pulsanti d'acquisto: l'abbonamento si
 // gestisce solo dal sito web.
@@ -13,6 +14,7 @@ export default function Paywall() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [clientSecret, setClientSecret] = useState(null);
+  const prices = planLabels(usePricing({ enabled: !isNative }));
 
   async function subscribe(plan) {
     setLoading(true);
@@ -62,7 +64,9 @@ export default function Paywall() {
                 >
                   <div className="flex items-baseline justify-between">
                     <span className="font-semibold">Mensile</span>
-                    <span className="font-mono text-lg font-bold">7,99€<span className="text-xs font-normal text-muted">/mese</span></span>
+                    {prices.monthly
+                      ? <span className="font-mono text-lg font-bold">{prices.monthly}<span className="text-xs font-normal text-muted">/mese</span></span>
+                      : <span className="text-xs text-muted">{PRICE_UNAVAILABLE}</span>}
                   </div>
                 </button>
                 <button
@@ -70,11 +74,18 @@ export default function Paywall() {
                   disabled={loading}
                   className="relative w-full rounded-xl border-2 border-accent bg-accentSoft px-4 py-4 text-left transition hover:brightness-95"
                 >
-                  <span className="absolute -top-2.5 right-4 rounded-full bg-income px-2.5 py-0.5 text-[10px] font-bold text-white">RISPARMI 2 MESI</span>
+                  {prices.monthsSaved && (
+                    <span className="absolute -top-2.5 right-4 rounded-full bg-income px-2.5 py-0.5 text-[10px] font-bold text-white">
+                      RISPARMI {prices.monthsSaved} {prices.monthsSaved === 1 ? 'MESE' : 'MESI'}
+                    </span>
+                  )}
                   <div className="flex items-baseline justify-between">
                     <span className="font-semibold">Annuale</span>
-                    <span className="font-mono text-lg font-bold">79€<span className="text-xs font-normal text-muted">/anno</span></span>
+                    {prices.annual
+                      ? <span className="font-mono text-lg font-bold">{prices.annual}<span className="text-xs font-normal text-muted">/anno</span></span>
+                      : <span className="text-xs text-muted">{PRICE_UNAVAILABLE}</span>}
                   </div>
+                  {prices.annualPerMonth && <div className="mt-0.5 text-right text-xs text-muted">circa {prices.annualPerMonth}/mese</div>}
                 </button>
               </div>
 

@@ -24,7 +24,7 @@ if (method() === 'PUT') {
     }
 }
 
-$stmt = db()->prepare("SELECT id, email, name, is_admin, digest_frequency, subscription_status, trial_ends_at, subscription_current_period_end FROM users WHERE id = :id");
+$stmt = db()->prepare("SELECT id, email, name, is_admin, digest_frequency, subscription_status, trial_ends_at, subscription_current_period_end, stripe_subscription_id FROM users WHERE id = :id");
 $stmt->execute(['id' => $uid]);
 $user = $stmt->fetch();
 if (!$user) respond_error('Utente non trovato', 404);
@@ -43,6 +43,7 @@ respond([
     'trial_ends_at' => $user['trial_ends_at'],
     'trial_days_left' => $trialDaysLeft,
     'subscription_current_period_end' => $user['subscription_current_period_end'],
+    'has_subscription' => !empty($user['stripe_subscription_id']),
     'has_access' => user_has_access((int)$user['id']),
     'is_admin' => (int)$user['is_admin'] === 1,
 ]);

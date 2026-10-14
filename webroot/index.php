@@ -103,7 +103,7 @@ seo_jsonld(['@graph' => [
   <div class="glow -right-32 top-40 h-80 w-80 bg-loan/10"></div>
   <div class="mx-auto max-w-3xl text-center">
     <span class="mb-5 inline-block rounded-full bg-accentSoft px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
-      6 mesi gratis, senza carta di credito
+      6 mesi (180 giorni) gratis, senza carta di credito
     </span>
     <h1 class="mb-5 text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
       Il riflesso vero<br class="hidden sm:block"> delle tue finanze
@@ -535,7 +535,7 @@ seo_jsonld(['@graph' => [
 <section class="px-6 py-20">
   <div class="mx-auto max-w-2xl rounded-3xl bg-gradient-to-br from-accent via-accentDark to-indigo-900 p-10 text-center text-white sm:p-14">
     <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Guarda le tue finanze come sono davvero</h2>
-    <p class="mb-8 text-white/80">6 mesi gratis, senza carta di credito.</p>
+    <p class="mb-8 text-white/80">6 mesi (180 giorni) gratis, senza carta di credito.</p>
     <a href="/app/" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">
       Crea il tuo account
     </a>
