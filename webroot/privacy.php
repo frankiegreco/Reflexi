@@ -53,7 +53,8 @@
       <p><strong>Dati di account:</strong> nome, cognome, email e password (conservata come hash crittografico, mai in chiaro). Sono obbligatori per creare l'account.</p>
       <p class="mt-2"><strong>Dati facoltativi:</strong> numero di telefono e livello di esperienza in finanza (principiante, intermedio, avanzato), se scegli di indicarli in registrazione o nel tuo profilo. Se arrivi alla registrazione dalla pagina dei prezzi, registriamo anche il piano (mensile o annuale) che avevi scelto. Puoi modificare o cancellare il telefono e il livello di esperienza in qualsiasi momento dal tuo profilo.</p>
       <p class="mt-2"><strong>Dati finanziari che inserisci tu stesso:</strong> conti, transazioni, categorie, mutui, strumenti finanziari e operazioni di investimento, obiettivi di risparmio, immobili. Questi dati esistono nel Servizio solo perché li inserisci volontariamente per usare le funzionalità dell'app — non li raccogliamo da fonti esterne.</p>
-      <p class="mt-2"><strong>Dati tecnici:</strong> indirizzo IP (usato per la sicurezza, ad esempio per limitare tentativi di accesso ripetuti), log tecnici del server, cookie (vedi sezione 6).</p>
+      <p class="mt-2"><strong>Dati di pagamento:</strong> se ti abboni, nome, indirizzo di fatturazione e dati della carta li inserisci direttamente nei moduli di Stripe (vedi sezione 4): noi non vediamo né conserviamo i dati della carta. Conserviamo solo lo stato del tuo abbonamento (ad esempio in prova, attivo, annullato) e le relative date.</p>
+      <p class="mt-2"><strong>Dati tecnici:</strong> indirizzo IP (usato per la sicurezza, ad esempio per limitare tentativi di accesso ripetuti), storico degli accessi al tuo account (data e ora, indirizzo IP, browser e dispositivo), log tecnici e di sicurezza del server, cookie (vedi sezione 6).</p>
       <p class="mt-2"><strong>Dati di mercato:</strong> quotazioni finanziarie pubbliche recuperate da fonti terze (Yahoo Finance) per gli strumenti che scegli di monitorare — non sono dati personali tuoi.</p>
     </section>
 
@@ -61,6 +62,7 @@
       <h2 class="mb-2 text-lg font-bold text-gray-900">3. Perché trattiamo i tuoi dati</h2>
       <ul class="ml-5 list-disc space-y-1">
         <li>Fornire le funzionalità del Servizio che hai richiesto (esecuzione del contratto/servizio)</li>
+        <li>Gestire l'abbonamento e i pagamenti, compresi gli obblighi fiscali collegati (esecuzione del contratto e obbligo di legge)</li>
         <li>Inviarti email necessarie al funzionamento dell'account (verifica email, reset password)</li>
         <li>Contattarti per assistenza sul tuo account, solo se ci hai lasciato il numero di telefono (consenso, revocabile cancellando il numero dal profilo). Non usiamo il telefono per comunicazioni commerciali e non lo cediamo a terzi</li>
         <li>Capire a chi è utile il Servizio e migliorarlo, a partire dal livello di esperienza in finanza indicato (consenso, revocabile togliendolo dal profilo)</li>
@@ -76,6 +78,7 @@
       <p>Non vendiamo né condividiamo i tuoi dati con terzi a scopo pubblicitario. I tuoi dati sono trattati da questi fornitori, in qualità di responsabili del trattamento, esclusivamente per far funzionare il Servizio:</p>
       <ul class="ml-5 mt-2 list-disc space-y-1">
         <li><strong>Aruba S.p.A.</strong> — hosting del server su cui gira il Servizio (Italia)</li>
+        <li><strong>Stripe Payments Europe, Limited</strong> — gestione dei pagamenti e degli abbonamenti (Irlanda). Riceve la tua email e un identificativo interno del tuo account, oltre ai dati che inserisci nei suoi moduli di pagamento. Per alcune attività, come la prevenzione delle frodi e gli obblighi di legge sui pagamenti, Stripe agisce come titolare autonomo del trattamento secondo la propria <a href="https://stripe.com/it/privacy" class="text-accent" rel="noopener">informativa privacy</a>.</li>
         <li><strong>Brevo (Sendinblue SAS)</strong> — invio delle email transazionali (verifica account, reset password, riepilogo periodico)</li>
         <li><strong>Google LLC</strong> — solo se acconsenti al cookie di Google Analytics sulla pagina pubblica, per statistiche di traffico anonime</li>
       </ul>
@@ -84,7 +87,13 @@
 
     <section>
       <h2 class="mb-2 text-lg font-bold text-gray-900">5. Per quanto tempo conserviamo i dati</h2>
-      <p>I tuoi dati restano nel Servizio finché il tuo account è attivo. Puoi richiedere la cancellazione completa del tuo account e di tutti i dati associati in qualsiasi momento scrivendo a <a href="mailto:privacy@reflexi.it" class="text-accent">privacy@reflexi.it</a>.</p>
+      <ul class="ml-5 list-disc space-y-1">
+        <li><strong>Dati di account e dati finanziari:</strong> finché il tuo account è attivo.</li>
+        <li><strong>Storico degli accessi</strong> (data e ora, indirizzo IP, browser e dispositivo): 180 giorni, poi viene cancellato automaticamente.</li>
+        <li><strong>Log di sicurezza</strong> (ad esempio accessi falliti ed errori del server, che possono contenere indirizzo IP ed email): 90 giorni, poi vengono cancellati automaticamente.</li>
+      </ul>
+      <p class="mt-2">Puoi eliminare il tuo account in qualsiasi momento dal <strong>Profilo</strong> dell'app, con "Elimina account" e la conferma della password: la cancellazione è immediata e definitiva e rimuove i dati dell'account, lo storico degli accessi e tutti i dati finanziari. Se non riesci ad accedere, scrivi a <a href="mailto:privacy@reflexi.it" class="text-accent">privacy@reflexi.it</a> dall'indirizzo email dell'account (vedi <a href="/cancella-account" class="text-accent">come cancellare l'account</a>).</p>
+      <p class="mt-2">Dopo la cancellazione restano solo le voci del log di sicurezza fino alla scadenza dei 90 giorni (compresa quella che registra la cancellazione, con la tua email) e i dati di pagamento che Stripe deve conservare per obblighi di legge.</p>
     </section>
 
     <section>
