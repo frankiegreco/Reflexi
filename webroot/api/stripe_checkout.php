@@ -33,6 +33,17 @@ try {
         $customer = \Stripe\Customer::create(['email' => $user['email'], 'metadata' => ['reflexi_user_id' => $uid]]);
         $customerId = $customer->id;
         db()->prepare("UPDATE users SET stripe_customer_id = :cid WHERE id = :id")->execute(['cid' => $customerId, 'id' => $uid]);
+    } else {
+        // Controllo anche su Stripe, non solo sul DB: se il webhook del primo
+        // checkout non è ancora arrivato, il DB non sa dell'abbonamento e un
+        // secondo click ne creerebbe un altro. 'unpaid' qui è past_due.
+        $existing = \Stripe\Subscription::all(['customer' => $customerId, 'status' => 'all', 'limit' => 100]);
+        foreach ($existing->data as $sub) {
+            if (in_array($sub->status, ['trialing', 'active', 'past_due', 'unpaid'], true)) {
+                log_event('info', 'stripe_checkout_blocked', "Checkout bloccato: il cliente ha già {$sub->id} ({$sub->status})", $uid);
+                respond(['error' => 'Hai già un abbonamento attivo: ti portiamo al portale per gestirlo, senza nuovi addebiti.', 'code' => 'subscription_exists'], 409);
+            }
+        }
     }
 
     $appUrl = app_base_url();
