@@ -129,7 +129,7 @@ seo_calculator('Calcolatore pensione', '/calcolatore-pensione', 'Calcola quanto 
   <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Tieni traccia del percorso verso la pensione, non solo la proiezione</h2>
   <p class="mb-6 text-muted">Con gli Obiettivi di risparmio di Reflexi, il progresso si aggiorna da solo insieme alle tue transazioni reali.</p>
-  <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>
+  <a href="/app/?mode=register" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>
   <p class="mt-4 text-sm text-muted">Come funziona in Reflexi: <a href="/fire-pensione" class="font-semibold text-accent hover:underline">FIRE e pensione →</a></p>
 </section>
 

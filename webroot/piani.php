@@ -77,7 +77,7 @@ seo_jsonld(seo_software_application());
         <?php endif; ?>
       </div>
       <p class="mb-6 text-sm text-muted">Fatturato ogni mese. Annulla quando vuoi.</p>
-      <a href="/app/" class="block rounded-xl border-2 border-accent bg-white px-6 py-3 text-center text-sm font-semibold text-accent transition hover:bg-accentSoft">Inizia la prova gratuita</a>
+      <a href="/app/?mode=register&amp;plan=mensile" class="block rounded-xl border-2 border-accent bg-white px-6 py-3 text-center text-sm font-semibold text-accent transition hover:bg-accentSoft">Inizia la prova gratuita</a>
     </div>
     <?php endif; ?>
 
@@ -96,7 +96,7 @@ seo_jsonld(seo_software_application());
         <?php endif; ?>
       </div>
       <p class="mb-6 text-sm text-muted"><?php if ($pricing['annual_per_month'] !== null): ?>Circa <?= htmlspecialchars(pricing_format($pricing['annual_per_month'], $annual['currency'], $tax)) ?>/mese, fatturato<?php else: ?>Fatturato<?php endif; ?> una volta l'anno.</p>
-      <a href="/app/" class="block rounded-xl bg-accent px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Inizia la prova gratuita</a>
+      <a href="/app/?mode=register&amp;plan=annuale" class="block rounded-xl bg-accent px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Inizia la prova gratuita</a>
     </div>
     <?php endif; ?>
 
@@ -155,7 +155,7 @@ seo_jsonld(seo_software_application());
 <section class="px-6 py-16 text-center">
   <h2 class="mb-2 text-xl font-bold">Prova Reflexi senza rischi</h2>
   <p class="mb-6 text-muted">6 mesi (180 giorni) completi, gratis, senza carta di credito.</p>
-  <a href="/app/" class="inline-block rounded-xl bg-accent px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Crea il tuo account</a>
+  <a href="/app/?mode=register" class="inline-block rounded-xl bg-accent px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Crea il tuo account</a>
 </section>
 
 <?php include '_footer.php'; ?>

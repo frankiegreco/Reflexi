@@ -47,7 +47,7 @@ include '_nav.php';
       <span class="mb-4 inline-block rounded-full bg-accentSoft px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">Investimenti</span>
       <h1 class="mb-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">ETF, azioni e crypto con quotazioni vere, non stimate</h1>
       <p class="mb-6 text-lg text-muted">Prezzi live da Yahoo Finance, costo medio di carico, plus e minusvalenze — e un PAC che compra da solo, con il prezzo reale del giorno.</p>
-      <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-accent/30 transition hover:bg-accentDark">Prova gratis</a>
+      <a href="/app/?mode=register" class="inline-block rounded-xl bg-accent px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-accent/30 transition hover:bg-accentDark">Prova gratis</a>
     </div>
     <div class="flex justify-center">
       <div class="w-[260px] rounded-[2.5rem] border-[10px] border-gray-900 bg-gray-900 shadow-2xl shadow-gray-400/40">
@@ -138,7 +138,7 @@ include '_nav.php';
   <div class="mx-auto max-w-2xl rounded-3xl bg-gradient-to-br from-accent via-accentDark to-indigo-900 p-10 text-center text-white sm:p-14">
     <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Il tuo portafoglio, sempre aggiornato</h2>
     <p class="mb-8 text-white/80">6 mesi gratis, senza carta di credito.</p>
-    <a href="/app/" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Crea il tuo account</a>
+    <a href="/app/?mode=register" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Crea il tuo account</a>
   </div>
 </section>
 

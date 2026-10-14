@@ -47,7 +47,7 @@ include '_nav.php';
       <span class="mb-4 inline-block rounded-full bg-income/10 text-income px-4 py-1.5 text-xs font-semibold uppercase tracking-wider">Simulazione trading</span>
       <h1 class="mb-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Fai pratica in Borsa senza rischiare un euro</h1>
       <p class="mb-6 text-lg text-muted">Apri un conto simulato con il capitale virtuale che vuoi e compra o vendi azioni, ETF e crypto ai prezzi reali di mercato. Commissioni comprese, perché anche quelle fanno parte dell'esperienza vera.</p>
-      <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-accent/30 transition hover:bg-accentDark">Prova gratis</a>
+      <a href="/app/?mode=register" class="inline-block rounded-xl bg-accent px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-accent/30 transition hover:bg-accentDark">Prova gratis</a>
     </div>
     <div class="flex justify-center">
       <div class="w-[260px] rounded-[2.5rem] border-[10px] border-gray-900 bg-gray-900 shadow-2xl shadow-gray-400/40">
@@ -135,7 +135,7 @@ include '_nav.php';
   <div class="mx-auto max-w-2xl rounded-3xl bg-gradient-to-br from-accent via-accentDark to-indigo-900 p-10 text-center text-white sm:p-14">
     <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Impara a investire prima di farlo davvero</h2>
     <p class="mb-8 text-white/80">6 mesi gratis, senza carta di credito.</p>
-    <a href="/app/" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Crea il tuo account</a>
+    <a href="/app/?mode=register" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Crea il tuo account</a>
   </div>
 </section>
 

@@ -113,7 +113,7 @@ seo_jsonld(['@graph' => [
       che non si parlano. Reflexi li mette in un unico posto, con la chiarezza di uno specchio.
     </p>
     <div class="relative flex items-center justify-center">
-      <a href="/app/"
+      <a href="/app/?mode=register"
          class="flex h-40 w-40 flex-shrink-0 items-center justify-center rounded-full border-[14px] border-accent bg-bg text-center text-base font-bold text-accent shadow-lg transition hover:scale-105 hover:bg-accentSoft sm:h-48 sm:w-48 sm:border-[16px] sm:text-lg">
         Inizia<br>gratis
       </a>
@@ -536,7 +536,7 @@ seo_jsonld(['@graph' => [
   <div class="mx-auto max-w-2xl rounded-3xl bg-gradient-to-br from-accent via-accentDark to-indigo-900 p-10 text-center text-white sm:p-14">
     <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Guarda le tue finanze come sono davvero</h2>
     <p class="mb-8 text-white/80">6 mesi (180 giorni) gratis, senza carta di credito.</p>
-    <a href="/app/" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">
+    <a href="/app/?mode=register" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">
       Crea il tuo account
     </a>
     <div class="mt-5 flex items-center justify-center gap-2 text-xs text-white/60">

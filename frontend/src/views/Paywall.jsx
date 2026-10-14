@@ -9,6 +9,11 @@ import { usePricing, planLabels, PRICE_UNAVAILABLE } from '../lib/pricing';
 // gestisce solo dal sito web.
 const isNative = Capacitor.isNativePlatform();
 
+// Piano scelto su /piani prima di registrarsi (users.preferred_plan).
+function PreferredTag() {
+  return <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent whitespace-nowrap ring-1 ring-accent/30">La tua scelta</span>;
+}
+
 export default function Paywall() {
   const { user, logout } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -84,7 +89,7 @@ export default function Paywall() {
                     className="w-full rounded-xl border-2 border-accent bg-white px-4 py-4 text-left transition hover:bg-accentSoft"
                   >
                     <div className="flex items-baseline justify-between">
-                      <span className="font-semibold">Mensile</span>
+                      <span className="font-semibold">Mensile{user?.preferred_plan === 'mensile' && <PreferredTag />}</span>
                       {prices.monthly
                         ? <span className="font-mono text-lg font-bold">{prices.monthly}<span className="text-xs font-normal text-muted">/mese</span></span>
                         : <span className="text-xs text-muted">{PRICE_UNAVAILABLE}</span>}
@@ -103,7 +108,7 @@ export default function Paywall() {
                       </span>
                     )}
                     <div className="flex items-baseline justify-between">
-                      <span className="font-semibold">Annuale</span>
+                      <span className="font-semibold">Annuale{user?.preferred_plan === 'annuale' && <PreferredTag />}</span>
                       {prices.annual
                         ? <span className="font-mono text-lg font-bold">{prices.annual}<span className="text-xs font-normal text-muted">/anno</span></span>
                         : <span className="text-xs text-muted">{PRICE_UNAVAILABLE}</span>}

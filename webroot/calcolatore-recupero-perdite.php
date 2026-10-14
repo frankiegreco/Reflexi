@@ -106,7 +106,7 @@ seo_calculator('Calcolatore recupero perdite', '/calcolatore-recupero-perdite', 
   <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Tieni sotto controllo plus e minusvalenze reali</h2>
   <p class="mb-6 text-muted">Reflexi calcola il costo medio di carico e la tassazione automaticamente, ad ogni vendita.</p>
-  <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>
+  <a href="/app/?mode=register" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>
   <p class="mt-4 text-sm text-muted">Come funziona in Reflexi: <a href="/investimenti" class="font-semibold text-accent hover:underline">Investimenti →</a></p>
 </section>
 

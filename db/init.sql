@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     is_admin TINYINT(1) NOT NULL DEFAULT 0,
     name VARCHAR(150) DEFAULT NULL,
+    first_name VARCHAR(75) DEFAULT NULL,
+    last_name VARCHAR(75) DEFAULT NULL,
+    phone VARCHAR(30) DEFAULT NULL,
+    finance_experience ENUM('principiante','intermedio','avanzato') DEFAULT NULL,
     email_verified_at TIMESTAMP NULL DEFAULT NULL,
     verification_token VARCHAR(64) DEFAULT NULL,
     verification_token_expires DATETIME DEFAULT NULL,
@@ -21,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
     subscription_current_period_end DATETIME DEFAULT NULL,
     past_due_since DATETIME DEFAULT NULL,
     subscription_cancel_at DATETIME DEFAULT NULL,
+    preferred_plan ENUM('mensile','annuale') DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

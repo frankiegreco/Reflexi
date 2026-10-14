@@ -31,6 +31,9 @@ export default function Profile() {
   const annualLabel = prices.annual
     ? `${prices.annual}/anno${prices.annualPerMonth ? ` (circa ${prices.annualPerMonth}/mese)` : ''}`
     : PRICE_UNAVAILABLE;
+  // Piano scelto su /piani prima di registrarsi: è quello messo in evidenza.
+  // Senza preferenza resta in evidenza l'annuale.
+  const preferMonthly = user?.preferred_plan === 'mensile';
   const [pwd, setPwd] = useState({ current_password: '', new_password: '', confirm: '' });
   const [pwdMsg, setPwdMsg] = useState('');
   const [pwdErr, setPwdErr] = useState('');
@@ -173,11 +176,12 @@ export default function Profile() {
                 <>
                   <p className="mb-3 text-sm text-muted">
                     Sei nel periodo di prova gratuito — <span className="font-semibold text-gray-900">{user.trial_days_left} giorni rimasti</span>.
+                    {!isNative && user.preferred_plan && <> Quando ti sei registrato avevi scelto il piano <span className="font-semibold text-gray-900">{user.preferred_plan}</span>.</>}
                   </p>
                   {!isNative && !clientSecret && (
                     <div className="flex flex-wrap gap-2">
-                      {prices.showMonthly && <button onClick={() => subscribe('mensile')} disabled={subLoading} className="btn-outline">Passa al mensile — {monthlyLabel}</button>}
-                      {prices.showAnnual && <button onClick={() => subscribe('annuale')} disabled={subLoading} className="btn-accent">Passa all'annuale — {annualLabel}</button>}
+                      {prices.showMonthly && <button onClick={() => subscribe('mensile')} disabled={subLoading} className={preferMonthly ? 'btn-accent' : 'btn-outline'}>Passa al mensile — {monthlyLabel}</button>}
+                      {prices.showAnnual && <button onClick={() => subscribe('annuale')} disabled={subLoading} className={preferMonthly ? 'btn-outline' : 'btn-accent'}>Passa all'annuale — {annualLabel}</button>}
                     </div>
                   )}
                 </>

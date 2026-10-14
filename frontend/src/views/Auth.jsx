@@ -34,14 +34,31 @@ function Message({ type, children }) {
   return <div className={`mb-3 rounded-lg px-3 py-2 text-sm ${cls}`}>{children}</div>;
 }
 
+// /app/?mode=register (pulsanti "Inizia la prova" del sito) apre direttamente
+// la registrazione; &plan=mensile|annuale porta il piano scelto su /piani. I
+// parametri vanno tolti dall'URL appena letti: un refresh o un logout
+// successivo devono tornare al login.
+export function clearModeParam() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has('mode') && !url.searchParams.has('plan')) return;
+  url.searchParams.delete('mode');
+  url.searchParams.delete('plan');
+  window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+}
+
 export default function Auth() {
   const { login, register, sessionExpired, clearSessionExpired } = useAuth();
   const params = new URLSearchParams(window.location.search);
-  const initialMode = params.get('reset_token') ? 'reset' : 'login';
+  const initialMode = params.get('reset_token') ? 'reset' : params.get('mode') === 'register' ? 'register' : 'login';
   const [mode, setMode] = useState(initialMode); // login | register | forgot | reset
+  const [plan] = useState(() => (initialMode === 'register' && ['mensile', 'annuale'].includes(params.get('plan')) ? params.get('plan') : null));
+  useEffect(clearModeParam, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [experience, setExperience] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
@@ -92,7 +109,10 @@ export default function Auth() {
     e.preventDefault();
     resetMessages(); setLoading(true);
     try {
-      const res = await register(email, password, name);
+      const res = await register({
+        email, password, plan,
+        first_name: firstName, last_name: lastName, phone, finance_experience: experience || null,
+      });
       setInfo(res.message);
       setMode('login');
     } catch (err) {
@@ -175,20 +195,46 @@ export default function Auth() {
     return (
       <AuthShell cta={cta}>
         <h2 className="mb-4 text-lg font-semibold">Crea un account</h2>
+        {plan && (
+          <p className="mb-3 rounded-lg bg-accentSoft px-3 py-2 text-sm text-gray-700">
+            Hai scelto il piano <span className="font-semibold text-accent">{plan}</span>. Si parte con la prova gratuita:
+            ora non paghi nulla e lo attivi quando vuoi, dal Profilo.
+          </p>
+        )}
         {error && <Message type="error">{error}</Message>}
         {info && <Message type="info">{info}</Message>}
         <form onSubmit={handleRegister} className="space-y-3">
-          <div>
-            <label className="field-label">Nome (opzionale)</label>
-            <input className="field" value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="field-label" htmlFor="reg-first-name">Nome</label>
+              <input id="reg-first-name" className="field" required maxLength={75} autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            </div>
+            <div>
+              <label className="field-label" htmlFor="reg-last-name">Cognome</label>
+              <input id="reg-last-name" className="field" required maxLength={75} autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            </div>
           </div>
           <div>
-            <label className="field-label">Email</label>
-            <input className="field" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label className="field-label" htmlFor="reg-email">Email</label>
+            <input id="reg-email" className="field" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
             <label className="field-label">Password (min. 8 caratteri)</label>
-            <input className="field" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input className="field" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="reg-phone">Telefono (facoltativo)</label>
+            <input id="reg-phone" className="field" type="tel" maxLength={25} autoComplete="tel" pattern="\+?[0-9 .\(\)\/\-]{6,25}"
+              title="Solo cifre, con + iniziale facoltativo" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="reg-experience">Esperienza in finanza (facoltativo)</label>
+            <select id="reg-experience" className="field" value={experience} onChange={(e) => setExperience(e.target.value)}>
+              <option value="">Preferisco non dirlo</option>
+              <option value="principiante">Principiante</option>
+              <option value="intermedio">Intermedio</option>
+              <option value="avanzato">Avanzato</option>
+            </select>
           </div>
           <label className="flex items-start gap-2 text-xs text-muted">
             <input type="checkbox" required checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-0.5" />

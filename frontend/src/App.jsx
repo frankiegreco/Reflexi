@@ -6,7 +6,7 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
 import Sidebar from './components/Sidebar';
-import Auth from './views/Auth';
+import Auth, { clearModeParam } from './views/Auth';
 import Paywall from './views/Paywall';
 import Dashboard from './views/Dashboard';
 import Transactions from './views/Transactions';
@@ -134,6 +134,9 @@ function Shell() {
 
 function Gate() {
   const { user, checking } = useAuth();
+  // Link di registrazione aperto da chi è già loggato: si ignora, e il parametro
+  // non deve riaprire la registrazione dopo un logout.
+  useEffect(() => { if (user) clearModeParam(); }, [user]);
   if (checking) return <div className="flex min-h-screen items-center justify-center text-muted">Caricamento...</div>;
   if (!user) return <Auth />;
   if (user.has_access === false) return <Paywall />;

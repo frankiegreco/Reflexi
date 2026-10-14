@@ -116,7 +116,7 @@ seo_calculator('Calcolatore obiettivo di risparmio', '/calcolatore-obiettivo-ris
   <a href="/calcolatori" class="mb-8 inline-block text-sm font-semibold text-accent hover:underline">Vedi tutti i calcolatori →</a>
   <h2 class="mb-2 text-xl font-bold">Vuoi tracciare il progresso reale verso il tuo obiettivo?</h2>
   <p class="mb-6 text-muted">Reflexi collega l'obiettivo al tuo risparmio reale, aggiornato automaticamente ogni volta che registri una transazione.</p>
-  <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>
+  <a href="/app/?mode=register" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi gratis</a>
   <p class="mt-4 text-sm text-muted">Come funziona in Reflexi: <a href="/obiettivi" class="font-semibold text-accent hover:underline">Obiettivi →</a></p>
 </section>
 

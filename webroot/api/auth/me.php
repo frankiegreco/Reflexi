@@ -24,9 +24,10 @@ if (method() === 'PUT') {
     }
 }
 
-// subscription_cancel_at arriva con la migrazione 060.
+// subscription_cancel_at e preferred_plan arrivano con le migrazioni 060 e 061.
 $cancelAtCol = db_has_column('users', 'subscription_cancel_at') ? ', subscription_cancel_at' : '';
-$stmt = db()->prepare("SELECT id, email, name, is_admin, digest_frequency, subscription_status, trial_ends_at, subscription_current_period_end, stripe_subscription_id{$cancelAtCol} FROM users WHERE id = :id");
+$planCol = db_has_column('users', 'preferred_plan') ? ', preferred_plan' : '';
+$stmt = db()->prepare("SELECT id, email, name, is_admin, digest_frequency, subscription_status, trial_ends_at, subscription_current_period_end, stripe_subscription_id{$cancelAtCol}{$planCol} FROM users WHERE id = :id");
 $stmt->execute(['id' => $uid]);
 $user = $stmt->fetch();
 if (!$user) respond_error('Utente non trovato', 404);
@@ -46,6 +47,7 @@ respond([
     'trial_days_left' => $trialDaysLeft,
     'subscription_current_period_end' => $user['subscription_current_period_end'],
     'subscription_cancel_at' => $user['subscription_cancel_at'] ?? null,
+    'preferred_plan' => $user['preferred_plan'] ?? null,
     'has_subscription' => !empty($user['stripe_subscription_id']),
     'has_access' => user_has_access((int)$user['id']),
     'is_admin' => (int)$user['is_admin'] === 1,

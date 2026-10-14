@@ -72,8 +72,9 @@ export function AuthProvider({ children }) {
     return u;
   }, []);
 
-  const register = useCallback(async (email, password, name) => {
-    return apiSend('auth/register.php', 'POST', { email, password, name });
+  // data: email, password, first_name, last_name, phone, finance_experience, plan
+  const register = useCallback(async (data) => {
+    return apiSend('auth/register.php', 'POST', data);
   }, []);
 
   const logout = useCallback(async () => {

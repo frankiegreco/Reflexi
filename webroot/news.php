@@ -163,7 +163,7 @@ seo_breadcrumb($categoria !== ''
 <section class="px-6 py-16 text-center">
   <h2 class="mb-2 text-xl font-bold">Vuoi vedere questi principi applicati ai tuoi numeri veri?</h2>
   <p class="mb-6 text-muted">Reflexi mette insieme mutuo, investimenti, budget e analisi predittiva in un unico posto.</p>
-  <a href="/app/" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi</a>
+  <a href="/app/?mode=register" class="inline-block rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accentDark">Prova Reflexi</a>
 </section>
 
 <?php include '_footer.php'; ?>
