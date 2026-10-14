@@ -143,6 +143,21 @@ try {
         case 'checkout.session.completed':
             $session = $event->data->object;
             if ($session->mode === 'subscription' && $session->subscription) {
+                // Cliente non associato a nessun utente (es. UPDATE di
+                // stripe_customer_id perso): lo si ricollega tramite il
+                // reflexi_user_id messo nei metadata dal nostro checkout.
+                $metaUid = (int)($session->metadata->reflexi_user_id ?? 0);
+                if ($session->customer && $metaUid > 0 && !find_user_by_customer($session->customer)) {
+                    $stmt = db()->prepare("SELECT stripe_customer_id FROM users WHERE id = :id");
+                    $stmt->execute(['id' => $metaUid]);
+                    $previous = $stmt->fetchColumn();
+                    if ($previous !== false) {
+                        db()->prepare("UPDATE users SET stripe_customer_id = :cid WHERE id = :id")
+                            ->execute(['cid' => $session->customer, 'id' => $metaUid]);
+                        log_event('warning', 'stripe_customer_relinked',
+                            "Checkout {$session->id}: cliente {$session->customer} non associato, collegato all'utente dai metadata (cliente precedente: " . ($previous ?: 'nessuno') . ')', $metaUid);
+                    }
+                }
                 sync_subscription($session->customer, \Stripe\Subscription::retrieve($session->subscription));
             }
             break;
