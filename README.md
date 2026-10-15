@@ -7,7 +7,34 @@ categoria, patrimonio netto (conti, investimenti, immobili, conti fruttiferi),
 obiettivi di risparmio, indicatori FIRE, fondi pensione, comparatore tassi
 mutuo e analisi predittiva (medie storiche, simulazione Monte Carlo,
 rilevamento automatico di spese ricorrenti nascoste). Inserimento dati
-manuale, nessuna connessione diretta a conti bancari.
+manuale o import da file CSV/Excel della banca, nessuna connessione diretta
+a conti bancari.
+
+**Sito:** [reflexi.it](https://reflexi.it) · **Prova gratuita:**
+[crea un account](https://reflexi.it/app/?mode=register) (6 mesi, senza carta
+di credito) · **Guida:** [gestione della finanza personale in 7
+passi](https://reflexi.it/gestione-finanza-personale)
+
+## Screenshot
+
+Dati di esempio inventati, da un account demo.
+
+![Riepilogo: saldo complessivo, conti e patrimonio netto](docs/screenshots/dashboard.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/mutuo.png" alt="Dettaglio del mutuo con piano di ammortamento"><br><sub><b>Mutui</b> · piano di ammortamento, quota capitale e interessi</sub></td>
+    <td width="50%"><img src="docs/screenshots/investimenti.png" alt="Portafoglio investimenti con quotazioni reali"><br><sub><b>Investimenti</b> · quotazioni reali, PAC e allocazione</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/budget.png" alt="Budget per categoria"><br><sub><b>Budget</b> · limiti per categoria e ripartizione della spesa</sub></td>
+    <td><img src="docs/screenshots/analisi.png" alt="Analisi predittiva del risparmio"><br><sub><b>Analisi predittiva</b> · storico e proiezione del risparmio</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/abbonamenti.png" alt="Abbonamenti e spese ricorrenti rilevate"><br><sub><b>Abbonamenti</b> · ricorrenti dichiarati e quelli rilevati in automatico</sub></td>
+    <td><img src="docs/screenshots/obiettivi.png" alt="Obiettivi di risparmio"><br><sub><b>Obiettivi</b> · traguardi di risparmio con scadenza</sub></td>
+  </tr>
+</table>
 
 Stack: **PHP 8.2** (backend/API, nessun framework) + **MariaDB** (dati) +
 **React 18 + Vite + Tailwind** (frontend). L'app autenticata vive sotto
@@ -300,7 +327,7 @@ entrata/uscita nei grafici mensili.
 reflexi/
 ├── docker-compose.yml          servizi: db (MariaDB), web (PHP/Apache), adminer, caddy
 ├── Caddyfile
-├── docs/                       roadmap e note di progetto
+├── docs/                       roadmap, note di progetto e screenshot del README
 ├── build/                      script di build del sito pubblico (CSS Tailwind, immagini social, articoli News)
 ├── db/
 │   ├── init.sql                schema completo per installazioni nuove
