@@ -1,4 +1,6 @@
--- Schema per l'app di gestione finanze personali (multi-utente)
+-- Schema completo di Reflexi per un'installazione nuova (multi-utente):
+-- equivale a tutte le migrazioni di db/migrations applicate in ordine.
+-- Va aggiornato insieme a ogni nuova migrazione che cambia lo schema.
 SET NAMES utf8mb4;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -27,6 +29,8 @@ CREATE TABLE IF NOT EXISTS users (
     past_due_since DATETIME DEFAULT NULL,
     subscription_cancel_at DATETIME DEFAULT NULL,
     preferred_plan ENUM('mensile','annuale') DEFAULT NULL,
+    fire_withdrawal_rate DECIMAL(4,2) NOT NULL DEFAULT 4.00,
+    fire_expected_return DECIMAL(4,2) NOT NULL DEFAULT 6.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -38,9 +42,29 @@ CREATE TABLE IF NOT EXISTS accounts (
     initial_balance DECIMAL(12,2) NOT NULL DEFAULT 0,
     color VARCHAR(7) NOT NULL DEFAULT '#4a90a4',
     archived TINYINT(1) NOT NULL DEFAULT 0,
+    exclude_from_networth TINYINT(1) NOT NULL DEFAULT 0,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    interest_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    interest_rate DECIMAL(5,3) DEFAULT NULL,
+    interest_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 26.00,
+    interest_frequency ENUM('mensile','trimestrale','annuale') NOT NULL DEFAULT 'annuale',
+    next_interest_date DATE DEFAULT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Storico dei tassi di interesse sui conti (migrazione 029), sul modello di
+-- loan_rate_history: il calcolo dell'interesse arretrato usa il tasso in
+-- vigore in ciascun periodo, non quello attuale applicato a tutto il passato.
+CREATE TABLE IF NOT EXISTS account_interest_rate_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_id INT NOT NULL,
+    effective_date DATE NOT NULL,
+    rate DECIMAL(5,3) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_account_date (account_id, effective_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -52,6 +76,7 @@ CREATE TABLE IF NOT EXISTS categories (
     icon VARCHAR(50) DEFAULT NULL,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    classification ENUM('necessita','desiderio','risparmio') DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -77,6 +102,36 @@ CREATE TABLE IF NOT EXISTS recurring_transactions (
     FOREIGN KEY (transfer_account_id) REFERENCES accounts(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Import massivo da CSV/Excel (migrazione 030): ogni import è un batch, che
+-- si può annullare in blocco (le transazioni create hanno import_batch_id e
+-- vengono cancellate a cascata). import_mappings salva la mappatura colonne
+-- con un nome (es. "Trade Republic") per riusarla agli import successivi.
+CREATE TABLE IF NOT EXISTS import_batches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    account_id INT NOT NULL,
+    source VARCHAR(100) NOT NULL DEFAULT 'CSV',
+    filename VARCHAR(255) DEFAULT NULL,
+    row_count INT NOT NULL DEFAULT 0,
+    imported_count INT NOT NULL DEFAULT 0,
+    duplicate_count INT NOT NULL DEFAULT 0,
+    error_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS import_mappings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    config JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_user_name (user_id, name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -88,15 +143,18 @@ CREATE TABLE IF NOT EXISTS transactions (
     description VARCHAR(255) DEFAULT NULL,
     date DATE NOT NULL,
     recurring_id INT DEFAULT NULL,
+    import_batch_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES categories(id),
     FOREIGN KEY (transfer_account_id) REFERENCES accounts(id),
     FOREIGN KEY (recurring_id) REFERENCES recurring_transactions(id) ON DELETE SET NULL,
+    FOREIGN KEY (import_batch_id) REFERENCES import_batches(id) ON DELETE CASCADE,
     INDEX idx_date (date),
     INDEX idx_account (account_id),
-    INDEX idx_category (category_id)
+    INDEX idx_category (category_id),
+    INDEX idx_import_batch (import_batch_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS loans (
@@ -173,6 +231,7 @@ CREATE TABLE IF NOT EXISTS investment_transactions (
     instrument_id INT NOT NULL,
     account_id INT DEFAULT NULL,
     linked_transaction_id INT DEFAULT NULL,
+    import_batch_id INT DEFAULT NULL,
     type ENUM('acquisto','vendita') NOT NULL,
     quantity DECIMAL(18,6) NOT NULL,
     price_per_unit DECIMAL(14,4) NOT NULL,
@@ -184,8 +243,10 @@ CREATE TABLE IF NOT EXISTS investment_transactions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (instrument_id) REFERENCES instruments(id) ON DELETE CASCADE,
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL,
+    FOREIGN KEY (import_batch_id) REFERENCES import_batches(id) ON DELETE CASCADE,
     INDEX idx_instrument (instrument_id),
-    INDEX idx_date (date)
+    INDEX idx_date (date),
+    INDEX idx_investment_import_batch (import_batch_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Cache prezzi GLOBALE (condivisa tra tutti gli utenti, per ticker: meno chiamate esterne)
@@ -410,4 +471,80 @@ CREATE TABLE IF NOT EXISTS user_reminders (
 CREATE TABLE IF NOT EXISTS guide_downloads_daily (
     day DATE PRIMARY KEY,
     downloads INT UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- FIRE e report (migrazione 013): fondi pensione e uno snapshot al giorno
+-- del patrimonio netto, per mostrarne l'andamento nel tempo.
+CREATE TABLE IF NOT EXISTS pension_funds (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    fund_type ENUM('negoziale','aperto','pip','tfr_azienda') NOT NULL DEFAULT 'negoziale',
+    current_balance DECIMAL(12,2) NOT NULL DEFAULT 0,
+    monthly_contribution DECIMAL(10,2) NOT NULL DEFAULT 0,
+    employer_contribution DECIMAL(10,2) NOT NULL DEFAULT 0,
+    expected_annual_return DECIMAL(5,2) NOT NULL DEFAULT 3.00,
+    notes VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS net_worth_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    date DATE NOT NULL,
+    net_worth DECIMAL(14,2) NOT NULL,
+    liquid_balance DECIMAL(14,2) NOT NULL,
+    investments_value DECIMAL(14,2) NOT NULL,
+    real_estate_value DECIMAL(14,2) NOT NULL,
+    debt_total DECIMAL(14,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_user_date (user_id, date),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Tassi mutuo di riferimento per il comparatore (migrazioni 016-019):
+-- tabella aggiornata a mano da fonti datate, non un'interrogazione live.
+CREATE TABLE IF NOT EXISTS reference_mortgage_rates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bank_name VARCHAR(150) NOT NULL,
+    rate_type ENUM('fisso','variabile') NOT NULL DEFAULT 'fisso',
+    loan_amount DECIMAL(12,2) DEFAULT NULL,
+    duration_years INT DEFAULT NULL,
+    tan DECIMAL(5,2) DEFAULT NULL,
+    taeg DECIMAL(5,2) DEFAULT NULL,
+    monthly_payment DECIMAL(10,2) DEFAULT NULL,
+    profile_description VARCHAR(255) DEFAULT NULL,
+    source_name VARCHAR(150) NOT NULL,
+    source_url VARCHAR(500) NOT NULL,
+    observed_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_offer (bank_name, tan, taeg, source_name, observed_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO reference_mortgage_rates (bank_name, rate_type, loan_amount, duration_years, tan, taeg, monthly_payment, profile_description, source_name, source_url, observed_date) VALUES
+('Credem', 'fisso', 100000, 30, 2.91, 3.29, 416.77, 'Prima casa, Milano, mutuo 100.000€ su immobile 200.000€, 30 anni, reddito 2.600€/mese', 'MutuiOnline.it', 'https://www.mutuionline.it/news/le-migliori-offerte-di-mutuo-prima-casa-a-luglio-2026-00047191.asp', '2026-07-03'),
+('Credem', 'fisso', 198000, 30, NULL, 3.11, 824.14, 'Prima casa, mutuo 198.000€ su immobile 250.000€, 30 anni, senza spese di istruttoria', 'OfferteShopping.it', 'https://www.offerteshopping.it/confronta-i-mutui-a-tasso-fisso-di-luglio-2026-scopri-le-proposte-piu-vantaggiose/', '2026-07-01'),
+('Banco BPM', 'fisso', 198000, 30, NULL, 3.11, 824.14, 'Immobile ad alta efficienza energetica, stesso profilo del confronto sopra', 'OfferteShopping.it', 'https://www.offerteshopping.it/confronta-i-mutui-a-tasso-fisso-di-luglio-2026-scopri-le-proposte-piu-vantaggiose/', '2026-07-01'),
+('Media di mercato', 'fisso', NULL, NULL, 2.53, NULL, NULL, 'Media indicativa 2,40%-2,65%, LTV 80%, durata 20-25 anni', 'BusinessOnline.it', 'https://www.businessonline.it/news/mutui-a-tasso-variabile-o-fisso-a-luglio-2026-quanto-si-paga-offerte-migliori-e-consigli-analisti_n85593.html', '2026-07-01'),
+('Media di mercato (immobili green)', 'fisso', NULL, NULL, 2.85, 3.00, NULL, 'Offerte riservate a immobili ad alta efficienza energetica (classe A/B)', 'MutuiSupermarket.it', 'https://www.mutuisupermarket.it/news-mutui/migliori-mutui-green-tasso-fisso-luglio-2026/', '2026-07-01'),
+('Intesa Sanpaolo (BancoPosta)', 'fisso', 100000, 20, 3.96, 4.21, NULL, 'Prima/seconda casa, fino all''80% del valore immobile, con polizza incendio inclusa', 'Poste Italiane (BancoPosta)', 'https://www.poste.it/mutui-bancoposta/mutuo-acquisto-casa-bancoposta', CURDATE());
+
+-- Sezione News del sito pubblico (migrazioni 021 e 045). Solo la struttura:
+-- gli articoli sono contenuto, gestito nel database di produzione.
+CREATE TABLE IF NOT EXISTS news_articles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(160) NOT NULL UNIQUE,
+    title VARCHAR(200) NOT NULL,
+    seo_title VARCHAR(70) DEFAULT NULL,
+    excerpt VARCHAR(300) NOT NULL,
+    meta_description VARCHAR(160) NOT NULL,
+    category VARCHAR(40) NOT NULL,
+    cover_emoji VARCHAR(8) NOT NULL DEFAULT '📰',
+    body MEDIUMTEXT NOT NULL,
+    status ENUM('bozza','pubblicato') NOT NULL DEFAULT 'bozza',
+    published_at DATETIME NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_status_published (status, published_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
