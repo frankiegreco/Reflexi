@@ -39,3 +39,8 @@ screen.jpeg
 
 # Note interne per Claude Code: solo in locale, non pubblicate
 CLAUDE.md
+
+# Guida PDF: generata da build/guida/generate.py, riservata agli iscritti
+# (non va pubblicata su GitHub). guida.html e' il sorgente intermedio.
+webroot/private/
+build/guida/guida.html

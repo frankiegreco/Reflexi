@@ -116,6 +116,7 @@ seo_jsonld([
   <span class="mb-4 inline-block rounded-full bg-accentSoft px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">Guida</span>
   <h1 class="mx-auto mb-4 max-w-3xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Gestione della finanza personale: la guida pratica in 7 passi</h1>
   <p class="mx-auto max-w-2xl text-lg text-muted">Entrate e spese, budget, fondo di emergenza, debiti, investimenti e obiettivi: un metodo semplice per sapere sempre dove vanno i tuoi soldi e decidere invece di subire.</p>
+  <a href="#guida-pdf" class="mt-6 inline-flex items-center gap-2 rounded-xl border border-accent/30 bg-white px-5 py-2.5 text-sm font-semibold text-accent shadow-sm transition hover:bg-accentSoft">📄 Scarica la guida in PDF, gratis</a>
 </section>
 
 <main class="mx-auto max-w-3xl px-6 py-8">
@@ -173,7 +174,7 @@ seo_jsonld([
     <?php gfp_table('200 euro al mese investiti: valore finale con rendimento annuo ipotetico', ['Anni', 'Versato', 'Al 3%', 'Al 5%'], [
         ['10', '24.000 €', '27.900 €', '31.100 €'],
         ['20', '48.000 €', '65.700 €', '82.200 €'],
-        ['30', '96.000 €', '116.500 €', '166.500 €'],
+        ['30', '72.000 €', '116.500 €', '166.500 €'],
     ], [1, 2, 3], 'Interesse composto con capitalizzazione mensile, valori arrotondati, al lordo di tasse e costi. I rendimenti passati non garantiscono quelli futuri.'); ?>
 
     <p class="mb-4 text-[15px] leading-relaxed text-gray-700">Fai le tue simulazioni con il <a href="/calcolatore-piano-investimento" class="text-accent hover:underline font-medium">calcolatore piano di investimento</a> o il <a href="/calcolatore-interesse-composto" class="text-accent hover:underline font-medium">calcolatore di interesse composto</a>, e prima di iniziare leggi le guide su <a href="/news/asset-allocation-cos-e-come-sceglierla" class="text-accent hover:underline font-medium">asset allocation</a> e <a href="/news/diversificazione-portafoglio-cosa-significa-davvero" class="text-accent hover:underline font-medium">diversificazione</a>.</p>
@@ -248,12 +249,21 @@ seo_jsonld([
 </section>
 <?php endif; ?>
 
-<!-- CTA -->
-<section class="px-6 py-20">
-  <div class="mx-auto max-w-2xl rounded-3xl bg-gradient-to-br from-accent via-accentDark to-indigo-900 p-10 text-center text-white sm:p-14">
-    <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Metti in pratica la guida con Reflexi</h2>
-    <p class="mb-8 text-white/80">Budget, mutuo, investimenti e obiettivi in un'unica app. 6 mesi gratis, senza carta di credito.</p>
-    <a href="/app/?mode=register" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Crea il tuo account</a>
+<!-- CTA: guida PDF gratuita per chi crea l'account (api/guide_pdf.php) -->
+<section id="guida-pdf" class="scroll-mt-24 px-6 py-20">
+  <div class="mx-auto grid max-w-4xl items-center gap-10 rounded-3xl bg-gradient-to-br from-accent via-accentDark to-indigo-900 p-10 text-white sm:grid-cols-[1fr_auto] sm:p-14">
+    <div>
+      <span class="mb-4 inline-block rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider">Gratis per gli iscritti</span>
+      <h2 class="mb-3 text-2xl font-bold sm:text-3xl">Scarica la guida in PDF, con le schede da compilare</h2>
+      <ul class="mb-8 space-y-1.5 text-white/85">
+        <li>✓ 13 pagine: i 7 passi, ampliati, con esempi e tabelle</li>
+        <li>✓ 7 schede da stampare: spese, budget, fondo di emergenza, debiti, obiettivi, routine</li>
+        <li>✓ Il cruscotto dei cinque numeri da aggiornare ogni trimestre</li>
+      </ul>
+      <a href="/app/?mode=register&amp;guida=1" class="inline-block rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-accent shadow-lg transition hover:bg-gray-50">Crea l'account e scarica la guida</a>
+      <p class="mt-4 text-sm text-white/70">Con l'account hai anche 6 mesi di Reflexi gratis, senza carta di credito. Hai già un account? <a href="/api/guide_pdf.php" class="font-semibold text-white underline">Scaricala qui</a>.</p>
+    </div>
+    <img src="/og/guida-pdf-copertina.png" alt="Copertina della guida in PDF Gestione della finanza personale" width="220" height="311" loading="lazy" class="mx-auto hidden w-[220px] rotate-3 rounded-lg shadow-2xl ring-4 ring-white/25 sm:block">
   </div>
 </section>
 

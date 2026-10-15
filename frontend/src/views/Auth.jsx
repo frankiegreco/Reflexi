@@ -40,9 +40,10 @@ function Message({ type, children }) {
 // successivo devono tornare al login.
 export function clearModeParam() {
   const url = new URL(window.location.href);
-  if (!url.searchParams.has('mode') && !url.searchParams.has('plan')) return;
+  if (!url.searchParams.has('mode') && !url.searchParams.has('plan') && !url.searchParams.has('guida')) return;
   url.searchParams.delete('mode');
   url.searchParams.delete('plan');
+  url.searchParams.delete('guida');
   window.history.replaceState({}, '', url.pathname + url.search + url.hash);
 }
 
@@ -52,6 +53,8 @@ export default function Auth() {
   const initialMode = params.get('reset_token') ? 'reset' : params.get('mode') === 'register' ? 'register' : 'login';
   const [mode, setMode] = useState(initialMode); // login | register | forgot | reset
   const [plan] = useState(() => (initialMode === 'register' && ['mensile', 'annuale'].includes(params.get('plan')) ? params.get('plan') : null));
+  // &guida=1: arriva dal pulsante "Scarica la guida in PDF" del sito.
+  const [fromGuide] = useState(() => params.get('guida') === '1');
   useEffect(clearModeParam, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -201,6 +204,14 @@ export default function Auth() {
     return (
       <AuthShell cta={cta}>
         <h2 className="mb-4 text-lg font-semibold">Crea un account</h2>
+        {fromGuide && (
+          <p className="mb-3 rounded-lg bg-accentSoft px-3 py-2 text-sm text-gray-700">
+            <span className="font-semibold text-accent">Guida in PDF gratuita.</span> Crea l'account: dopo aver confermato
+            l'email la scarichi dalla dashboard, insieme a 6 mesi di prova di Reflexi senza carta di credito.
+            Hai già un account?{' '}
+            <button type="button" className="font-semibold text-accent hover:underline" onClick={() => { setMode('login'); resetMessages(); }}>Accedi</button>.
+          </p>
+        )}
         {plan && (
           <p className="mb-3 rounded-lg bg-accentSoft px-3 py-2 text-sm text-gray-700">
             Hai scelto il piano <span className="font-semibold text-accent">{plan}</span>. Si parte con la prova gratuita:

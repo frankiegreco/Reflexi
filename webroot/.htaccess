@@ -22,8 +22,10 @@ RewriteRule ^_ - [R=404,L]
 # File tecnici che stanno nel webroot solo per la build del container
 # (Composer, Dockerfile, config di Apache) e librerie/script non pubblici:
 # vendor/composer/installed.json elencava le versioni esatte dei pacchetti.
+# private/ contiene file riservati agli utenti registrati (la guida PDF),
+# serviti solo da api/guide_pdf.php dopo il login.
 RewriteCond %{ENV:REDIRECT_STATUS} ^$
-RewriteRule ^(vendor|cron|cli)(/|$)|^(composer\.(json|lock)|Dockerfile|[^/]+\.conf)$ - [R=404,L]
+RewriteRule ^(vendor|cron|cli|private)(/|$)|^(composer\.(json|lock)|Dockerfile|[^/]+\.conf)$ - [R=404,L]
 
 # Home: /index.php -> /. Il controllo su THE_REQUEST (la richiesta originale)
 # evita il loop con il DirectoryIndex, che serve index.php per "/".

@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { apiSend } from '../api';
 import CheckoutForm from '../components/CheckoutForm';
+import GuideCard from '../components/GuideCard';
 import { usePricing, planLabels, PRICE_UNAVAILABLE } from '../lib/pricing';
 
 // Nell'app nativa niente prezzi né pulsanti d'acquisto: l'abbonamento si
@@ -272,6 +273,8 @@ export default function Profile() {
           </div>
 
           <div className="min-w-0 space-y-4">
+            <GuideCard compact />
+
             <div className="card p-5">
               <h6 className="mb-1 text-sm font-semibold">Riepilogo periodico via email</h6>
               <p className="mb-3 text-xs text-muted">Ricevi un'email con quanto hai speso, risparmiato e lo stato dei tuoi mutui, senza dover aprire l'app.</p>

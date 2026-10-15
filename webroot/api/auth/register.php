@@ -60,6 +60,7 @@ send_email($email, 'Conferma la tua email — Le mie finanze', "
     <p>Ciao {$greeting},</p>
     <p>Grazie per esserti registrato. Conferma il tuo indirizzo email cliccando il link qui sotto (valido 24 ore):</p>
     <p><a href=\"{$verifyUrl}\">Conferma la tua email</a></p>
+    <p>Dopo l'accesso trovi nella dashboard la tua guida gratuita in PDF, <em>Gestione della finanza personale in 7 passi</em>, con esempi e schede da compilare.</p>
     <p>Se non hai richiesto tu questa registrazione, ignora questa email.</p>
 ");
 

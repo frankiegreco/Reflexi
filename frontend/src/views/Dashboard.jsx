@@ -8,6 +8,7 @@ import { euro, monthLabel } from '../lib/format';
 import StatCard from '../components/StatCard';
 import ProgressBar from '../components/ProgressBar';
 import Modal from '../components/Modal';
+import GuideCard from '../components/GuideCard';
 
 export default function Dashboard() {
   const { signal } = useData();
@@ -95,6 +96,8 @@ export default function Dashboard() {
         entrate e uscite negli ultimi mesi, e dove va la maggior parte dei tuoi soldi ogni mese.
         Per i dettagli, usa le sezioni nel menu a sinistra.
       </div>
+
+      <GuideCard />
 
       {/* Conti */}
       <div className="flex gap-3 overflow-x-auto pb-1">
