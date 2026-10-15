@@ -30,8 +30,9 @@ $featureItems = [
 $toolItems = [
     ['/mercati', 'mercati', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
     ['/calcolatori', 'calcolatori', 'Tutti i calcolatori', 'La pagina con tutti gli strumenti di calcolo'],
+    ['/gestione-finanza-personale', 'guida', 'Guida alla finanza personale', 'Gestire le tue finanze in 7 passi'],
 ];
-// I singoli calcolatori, in forma compatta sotto i due strumenti principali.
+// I singoli calcolatori, in forma compatta sotto gli strumenti principali.
 // Tutte le pagine calcolatore usano $active = 'calcolatori'.
 $calculatorItems = [
     ['/calcolatore-interesse-composto', 'Interesse composto'],

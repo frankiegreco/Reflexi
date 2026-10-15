@@ -109,7 +109,7 @@ seo_jsonld([
 </head>
 <body class="bg-bg text-gray-900 antialiased">
 
-<?php $active = ''; include '_nav.php'; ?>
+<?php $active = 'guida'; include '_nav.php'; ?>
 
 <!-- HERO -->
 <section class="px-6 pb-8 pt-14 text-center sm:pt-20">

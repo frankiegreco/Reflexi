@@ -20,8 +20,9 @@ const FEATURE_ITEMS = [
 const TOOL_ITEMS = [
   ['/mercati', 'Mercati', 'Andamenti di azioni, ETF e crypto'],
   ['/calcolatori', 'Tutti i calcolatori', 'La pagina con tutti gli strumenti di calcolo'],
+  ['/gestione-finanza-personale', 'Guida alla finanza personale', 'Gestire le tue finanze in 7 passi'],
 ];
-// I singoli calcolatori, in forma compatta sotto i due strumenti principali.
+// I singoli calcolatori, in forma compatta sotto gli strumenti principali.
 const CALCULATOR_ITEMS = [
   ['/calcolatore-interesse-composto', 'Interesse composto'],
   ['/calcolatore-piano-investimento', 'Piano di investimento'],
