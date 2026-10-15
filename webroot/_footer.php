@@ -37,6 +37,7 @@
         <ul class="space-y-2 text-sm">
           <li><a href="/mercati" class="text-gray-600 hover:text-accent">Mercati</a></li>
           <li><a href="/calcolatori" class="text-gray-600 hover:text-accent">Calcolatori gratuiti</a></li>
+          <li><a href="/gestione-finanza-personale" class="text-gray-600 hover:text-accent">Guida alla finanza personale</a></li>
           <li><a href="/news" class="text-gray-600 hover:text-accent">News</a></li>
           <li><a href="/piani" class="text-gray-600 hover:text-accent">Piani e prezzi</a></li>
         </ul>

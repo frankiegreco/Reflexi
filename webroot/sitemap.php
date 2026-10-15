@@ -19,6 +19,7 @@ $staticUrls = [
     ['/obiettivi', '0.8', 'monthly'],
     ['/abbonamenti', '0.8', 'monthly'],
     ['/patrimonio', '0.8', 'monthly'],
+    ['/gestione-finanza-personale', '0.9', 'monthly'],
     ['/calcolatori', '0.9', 'monthly'],
     ['/calcolatore-interesse-composto', '0.7', 'monthly'],
     ['/calcolatore-piano-investimento', '0.7', 'monthly'],

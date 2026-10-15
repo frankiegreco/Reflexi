@@ -17,8 +17,8 @@ $categoryLabels = [
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reflexi — Il riflesso vero delle tue finanze</title>
-<meta name="description" content="Reflexi mette insieme mutuo, investimenti, budget e analisi predittiva in un unico posto: l'app che fa parlare tra loro le tue finanze.">
+<title>App di finanza personale: budget, mutuo e ETF — Reflexi</title>
+<meta name="description" content="Reflexi è l'app di finanza personale che unisce budget, mutuo, investimenti e previsioni: tutta la gestione della finanza personale in un unico posto.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://reflexi.it/">
 
@@ -26,8 +26,8 @@ $categoryLabels = [
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://reflexi.it/">
 <meta property="og:site_name" content="Reflexi">
-<meta property="og:title" content="Reflexi — Il riflesso vero delle tue finanze">
-<meta property="og:description" content="Mutuo, investimenti, budget e analisi predittiva in un unico posto. L'unica app che fa parlare tra loro i pezzi della tua vita finanziaria.">
+<meta property="og:title" content="App di finanza personale: budget, mutuo e ETF — Reflexi">
+<meta property="og:description" content="L'app di finanza personale che mette mutuo, investimenti, budget e analisi predittiva in un unico posto e fa parlare tra loro i pezzi della tua vita finanziaria.">
 <meta property="og:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -35,7 +35,7 @@ $categoryLabels = [
 
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Reflexi — Il riflesso vero delle tue finanze">
+<meta name="twitter:title" content="App di finanza personale: budget, mutuo e ETF — Reflexi">
 <meta name="twitter:description" content="Mutuo, investimenti, budget e analisi predittiva in un unico posto.">
 <meta name="twitter:image" content="<?php require_once __DIR__ . '/_seo.php'; echo seo_og_image(); ?>">
 
@@ -106,11 +106,12 @@ seo_jsonld(['@graph' => [
       6 mesi (180 giorni) gratis, senza carta di credito
     </span>
     <h1 class="mb-5 text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
+      <span class="mb-3 block text-lg font-semibold tracking-normal text-accent sm:text-xl">App di finanza personale</span>
       Il riflesso vero<br class="hidden sm:block"> delle tue finanze
     </h1>
     <p class="mx-auto mb-9 max-w-xl text-lg text-muted">
       Mutuo, investimenti, spese quotidiane e proiezioni future — di solito li tieni su tre app diverse
-      che non si parlano. Reflexi li mette in un unico posto, con la chiarezza di uno specchio.
+      che non si parlano. Reflexi li mette in un unico posto: la gestione della finanza personale, con la chiarezza di uno specchio.
     </p>
     <div class="relative flex items-center justify-center">
       <a href="/app/?mode=register"
@@ -456,7 +457,7 @@ seo_jsonld(['@graph' => [
 <!-- DIFFERENZIAZIONE -->
 <section class="border-t border-border bg-white px-6 py-20">
   <div class="mx-auto max-w-3xl text-center">
-    <h2 class="mb-10 text-2xl font-bold sm:text-3xl">Perché non è "un'altra app di risparmio"</h2>
+    <h2 class="mb-10 text-2xl font-bold sm:text-3xl">Un'app di finanza personale, non "un'altra app di risparmio"</h2>
     <div class="grid grid-cols-1 gap-6 text-left sm:grid-cols-2">
       <div class="flex gap-3">
         <span class="mt-0.5 text-income">✓</span>
@@ -475,6 +476,49 @@ seo_jsonld(['@graph' => [
         <p class="text-sm text-muted"><span class="font-semibold text-gray-900">Proiezioni probabilistiche</span> — non una singola cifra ottimista, un ventaglio di scenari reali</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- GESTIONE FINANZA PERSONALE: i passi della guida, ognuno con il modulo dell'app -->
+<section class="border-t border-border px-6 py-20">
+  <div class="mx-auto max-w-4xl">
+    <div class="mb-12 text-center">
+      <h2 class="mb-3 text-2xl font-bold sm:text-3xl">La gestione della finanza personale, passo per passo</h2>
+      <p class="mx-auto max-w-xl text-muted">Gli stessi passi che consiglieresti a un amico, ognuno con lo strumento giusto già pronto nell'app.</p>
+    </div>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div class="flex gap-3 rounded-2xl border border-border bg-white p-5">
+        <span class="text-2xl">🧾</span>
+        <div>
+          <div class="font-semibold">1. Sai dove vanno i tuoi soldi</div>
+          <div class="text-sm text-muted">Importi le transazioni da CSV o Excel della banca, i saldi si calcolano da soli e gli abbonamenti dimenticati vengono a galla.</div>
+        </div>
+      </div>
+      <div class="flex gap-3 rounded-2xl border border-border bg-white p-5">
+        <span class="text-2xl">🎯</span>
+        <div>
+          <div class="font-semibold">2. Decidi quanto spendere</div>
+          <div class="text-sm text-muted">Un <a href="/budget" class="text-accent hover:underline">budget per categoria</a> con avviso prima di sforare e rollover di quello che non spendi.</div>
+        </div>
+      </div>
+      <div class="flex gap-3 rounded-2xl border border-border bg-white p-5">
+        <span class="text-2xl">🏠</span>
+        <div>
+          <div class="font-semibold">3. Tieni sotto controllo i debiti</div>
+          <div class="text-sm text-muted">Il <a href="/mutui" class="text-accent hover:underline">mutuo</a> con piano di ammortamento vero, rientro anticipato e la rata collegata al resto del mese.</div>
+        </div>
+      </div>
+      <div class="flex gap-3 rounded-2xl border border-border bg-white p-5">
+        <span class="text-2xl">📈</span>
+        <div>
+          <div class="font-semibold">4. Fai crescere il patrimonio</div>
+          <div class="text-sm text-muted"><a href="/investimenti" class="text-accent hover:underline">Investimenti</a> con quotazioni reali, <a href="/obiettivi" class="text-accent hover:underline">obiettivi</a> con scadenza e <a href="/patrimonio" class="text-accent hover:underline">patrimonio netto</a> aggiornato da solo.</div>
+        </div>
+      </div>
+    </div>
+    <p class="mt-8 text-center text-sm text-muted">
+      Vuoi partire dalle basi? Leggi la <a href="/gestione-finanza-personale" class="font-semibold text-accent hover:underline">guida alla gestione della finanza personale in 7 passi</a>.
+    </p>
   </div>
 </section>
 

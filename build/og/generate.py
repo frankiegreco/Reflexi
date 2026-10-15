@@ -34,6 +34,7 @@ PAGES = {
     '/patrimonio': ('Patrimonio e report', '📊', 'Funzionalità'),
     '/mercati': ('Mercati', '💹', 'Strumenti gratuiti'),
     '/calcolatori': ('Calcolatori', '🧮', 'Strumenti gratuiti'),
+    '/gestione-finanza-personale': ('Guida', '🧭', 'Gestione della finanza personale'),
     '/calcolatore-interesse-composto': ('Calcolatore', '🌱', 'Strumenti gratuiti'),
     '/calcolatore-piano-investimento': ('Calcolatore', '📅', 'Strumenti gratuiti'),
     '/calcolatore-obiettivo-risparmio': ('Calcolatore', '🎯', 'Strumenti gratuiti'),
