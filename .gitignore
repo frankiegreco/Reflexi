@@ -36,3 +36,6 @@ backup_*.sql
 GO_LIVE_STRIPE.md
 foto.png
 screen.jpeg
+
+# Note interne per Claude Code: solo in locale, non pubblicate
+CLAUDE.md
