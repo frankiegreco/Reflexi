@@ -1,0 +1,28 @@
+Copyright (c) 2026 Reflexi — titolare di P.IVA IT03005860642.
+Tutti i diritti riservati.
+
+Il codice sorgente di questo repository è pubblicato solo per consultazione.
+Senza autorizzazione scritta del titolare non è consentito copiarlo,
+modificarlo, distribuirlo, concederlo in licenza a terzi, usarlo per offrire
+un servizio, né eseguirlo, in tutto o in parte. La pubblicazione non concede
+alcuna licenza, espressa o implicita, sul codice, sul marchio Reflexi o sul
+logo.
+
+Il codice di terze parti incluso nel repository (ad esempio i font in
+webroot/fonts/ e le librerie contenute nella build in webroot/app/) resta
+soggetto alle rispettive licenze.
+
+---
+
+Copyright (c) 2026 Reflexi — holder of VAT number IT03005860642.
+All rights reserved.
+
+The source code in this repository is published for viewing only. Without
+written permission from the copyright holder, you may not copy, modify,
+distribute, sublicense, run, or use it to provide a service, in whole or in
+part. Publishing it grants no license, express or implied, to the code, the
+Reflexi name or the logo.
+
+Third-party code included in the repository (such as the fonts in
+webroot/fonts/ and the libraries bundled in the build in webroot/app/)
+remains under its own licenses.
