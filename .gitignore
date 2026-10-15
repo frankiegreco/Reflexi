@@ -27,7 +27,12 @@ frontend/dist_incoming/
 build/og/items.json
 __pycache__/
 
-# Backup del go-live Stripe (GO_LIVE_STRIPE.md): dump con dati utenti e .env
-# con le chiavi di test
+# Backup del go-live Stripe: dump con dati utenti e .env con le chiavi di test
 backup_*.sql
 .env.test-backup
+
+# Documenti e immagini solo locali, mai nel repo (pubblicabile): checklist
+# operativa Stripe e screenshot con dati finanziari reali
+GO_LIVE_STRIPE.md
+foto.png
+screen.jpeg
