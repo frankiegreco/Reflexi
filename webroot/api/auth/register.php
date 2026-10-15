@@ -56,7 +56,7 @@ seed_default_data_for_user($userId);
 
 $verifyUrl = app_base_url() . '/api/auth/verify_email.php?token=' . $token;
 $greeting = htmlspecialchars($firstName);
-send_email($email, 'Conferma la tua email — Le mie finanze', "
+send_email($email, 'Conferma la tua email — Reflexi', "
     <p>Ciao {$greeting},</p>
     <p>Grazie per esserti registrato. Conferma il tuo indirizzo email cliccando il link qui sotto (valido 24 ore):</p>
     <p><a href=\"{$verifyUrl}\">Conferma la tua email</a></p>

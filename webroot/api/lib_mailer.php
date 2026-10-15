@@ -31,7 +31,7 @@ function send_email(string $to, string $subject, string $htmlBody): bool
         $mail->SMTPSecure = getenv('SMTP_SECURE') ?: PHPMailer::ENCRYPTION_STARTTLS;
         $mail->CharSet = 'UTF-8';
 
-        $mail->setFrom(getenv('SMTP_FROM') ?: 'no-reply@localhost', getenv('SMTP_FROM_NAME') ?: 'Le mie finanze');
+        $mail->setFrom(getenv('SMTP_FROM') ?: 'no-reply@localhost', getenv('SMTP_FROM_NAME') ?: 'Reflexi');
         $mail->addAddress($to);
         $mail->isHTML(true);
         $mail->Subject = $subject;
@@ -71,7 +71,7 @@ function send_password_reset_email(int $userId, string $email, int $validHours =
 
     $resetUrl = app_base_url() . '/app/?reset_token=' . $token;
     $validity = $validHours === 1 ? '1 ora' : "{$validHours} ore";
-    return send_email($email, 'Reimposta la password — Le mie finanze', "
+    return send_email($email, 'Reimposta la password — Reflexi', "
         <p>Hai richiesto di reimpostare la password. Il link è valido {$validity}:</p>
         <p><a href=\"{$resetUrl}\">Reimposta la password</a></p>
         <p>Se non hai richiesto tu questa operazione, ignora questa email: la tua password resterà invariata.</p>
