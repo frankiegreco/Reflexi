@@ -405,3 +405,9 @@ CREATE TABLE IF NOT EXISTS user_reminders (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (sent_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Download della guida PDF, solo totali giornalieri (migrazione 065).
+CREATE TABLE IF NOT EXISTS guide_downloads_daily (
+    day DATE PRIMARY KEY,
+    downloads INT UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

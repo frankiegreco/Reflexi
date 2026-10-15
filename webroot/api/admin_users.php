@@ -259,6 +259,16 @@ $users = array_map('admin_user_row', db()->query("
 ")->fetchAll());
 
 $since30 = strtotime('-30 days');
+// Download della guida PDF (migrazione 065): null se la tabella non c'è ancora.
+$guide = null;
+try {
+    $guide = db()->query("SELECT COALESCE(SUM(downloads), 0) AS total,
+        COALESCE(SUM(CASE WHEN day >= CURDATE() - INTERVAL 29 DAY THEN downloads END), 0) AS last_30d
+        FROM guide_downloads_daily")->fetch();
+    $guide = ['total' => (int)$guide['total'], 'last_30d' => (int)$guide['last_30d']];
+} catch (PDOException $e) {
+    $guide = null;
+}
 respond([
     'users' => $users,
     'summary' => [
@@ -267,5 +277,6 @@ respond([
         'active' => count(array_filter($users, fn($u) => $u['subscription_status'] === 'active')),
         'trialing' => count(array_filter($users, fn($u) => $u['subscription_status'] === 'trialing')),
         'new_30d' => count(array_filter($users, fn($u) => strtotime($u['created_at']) >= $since30)),
+        'guide_downloads' => $guide,
     ],
 ]);

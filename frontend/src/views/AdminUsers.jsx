@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, BadgeCheck, CreditCard, Hourglass, UserPlus, ArrowLeft, LogIn, Timer, Clock, Globe, ChevronRight, ShieldAlert, Pencil, MailCheck, KeyRound, CalendarClock, Trash2, Send, BellRing } from 'lucide-react';
+import { Users, BadgeCheck, CreditCard, Hourglass, UserPlus, ArrowLeft, LogIn, Timer, Clock, Globe, ChevronRight, ShieldAlert, Pencil, MailCheck, KeyRound, CalendarClock, Trash2, Send, BellRing, FileDown } from 'lucide-react';
 import { apiGet, apiSend } from '../api';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
@@ -641,12 +641,15 @@ export default function AdminUsers() {
         finanziario degli utenti (conti, transazioni, investimenti) è visibile. Clicca un utente per il dettaglio.
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-6">
         <StatCard label="Totale" value={s.total} icon={Users} />
         <StatCard label="Email verificata" value={s.verified} icon={BadgeCheck} iconColor="#7fa876" />
         <StatCard label="Abbonati" value={s.active} icon={CreditCard} iconColor="#7fa876" />
         <StatCard label="In prova" value={s.trialing} icon={Hourglass} iconColor="#d4a24c" />
         <StatCard label="Nuovi (30 gg)" value={s.new_30d} icon={UserPlus} />
+        {s.guide_downloads && (
+          <StatCard label="Guida PDF scaricata" value={s.guide_downloads.total} hint={`${s.guide_downloads.last_30d} negli ultimi 30 giorni`} icon={FileDown} />
+        )}
       </div>
 
       <div className="card overflow-hidden">

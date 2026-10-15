@@ -9,17 +9,29 @@ require __DIR__ . '/db.php';
 
 $file = __DIR__ . '/../private/guida-finanza-personale-7-passi.pdf';
 $uid = current_user_id();
-$exists = false;
+$isAdmin = null;
 if ($uid) {
-    $stmt = db()->prepare("SELECT 1 FROM users WHERE id = :id");
+    $stmt = db()->prepare("SELECT is_admin FROM users WHERE id = :id");
     $stmt->execute(['id' => $uid]);
-    $exists = (bool)$stmt->fetchColumn();
+    $isAdmin = $stmt->fetchColumn();
 }
-if (!$exists) {
+if ($isAdmin === false || $isAdmin === null) {
     header('Location: /app/?mode=register&guida=1');
     exit;
 }
 if (!is_file($file)) respond_error('Guida non disponibile', 404);
+
+// Conteggio anonimo per l'area admin (migrazione 065): solo il totale del
+// giorno, i download degli admin (prove) esclusi. Un errore qui (tabella non
+// ancora creata) non deve mai bloccare il download.
+if ((int)$isAdmin !== 1) {
+    try {
+        db()->exec("INSERT INTO guide_downloads_daily (day, downloads) VALUES (CURDATE(), 1)
+            ON DUPLICATE KEY UPDATE downloads = downloads + 1");
+    } catch (Throwable $e) {
+        error_log('conteggio download guida fallito: ' . $e->getMessage());
+    }
+}
 
 header('Content-Type: application/pdf');
 header('Content-Disposition: attachment; filename="Reflexi - Guida alla finanza personale in 7 passi.pdf"');
