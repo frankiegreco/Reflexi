@@ -10,7 +10,8 @@ require __DIR__ . '/db.php';
 //
 // Scritture (vedi admin_update_user e admin_user_action più sotto):
 // PUT ?id=N modifica i dati anagrafici; POST ?id=N&action=... per verifica
-// email, link di reset password, fine della prova ed eliminazione. Il flag is_admin non si
+// email, link di reset password, promemoria per tornare a usare l'app, fine
+// della prova ed eliminazione. Il flag is_admin non si
 // tocca da qui (solo via SQL), lo stato dell'abbonamento lo governa Stripe.
 // Ogni modifica finisce nel log di sicurezza con l'admin che l'ha fatta.
 
@@ -36,6 +37,9 @@ function admin_user_row(array $u): array
         // Solo il fatto che esista, non l'ID: serve a sapere se la prova è
         // modificabile (con un abbonamento la gestisce Stripe).
         'has_subscription' => !empty($u['stripe_subscription_id']),
+        // Promemoria (migrazione 063).
+        'reminders_enabled' => (int)($u['reminders_enabled'] ?? 1) === 1,
+        'last_reminder_at' => $u['last_reminder_at'] ?? null,
         'is_admin' => (int)$u['is_admin'] === 1,
         'email_verified' => $u['email_verified_at'] !== null,
         'email_verified_at' => $u['email_verified_at'],
@@ -53,6 +57,9 @@ function admin_user_columns(): string
 {
     $extra = db_has_column('users', 'preferred_plan') ? ', u.preferred_plan' : '';
     if (db_has_column('users', 'first_name')) $extra .= ', u.first_name, u.last_name, u.phone, u.finance_experience';
+    if (db_has_column('users', 'reminders_enabled')) {
+        $extra .= ', u.reminders_enabled, (SELECT MAX(r.sent_at) FROM user_reminders r WHERE r.user_id = u.id) AS last_reminder_at';
+    }
     return "u.id, u.email, u.name, u.is_admin, u.email_verified_at, u.created_at,
         u.subscription_status, u.trial_ends_at, u.subscription_current_period_end, u.digest_frequency,
         u.stripe_subscription_id{$extra},
@@ -126,7 +133,7 @@ function admin_update_user(int $adminId, int $id): void
     respond(['user' => admin_user_row(admin_load_user($id)), 'message' => 'Dati aggiornati.', 'warning' => $warning]);
 }
 
-/** POST ?id=N&action=verify_email|send_password_reset|set_trial_end|delete */
+/** POST ?id=N&action=verify_email|send_password_reset|send_reminder|set_trial_end|delete */
 function admin_user_action(int $adminId, int $id, string $action): void
 {
     $u = admin_load_user($id);
@@ -147,6 +154,12 @@ function admin_user_action(int $adminId, int $id, string $action): void
         }
         log_event('info', 'admin_password_reset_sent', "Admin #{$adminId} ha inviato un link di reset password", $id);
         respond(['user' => admin_user_row($u), 'message' => "Link per reimpostare la password inviato a {$u['email']} (valido 24 ore)."]);
+    }
+
+    if ($action === 'send_reminder') {
+        require_once __DIR__ . '/lib_reminders.php';
+        $message = send_single_reminder($adminId, $id, (string)($in['message'] ?? ''));
+        respond(['user' => admin_user_row(admin_load_user($id)), 'message' => $message]);
     }
 
     if ($action === 'set_trial_end') {

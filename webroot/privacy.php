@@ -68,6 +68,7 @@
         <li>Capire a chi è utile il Servizio e migliorarlo, a partire dal livello di esperienza in finanza indicato (consenso, revocabile togliendolo dal profilo)</li>
         <li>Ricordarti il piano che avevi scelto e mostrartelo in evidenza quando decidi di abbonarti (esecuzione del servizio)</li>
         <li>Inviarti il riepilogo periodico via email, solo se lo attivi tu esplicitamente dal tuo profilo (consenso)</li>
+        <li>Inviarti di tanto in tanto un promemoria via email se non usi il Servizio da un po' (legittimo interesse a farti usare il servizio che hai attivato). Puoi disattivare i promemoria in qualsiasi momento dal tuo profilo</li>
         <li>Proteggere il Servizio da accessi non autorizzati e abusi (legittimo interesse alla sicurezza)</li>
         <li>Analisi statistiche aggregate sul traffico della pagina pubblica, solo se acconsenti al cookie di Google Analytics (consenso)</li>
       </ul>

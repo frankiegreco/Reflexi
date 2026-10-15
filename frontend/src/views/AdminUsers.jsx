@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, BadgeCheck, CreditCard, Hourglass, UserPlus, ArrowLeft, LogIn, Timer, Clock, Globe, ChevronRight, ShieldAlert, Pencil, MailCheck, KeyRound, CalendarClock, Trash2 } from 'lucide-react';
+import { Users, BadgeCheck, CreditCard, Hourglass, UserPlus, ArrowLeft, LogIn, Timer, Clock, Globe, ChevronRight, ShieldAlert, Pencil, MailCheck, KeyRound, CalendarClock, Trash2, Send, BellRing } from 'lucide-react';
 import { apiGet, apiSend } from '../api';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
@@ -156,7 +156,7 @@ function trialInputValue(u) {
   return d.toISOString().slice(0, 10);
 }
 
-function UserActions({ user, onDone }) {
+function UserActions({ user, onDone, onRemind }) {
   const [busy, setBusy] = useState('');
   const [trialDate, setTrialDate] = useState(trialInputValue(user));
   const trialEditable = !user.has_subscription && !['active', 'past_due'].includes(user.subscription_status);
@@ -188,6 +188,10 @@ function UserActions({ user, onDone }) {
           onClick={() => run('send_password_reset', `Inviare a ${user.email} un link per reimpostare la password (valido 24 ore)?`)}>
           <KeyRound size={16} /> {busy === 'send_password_reset' ? 'Invio...' : 'Invia link reset password'}
         </button>
+        <button className="btn-outline flex items-center gap-1.5" disabled={!!busy || !user.reminders_enabled} onClick={onRemind}
+          title={user.reminders_enabled ? '' : "L'utente ha disattivato i promemoria"}>
+          <BellRing size={16} /> Invia promemoria
+        </button>
       </div>
 
       <div className="mt-4 border-t border-border pt-4">
@@ -201,6 +205,162 @@ function UserActions({ user, onDone }) {
         ) : (
           <p className="text-sm text-muted">L'utente ha un abbonamento: la prova e i rinnovi si gestiscono da Stripe.</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Promemoria per tornare a usare l'app (lib_reminders.php). Con `user`: al
+// singolo utente; senza: a tutti gli inattivi da N giorni, con anteprima.
+const REMINDER_DAYS = [7, 14, 30, 60, 90];
+
+function ReminderModal({ user, onClose, onSent }) {
+  const [days, setDays] = useState(30);
+  const [includeUnknown, setIncludeUnknown] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (user) return;
+    setPreview(null);
+    apiGet(`admin_reminders.php?days=${days}&include_unknown=${includeUnknown ? 1 : 0}`)
+      .then(setPreview).catch((e) => setError(e.message));
+  }, [user, days, includeUnknown]);
+
+  async function send(e) {
+    e.preventDefault();
+    if (!user && !window.confirm(`Inviare il promemoria a ${preview.count} ${preview.count === 1 ? 'utente' : 'utenti'}?`)) return;
+    setError(''); setSending(true);
+    try {
+      const res = user
+        ? await apiSend(`admin_users.php?id=${user.id}&action=send_reminder`, 'POST', { message })
+        : await apiSend('admin_reminders.php', 'POST', { days, include_unknown: includeUnknown, message });
+      onSent(res);
+    } catch (err) {
+      setError(err.message);
+      setSending(false);
+    }
+  }
+
+  const canSend = user || (preview && preview.count > 0);
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={user ? 'Invia promemoria' : 'Promemoria agli utenti inattivi'}
+      footer={(
+        <>
+          <button type="button" className="btn-outline" onClick={onClose}>Annulla</button>
+          <button type="submit" form="admin-reminder" className="btn-accent flex items-center gap-1.5" disabled={!canSend || sending}>
+            <Send size={16} /> {sending ? 'Invio...' : user ? 'Invia promemoria' : `Invia a ${preview?.count ?? '…'}`}
+          </button>
+        </>
+      )}
+    >
+      <form id="admin-reminder" onSubmit={send} className="space-y-3 text-sm">
+        {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-red-600">{error}</div>}
+        {user ? (
+          <p className="text-muted">
+            {user.email} riceverà un'email con l'invito a tornare su Reflexi
+            {!user.email_verified && ', con il link per confermare l\'email (non ancora verificata)'}.
+          </p>
+        ) : (
+          <>
+            <p className="text-muted">
+              Un'email che invita a tornare su Reflexi. Esclusi gli admin, chi ha disattivato i promemoria dal Profilo
+              e chi ne ha già ricevuto uno negli ultimi {preview?.bulk_gap_days ?? 7} giorni.
+            </p>
+            <div>
+              <label className="field-label" htmlFor="rem-days">Utenti senza accessi da almeno</label>
+              <select id="rem-days" className="field" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+                {REMINDER_DAYS.map((d) => <option key={d} value={d}>{d} giorni</option>)}
+              </select>
+            </div>
+            <label className="flex items-start gap-2 text-gray-700">
+              <input type="checkbox" className="mt-0.5" checked={includeUnknown} onChange={(e) => setIncludeUnknown(e.target.checked)} />
+              <span>
+                Includi chi non ha accessi registrati: lo storico parte dal {preview ? day(preview.history_start) : '11/10/2026'},
+                quindi potrebbe anche usare l'app ogni giorno.
+              </span>
+            </label>
+            <div className="rounded-lg border border-border bg-gray-50 px-3 py-2">
+              {!preview ? <span className="text-muted">Calcolo dei destinatari...</span> : preview.count === 0 ? (
+                <span className="text-muted">Nessun utente da avvisare con questi criteri.</span>
+              ) : (
+                <>
+                  <div className="mb-1 font-semibold">{preview.count} {preview.count === 1 ? 'destinatario' : 'destinatari'}{preview.capped && ' (massimo per invio)'}</div>
+                  <ul className="max-h-36 space-y-0.5 overflow-y-auto text-xs text-muted">
+                    {preview.users.map((x) => (
+                      <li key={x.id} className="flex justify-between gap-2">
+                        <span className="min-w-0 truncate">{x.name || x.email}</span>
+                        <span className="whitespace-nowrap">{x.last_activity ? `ultimo accesso ${day(x.last_activity)}` : 'accessi non registrati'}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          </>
+        )}
+        <div>
+          <label className="field-label" htmlFor="rem-message">Messaggio personale (facoltativo)</label>
+          <textarea id="rem-message" className="field min-h-[90px]" maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)}
+            placeholder="Compare nell'email, sopra il pulsante" />
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function RemindersSection({ reloadKey }) {
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    apiGet('admin_reminders.php').then((d) => setRows(d.reminders)).catch((e) => setError(e.message));
+  }, [reloadKey]);
+
+  if (error) return <div className="mt-6 text-sm text-expense">{error}</div>;
+  if (!rows) return null;
+
+  return (
+    <div className="mt-6">
+      <h2 className="mb-3 text-sm font-bold text-gray-800">Promemoria inviati</h2>
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted">
+                <th className="px-4 py-3">Utente</th>
+                <th className="px-4 py-3">Inviato il</th>
+                <th className="px-4 py-3">Dopo il promemoria</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length ? rows.map((r) => (
+                <tr key={r.id} className="border-b border-border last:border-0">
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{r.name || <span className="text-muted">Senza nome</span>}</div>
+                    <div className="text-xs text-muted">{r.email}</div>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted">
+                    {dayTime(r.sent_at)}
+                    {r.sent_by_name && <div className="text-xs">da {r.sent_by_name}</div>}
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.returned
+                      ? <span className="whitespace-nowrap rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">Tornato il {day(r.last_seen_at)}</span>
+                      : <span className="whitespace-nowrap rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">Non ancora</span>}
+                  </td>
+                </tr>
+              )) : (
+                <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-muted">Nessun promemoria inviato. Usa "Promemoria" per avvisare gli utenti inattivi.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -264,6 +424,7 @@ function UserDetail({ id, onBack, currentUserId }) {
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [reminding, setReminding] = useState(false);
   const [notice, setNotice] = useState(null); // { type: 'ok' | 'warning' | 'error', text }
 
   useEffect(() => {
@@ -323,11 +484,18 @@ function UserDetail({ id, onBack, currentUserId }) {
         <Field label="Telefono"><Phone phone={u.phone} /></Field>
         <Field label="Esperienza in finanza">{EXPERIENCE[u.finance_experience] || notGiven}</Field>
         <Field label="Piano scelto all'iscrizione">{PLAN[u.preferred_plan] || notGiven}</Field>
+        <Field label="Promemoria">
+          {u.reminders_enabled ? 'Attivi' : <span className="text-amber-700">Disattivati dall'utente</span>}
+          {u.last_reminder_at && <div className="text-xs text-muted">Ultimo: {dayTime(u.last_reminder_at)}</div>}
+        </Field>
         <Field label="Ultimo login">{dayTime(u.last_login_at)}</Field>
         <Field label="Ultima attività">{dayTime(u.last_seen_at)}</Field>
       </div>
 
-      <UserActions key={`${u.id}-${u.trial_ends_at}`} user={u} onDone={applyResult} />
+      <UserActions key={`${u.id}-${u.trial_ends_at}`} user={u} onDone={applyResult} onRemind={() => { setNotice(null); setReminding(true); }} />
+      {reminding && (
+        <ReminderModal user={u} onClose={() => setReminding(false)} onSent={(res) => { setReminding(false); applyResult(res); }} />
+      )}
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label="Login totali" value={s.logins_total} hint={`${s.logins_30d} negli ultimi 30 giorni`} icon={LogIn} />
@@ -406,7 +574,9 @@ export default function AdminUsers() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedId, setSelectedId] = useState(null);
-  const [listNotice, setListNotice] = useState('');
+  const [listNotice, setListNotice] = useState(null); // { type: 'ok' | 'error', text }
+  const [reminderOpen, setReminderOpen] = useState(false);
+  const [remindersKey, setRemindersKey] = useState(0);
   const { user: me } = useAuth();
 
   // Si ricarica a ogni ritorno dal dettaglio, dove i dati possono essere cambiati.
@@ -420,7 +590,7 @@ export default function AdminUsers() {
       <UserDetail
         id={selectedId}
         currentUserId={me?.id}
-        onBack={(message) => { setListNotice(typeof message === 'string' ? message : ''); setSelectedId(null); }}
+        onBack={(message) => { setListNotice(typeof message === 'string' ? { type: 'ok', text: message } : null); setSelectedId(null); }}
       />
     );
   }
@@ -440,6 +610,9 @@ export default function AdminUsers() {
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h4 className="text-xl font-bold">Utenti registrati</h4>
         <div className="flex flex-col gap-2 sm:flex-row">
+          <button className="btn-accent flex items-center justify-center gap-1.5" onClick={() => { setListNotice(null); setReminderOpen(true); }}>
+            <BellRing size={16} /> Promemoria
+          </button>
           <select className="field w-full sm:w-44" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filtra per abbonamento">
             <option value="">Tutti gli stati</option>
             {Object.entries(STATUS).map(([value, st]) => <option key={value} value={value}>{st.label}</option>)}
@@ -453,7 +626,15 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {listNotice && <div className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{listNotice}</div>}
+      {listNotice && (
+        <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${listNotice.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-700'}`}>{listNotice.text}</div>
+      )}
+      {reminderOpen && (
+        <ReminderModal
+          onClose={() => setReminderOpen(false)}
+          onSent={(res) => { setReminderOpen(false); setListNotice({ type: 'ok', text: res.message }); setRemindersKey((k) => k + 1); }}
+        />
+      )}
 
       <div className="mb-4 rounded-xl border border-accent/20 bg-accentSoft px-4 py-3 text-sm text-gray-700">
         Area riservata agli amministratori. Qui ci sono solo i dati dell'account e degli accessi: nessun dato
@@ -514,6 +695,8 @@ export default function AdminUsers() {
           </table>
         </div>
       </div>
+
+      <RemindersSection reloadKey={remindersKey} />
     </div>
   );
 }

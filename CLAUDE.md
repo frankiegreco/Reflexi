@@ -138,6 +138,13 @@ Nessuna suite di test automatizzati nel repo (né PHP né JS) al momento — ver
   `?id=N&action=` (verify_email, send_password_reset, set_trial_end, delete),
   ognuna registrata nel log di sicurezza. Mai `is_admin` né lo stato
   dell'abbonamento da API; gli admin non si eliminano dall'area admin.
+  Promemoria per tornare a usare l'app (solo utenti registrati, mai admin):
+  `admin_reminders.php` (anteprima e invio a tutti gli inattivi da N giorni,
+  storico) e `action=send_reminder` sul singolo utente, logica in
+  `lib_reminders.php` (tabella `user_reminders` + `users.reminders_enabled`,
+  migrazione 063; l'utente li disattiva dal Profilo). L'inattività si misura
+  su `user_sessions`, quindi chi non ha sessioni dal 2026-10-11 ha attività
+  "sconosciuta" ed entra nell'invio di massa solo se l'admin lo chiede.
 - **Eliminazione utente**: sempre via `delete_user_account()` in
   `lib_user_delete.php` (usata da `auth/delete_account.php` e dall'admin):
   annulla prima gli abbonamenti Stripe aperti e, se Stripe non risponde, non

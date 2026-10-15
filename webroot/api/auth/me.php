@@ -34,6 +34,10 @@ if (method() === 'PUT') {
             $params['finance_experience'] = profile_experience($in['finance_experience']);
         }
     }
+    if (array_key_exists('reminders_enabled', $in) && db_has_column('users', 'reminders_enabled')) {
+        $fields[] = 'reminders_enabled = :reminders_enabled';
+        $params['reminders_enabled'] = $in['reminders_enabled'] ? 1 : 0;
+    }
     if (array_key_exists('digest_frequency', $in) && in_array($in['digest_frequency'], ['nessuno', 'settimanale', 'mensile'], true)) {
         $fields[] = 'digest_frequency = :digest_frequency';
         $params['digest_frequency'] = $in['digest_frequency'];
@@ -47,6 +51,7 @@ if (method() === 'PUT') {
 $cancelAtCol = db_has_column('users', 'subscription_cancel_at') ? ', subscription_cancel_at' : '';
 $planCol = db_has_column('users', 'preferred_plan') ? ', preferred_plan' : '';
 $profileCols = db_has_column('users', 'first_name') ? ', first_name, last_name, phone, finance_experience' : '';
+$profileCols .= db_has_column('users', 'reminders_enabled') ? ', reminders_enabled' : '';
 $stmt = db()->prepare("SELECT id, email, name, is_admin, digest_frequency, subscription_status, trial_ends_at, subscription_current_period_end, stripe_subscription_id{$cancelAtCol}{$planCol}{$profileCols} FROM users WHERE id = :id");
 $stmt->execute(['id' => $uid]);
 $user = $stmt->fetch();
@@ -65,6 +70,7 @@ respond([
     'last_name' => $user['last_name'] ?? null,
     'phone' => $user['phone'] ?? null,
     'finance_experience' => $user['finance_experience'] ?? null,
+    'reminders_enabled' => (int)($user['reminders_enabled'] ?? 1) === 1,
     'digest_frequency' => $user['digest_frequency'],
     'subscription_status' => $user['subscription_status'],
     'trial_ends_at' => $user['trial_ends_at'],

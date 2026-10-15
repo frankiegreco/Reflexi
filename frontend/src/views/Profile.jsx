@@ -30,6 +30,7 @@ export default function Profile() {
   const [profileErr, setProfileErr] = useState('');
   const [digest, setDigest] = useState(user?.digest_frequency || 'nessuno');
   const [digestMsg, setDigestMsg] = useState('');
+  const [reminders, setReminders] = useState(user?.reminders_enabled !== false);
   const [subLoading, setSubLoading] = useState(false);
   const [subError, setSubError] = useState('');
   const [clientSecret, setClientSecret] = useState(null);
@@ -118,6 +119,14 @@ export default function Profile() {
   }
 
   const setField = (key) => (e) => setProfile((p) => ({ ...p, [key]: e.target.value }));
+
+  async function saveReminders(enabled) {
+    setReminders(enabled);
+    setDigestMsg('');
+    const updated = await apiSend('auth/me.php', 'PUT', { reminders_enabled: enabled });
+    if (setUser) setUser(updated);
+    setDigestMsg(enabled ? 'Promemoria attivati.' : 'Promemoria disattivati.');
+  }
 
   async function saveDigest(value) {
     setDigest(value);
@@ -278,6 +287,10 @@ export default function Profile() {
                   </button>
                 ))}
               </div>
+              <label className="mt-4 flex items-start gap-2 border-t border-border pt-3 text-sm text-gray-700">
+                <input type="checkbox" className="mt-0.5" checked={reminders} onChange={(e) => saveReminders(e.target.checked)} />
+                <span>Ricevi un promemoria via email se non accedi a Reflexi da un po'</span>
+              </label>
             </div>
 
             <div className="card p-5">

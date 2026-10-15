@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_name VARCHAR(75) DEFAULT NULL,
     phone VARCHAR(30) DEFAULT NULL,
     finance_experience ENUM('principiante','intermedio','avanzato') DEFAULT NULL,
+    reminders_enabled TINYINT(1) NOT NULL DEFAULT 1,
     email_verified_at TIMESTAMP NULL DEFAULT NULL,
     verification_token VARCHAR(64) DEFAULT NULL,
     verification_token_expires DATETIME DEFAULT NULL,
@@ -393,4 +394,14 @@ CREATE TABLE IF NOT EXISTS security_events (
     INDEX idx_security_events_type (type, created_at),
     INDEX idx_security_events_ip (ip, created_at),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_reminders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    sent_by INT DEFAULT NULL,
+    sent_at DATETIME NOT NULL,
+    INDEX idx_user_reminders_user (user_id, sent_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (sent_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

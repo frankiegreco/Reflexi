@@ -77,3 +77,53 @@ function send_password_reset_email(int $userId, string $email, int $validHours =
         <p>Se non hai richiesto tu questa operazione, ignora questa email: la tua password resterà invariata.</p>
     ");
 }
+
+/**
+ * Cornice HTML delle email "curate" (oggi i promemoria): tabelle e stili in
+ * linea, perché Gmail, Outlook e le app di posta ignorano CSS esterni e
+ * layout moderni. $preheader è l'anteprima mostrata accanto all'oggetto nella
+ * casella di posta; $content il corpo, già HTML; $footer la nota in fondo.
+ */
+function email_layout(string $preheader, string $content, string $footer): string
+{
+    $preheader = htmlspecialchars($preheader);
+    $site = htmlspecialchars(app_base_url());
+    return <<<HTML
+<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Reflexi</title></head>
+<body style="margin:0;padding:0;background:#f3f4f8;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">{$preheader}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f4f8;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+      <tr><td style="padding:0 4px 20px;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;color:#14162b;letter-spacing:-0.3px;">
+        <span style="color:#4f46e5;">&#9679;</span> Reflexi
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:16px;padding:36px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#1f2937;">
+        {$content}
+      </td></tr>
+      <tr><td style="padding:20px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#9ca3af;text-align:center;">
+        {$footer}<br><a href="{$site}" style="color:#9ca3af;">reflexi.it</a> &middot; Il riflesso vero delle tue finanze
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
+HTML;
+}
+
+/** Pulsante centrato per email_layout(), cliccabile in tutto il riquadro anche in Outlook. */
+function email_button(string $url, string $label): string
+{
+    $url = htmlspecialchars($url);
+    return <<<HTML
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:28px auto;">
+  <tr><td align="center" bgcolor="#4f46e5" style="border-radius:12px;">
+    <a href="{$url}" style="display:inline-block;padding:14px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">{$label}</a>
+  </td></tr>
+</table>
+HTML;
+}
+
